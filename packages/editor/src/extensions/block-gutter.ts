@@ -37,7 +37,12 @@ function gutterBranchable(node: PMNode, parent: PMNode | null, policy: HamBranch
   }
 }
 
-function branchButton(blockId: HamBlockId, onBranch: BlockGutterContext["onBranch"]): HTMLElement {
+type GetContext = () => BlockGutterContext | null;
+
+// ProseMirror reuses widget DOM across rebuilds when the decoration key is
+// unchanged, so the click handler must be resolved from the live context at
+// click time — capturing `ctx.onBranch` here would bind a stale closure.
+function branchButton(blockId: HamBlockId, getContext: GetContext): HTMLElement {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "ham-branch-button";
@@ -47,7 +52,7 @@ function branchButton(blockId: HamBlockId, onBranch: BlockGutterContext["onBranc
   btn.addEventListener("mousedown", (e) => e.preventDefault()); // keep editor selection
   btn.addEventListener("click", (e) => {
     e.preventDefault();
-    onBranch(blockId, e);
+    getContext()?.onBranch(blockId, e);
   });
   return btn;
 }
@@ -55,7 +60,7 @@ function branchButton(blockId: HamBlockId, onBranch: BlockGutterContext["onBranc
 function childChips(
   blockId: HamBlockId,
   children: HamBranchChildSummary[],
-  onOpenChild: BlockGutterContext["onOpenChild"],
+  getContext: GetContext,
 ): HTMLElement {
   const wrap = document.createElement("span");
   wrap.className = "ham-branch-children";
@@ -70,7 +75,7 @@ function childChips(
     chip.addEventListener("mousedown", (e) => e.preventDefault());
     chip.addEventListener("click", (e) => {
       e.preventDefault();
-      onOpenChild(child, blockId);
+      getContext()?.onOpenChild(child, blockId);
     });
     wrap.appendChild(chip);
   }
@@ -93,7 +98,7 @@ function build(doc: PMNode, getContext: () => BlockGutterContext | null): Decora
 
     if (ctx.editable && gutterBranchable(node, parent, ctx.branchPolicy)) {
       decos.push(
-        Decoration.widget(pos + 1, () => branchButton(blockId, ctx.onBranch), {
+        Decoration.widget(pos + 1, () => branchButton(blockId, getContext), {
           side: -1,
           key: `branch-${blockId}`,
           ignoreSelection: true,
@@ -105,15 +110,11 @@ function build(doc: PMNode, getContext: () => BlockGutterContext | null): Decora
     if (kids && kids.length > 0) {
       const sig = kids.map((k) => `${k.edgeId}:${k.active ? 1 : 0}`).join(",");
       decos.push(
-        Decoration.widget(
-          pos + node.nodeSize - 1,
-          () => childChips(blockId, kids, ctx.onOpenChild),
-          {
-            side: 1,
-            key: `kids-${blockId}-${sig}`,
-            ignoreSelection: true,
-          },
-        ),
+        Decoration.widget(pos + node.nodeSize - 1, () => childChips(blockId, kids, getContext), {
+          side: 1,
+          key: `kids-${blockId}-${sig}`,
+          ignoreSelection: true,
+        }),
       );
     }
   });

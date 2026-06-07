@@ -129,6 +129,40 @@ describe("HamEditor", () => {
     });
   });
 
+  it("invokes the current onBranchRequest after a re-render (no stale handler)", async () => {
+    const fn1 = vi.fn<(e: HamBranchRequestEvent) => void>();
+    const fn2 = vi.fn<(e: HamBranchRequestEvent) => void>();
+    let handle: HamEditorHandle | null = null;
+    const view = (cb: (e: HamBranchRequestEvent) => void) => (
+      <HamEditor
+        surfaceId="s1"
+        rootBlockId="blk_root"
+        title="Method"
+        value={{ kind: "markdown", markdown: MD }}
+        onBranchRequest={cb}
+        onReady={(h) => {
+          handle = h;
+        }}
+      />
+    );
+    const { container, rerender } = render(view(fn1));
+    await waitFor(() => expect(handle).not.toBeNull());
+
+    let button: HTMLElement | null = null;
+    await waitFor(() => {
+      button = container.querySelector<HTMLElement>(".ham-branch-button");
+      expect(button).not.toBeNull();
+    });
+
+    // Swap the handler; the gutter widget DOM is reused (same key), so the click
+    // must resolve fn2 from the live context — not the captured fn1.
+    rerender(view(fn2));
+    fireEvent.click(button!);
+
+    expect(fn1).not.toHaveBeenCalled();
+    expect(fn2).toHaveBeenCalledOnce();
+  });
+
   it("save() yields markdown, tiptap json, and a snapshot", async () => {
     const { getHandle } = await mountEditor();
     const payload = await getHandle().save();

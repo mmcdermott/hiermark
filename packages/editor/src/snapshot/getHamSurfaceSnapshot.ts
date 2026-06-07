@@ -5,9 +5,9 @@ import { generateBlockId } from "../id";
 import type { HamBlockId, HamSurfaceId, HamSurfaceSnapshot } from "../types";
 import {
   DEFAULT_HAM_BLOCK_TYPES,
-  ITEM_TYPES,
   LEAF_CONTAINER_TYPES,
   LIST_CONTAINER_TYPES,
+  TEXT_AND_RECURSE_TYPES,
 } from "./blockTreePolicy";
 import { projectBlockTree, type BlockNodeMeta } from "./projectBlockTree";
 
@@ -52,7 +52,9 @@ export function surfaceSnapshotFromDoc(
   const walk = (node: PMNode, itemAncestorId: HamBlockId | null) => {
     node.forEach((child) => {
       const type = child.type.name;
-      if (ITEM_TYPES.has(type)) {
+      if (TEXT_AND_RECURSE_TYPES.has(type)) {
+        // listItem / taskItem / blockquote: their direct paragraphs are this
+        // block's text; recurse to surface nested lists as child blocks.
         const id = idOf(child);
         const text = directItemText(child);
         metas.push({
@@ -64,7 +66,7 @@ export function surfaceSnapshotFromDoc(
           literalParentId: itemAncestorId,
           ...attrsOf(child),
         });
-        walk(child, id); // descend for nested lists; this item is their ancestor
+        walk(child, id);
       } else if (LIST_CONTAINER_TYPES.has(type)) {
         walk(child, itemAncestorId); // not a block; keep the ancestor
       } else if (type === "heading") {

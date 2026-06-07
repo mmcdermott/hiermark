@@ -116,13 +116,27 @@ export function projectBlockTree(
 
   // 5. depth + preorder blockOrder via DFS from the root.
   const blockOrder: HamBlockId[] = [];
+  const visited = new Set<HamBlockId>();
   const visit = (id: HamBlockId, depth: number) => {
+    if (visited.has(id)) return; // defensive: never loop on a malformed cycle
+    visited.add(id);
     const block = blocks[id]!;
     block.depth = depth;
     blockOrder.push(id);
     for (const childId of block.childIds) visit(childId, depth + 1);
   };
   visit(rootBlockId, 0);
+
+  // Reattach any orphans (e.g. a cyclic literalParentId) under the root so every
+  // block stays addressable and present in blockOrder.
+  for (const id of known) {
+    if (visited.has(id)) continue;
+    const root = blocks[rootBlockId]!;
+    blocks[id]!.parentId = rootBlockId;
+    root.childIds.push(id);
+    blocks[id]!.order = root.childIds.length - 1;
+    visit(id, 1);
+  }
 
   return {
     surfaceId,

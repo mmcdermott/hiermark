@@ -3,7 +3,11 @@ import type { Node as PMNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
-import { isHamBlockNode } from "../snapshot/blockTreePolicy";
+import {
+  isHamBlockNode,
+  LIST_CONTAINER_TYPES,
+  TEXT_AND_RECURSE_TYPES,
+} from "../snapshot/blockTreePolicy";
 import { surfaceSnapshotFromDoc } from "../snapshot/getHamSurfaceSnapshot";
 import type {
   HamAnnotationHit,
@@ -27,24 +31,36 @@ export interface AnnotationLayerOptions {
 /** Plugin key — dispatch `tr.setMeta(annotationLayerKey, true)` to rebuild on ctx change. */
 export const annotationLayerKey = new PluginKey<DecorationSet>("hamAnnotations");
 
-interface BlockSpan {
-  start: number; // absolute position where the block's text begins
-  end: number; // absolute position of the block's end
+interface BlockTextIndex {
+  /** The block's recognizable text (direct text only — nested lists excluded). */
+  text: string;
+  /** Absolute PM position of each character in `text` (length === text.length). */
+  charToPos: number[];
+  /** Absolute position of the block's end. */
+  end: number;
 }
 
-function firstTextStart(node: PMNode, pos: number): number {
-  let start = pos + 1;
-  let done = false;
+/**
+ * Build a char-index → absolute-PM-position map for a block's text. Walking the
+ * inline content (rather than assuming `firstTextStart + offset`) keeps offsets
+ * correct across inline atoms (math) and hard breaks, which occupy PM positions
+ * but contribute no characters. For item/blockquote blocks, nested lists are
+ * skipped so the indexed text matches the snapshot's direct-children text.
+ */
+function buildBlockTextIndex(node: PMNode, pos: number): BlockTextIndex {
+  const stopAtLists = TEXT_AND_RECURSE_TYPES.has(node.type.name);
+  let text = "";
+  const charToPos: number[] = [];
   node.descendants((child, rel) => {
-    if (done) return false;
-    if (child.isText) {
-      start = pos + 1 + rel;
-      done = true;
-      return false;
+    if (stopAtLists && LIST_CONTAINER_TYPES.has(child.type.name)) return false;
+    if (child.isText && child.text) {
+      const base = pos + 1 + rel;
+      for (let j = 0; j < child.text.length; j++) charToPos.push(base + j);
+      text += child.text;
     }
     return undefined;
   });
-  return start;
+  return { text, charToPos, end: pos + node.nodeSize };
 }
 
 function chipEl(hit: HamAnnotationHit): HTMLElement {
@@ -66,13 +82,14 @@ function build(doc: PMNode, ctx: AnnotationLayerContext | null): DecorationSet {
   });
 
   const textByBlockId: Record<string, string> = {};
-  const spanByBlockId = new Map<string, BlockSpan>();
+  const indexByBlockId = new Map<string, BlockTextIndex>();
   doc.descendants((node, pos, parent) => {
     if (!isHamBlockNode(node, parent)) return;
     const id = (node.attrs?.dataBlockId as string | null) ?? null;
     if (!id) return;
-    textByBlockId[id] = node.textContent;
-    spanByBlockId.set(id, { start: firstTextStart(node, pos), end: pos + node.nodeSize });
+    const index = buildBlockTextIndex(node, pos);
+    textByBlockId[id] = index.text;
+    indexByBlockId.set(id, index);
   });
 
   const blocks: HamBlockSnapshot[] = snapshot.blockOrder
@@ -93,31 +110,33 @@ function build(doc: PMNode, ctx: AnnotationLayerContext | null): DecorationSet {
   for (const hit of hits) {
     const type = placementOf.get(hit.type);
     const placement = type?.placement ?? "inline";
-    const span = spanByBlockId.get(hit.blockId);
-    if (!span) continue;
+    const index = indexByBlockId.get(hit.blockId);
+    if (!index) continue;
 
     if (
       (placement === "inline" || placement === "decoration" || placement === "popover") &&
       hit.from != null &&
-      hit.to != null
+      hit.to != null &&
+      hit.to > hit.from
     ) {
+      const from = index.charToPos[hit.from];
+      const lastChar = index.charToPos[hit.to - 1];
+      if (from == null || lastChar == null) continue; // offset out of range
+      const to = lastChar + 1;
       const classes = ["ham-annotation", `ham-annotation-${hit.type}`];
       const extra = type?.inlineClass?.(hit, ctx.context);
       if (extra) classes.push(extra);
-      const from = span.start + hit.from;
-      const to = span.start + hit.to;
-      if (from < to) {
-        decos.push(
-          Decoration.inline(from, to, {
-            class: classes.join(" "),
-            "data-annotation-type": hit.type,
-            "data-annotation-id": hit.id,
-          }),
-        );
-      }
-    } else if (placement === "block-chip" || placement === "gutter") {
       decos.push(
-        Decoration.widget(Math.max(span.start, span.end - 1), () => chipEl(hit), {
+        Decoration.inline(from, to, {
+          class: classes.join(" "),
+          "data-annotation-type": hit.type,
+          "data-annotation-id": hit.id,
+        }),
+      );
+    } else if (placement === "block-chip" || placement === "gutter") {
+      const at = Math.max(index.charToPos[0] ?? index.end - 1, index.end - 1);
+      decos.push(
+        Decoration.widget(at, () => chipEl(hit), {
           side: 1,
           key: `anno-${hit.id}`,
           ignoreSelection: true,

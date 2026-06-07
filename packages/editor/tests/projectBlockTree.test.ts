@@ -101,6 +101,22 @@ describe("projectBlockTree", () => {
     expect(snap.blocks.x!.parentId).toBe("root");
   });
 
+  it("reattaches blocks orphaned by a cyclic literalParentId so none vanish", () => {
+    // a → b → a is malformed (can't happen from a real PM tree, but be defensive).
+    const snap = projectBlockTree(
+      [
+        meta({ id: "a", type: "listItem", literalParentId: "b" }),
+        meta({ id: "b", type: "listItem", literalParentId: "a" }),
+      ],
+      OPTS,
+    );
+    // Every block is present in blocks and blockOrder; the DFS never loops.
+    expect(snap.blockOrder).toContain("a");
+    expect(snap.blockOrder).toContain("b");
+    expect(new Set(snap.blockOrder).size).toBe(snap.blockOrder.length);
+    expect(Object.keys(snap.blocks).sort()).toEqual(["a", "b", "root"]);
+  });
+
   it("carries an empty flag and attrs through", () => {
     const snap = projectBlockTree(
       [meta({ id: "e", isEmpty: true, text: "", attrs: { foo: 1 } })],

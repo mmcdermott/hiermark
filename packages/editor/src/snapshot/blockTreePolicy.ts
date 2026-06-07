@@ -16,6 +16,7 @@ export const DEFAULT_HAM_BLOCK_TYPES: ReadonlySet<string> = new Set([
   "codeBlock",
   "listItem",
   "taskItem",
+  "table",
 ]);
 
 /** List/task container types whose children are blocks but which are not themselves blocks. */
@@ -25,11 +26,25 @@ export const LIST_CONTAINER_TYPES: ReadonlySet<string> = new Set([
   "taskList",
 ]);
 
-/** Block types treated as opaque leaves (their inner paragraphs are not separate blocks). */
-export const LEAF_CONTAINER_TYPES: ReadonlySet<string> = new Set(["blockquote", "codeBlock"]);
+/**
+ * Block types treated as opaque leaves: their inner content is the block's text
+ * and is not decomposed into separate blocks. `blockquote` is deliberately NOT
+ * here — it recurses so nested lists inside a quote keep their items.
+ */
+export const LEAF_CONTAINER_TYPES: ReadonlySet<string> = new Set(["codeBlock", "table"]);
 
-/** Item block types whose direct paragraph child is the item's text, not a block. */
+/**
+ * Block types whose direct paragraph child is the block's text rather than a
+ * separate block, and which recurse to surface nested lists as child blocks.
+ */
 export const ITEM_TYPES: ReadonlySet<string> = new Set(["listItem", "taskItem"]);
+
+/** Block types that hold their own text in direct paragraphs but recurse for nested lists. */
+export const TEXT_AND_RECURSE_TYPES: ReadonlySet<string> = new Set([
+  "listItem",
+  "taskItem",
+  "blockquote",
+]);
 
 /**
  * Whether a ProseMirror node should be treated as a HAM block, given its parent.
