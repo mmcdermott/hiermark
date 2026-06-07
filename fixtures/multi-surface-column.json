@@ -1,0 +1,58 @@
+{
+  "name": "multi-surface-column",
+  "description": "Two blocks in the root branch to two separate surfaces that share one column. A second branch from block A adds a sibling.",
+  "rootSurfaceId": "s_root",
+  "activeSurfaceId": "s_a",
+  "surfaces": {
+    "s_root": {
+      "id": "s_root",
+      "rootBlockId": "blk_root",
+      "title": "Root",
+      "content": {
+        "kind": "markdown",
+        "markdown": "# Root\n\n## A — Background\n\nNotes about background.\n\n## B — Experiment plan\n\nNotes about the plan.\n"
+      }
+    },
+    "s_a": {
+      "id": "s_a",
+      "rootBlockId": "blk_a_root",
+      "title": "Background notes",
+      "content": { "kind": "markdown", "markdown": "# Background notes\n\nExpanded background.\n" }
+    },
+    "s_a2": {
+      "id": "s_a2",
+      "rootBlockId": "blk_a2_root",
+      "title": "Background alternative",
+      "content": { "kind": "markdown", "markdown": "# Background alternative\n\nA second take.\n" }
+    },
+    "s_b": {
+      "id": "s_b",
+      "rootBlockId": "blk_b_root",
+      "title": "Experiment plan",
+      "content": { "kind": "markdown", "markdown": "# Experiment plan\n\nExpanded plan.\n" }
+    }
+  },
+  "branchEdges": [
+    {
+      "id": "e_a",
+      "fromSurfaceId": "s_root",
+      "fromBlockId": "blk_A",
+      "toSurfaceId": "s_a",
+      "order": 0
+    },
+    {
+      "id": "e_a2",
+      "fromSurfaceId": "s_root",
+      "fromBlockId": "blk_A",
+      "toSurfaceId": "s_a2",
+      "order": 1
+    },
+    {
+      "id": "e_b",
+      "fromSurfaceId": "s_root",
+      "fromBlockId": "blk_B",
+      "toSurfaceId": "s_b",
+      "order": 0
+    }
+  ]
+}

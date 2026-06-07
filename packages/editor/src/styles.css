@@ -1,0 +1,13 @@
+/* @ham/editor default styles. Override via CSS variables; see :root below. */
+:root {
+  --ham-bg: #ffffff;
+  --ham-surface-bg: #ffffff;
+  --ham-surface-border: #d8d8df;
+  --ham-text: #16161a;
+  --ham-muted: #6f6f7a;
+  --ham-accent: #6f5cff;
+  --ham-danger: #c73b3b;
+  --ham-radius: 12px;
+  --ham-column-gap: 24px;
+  --ham-surface-gap: 16px;
+}

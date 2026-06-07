@@ -1,0 +1,18 @@
+{
+  "name": "nested-blocks",
+  "description": "A single surface whose markdown exercises heading containment and list nesting, used to test tree-shaped snapshot extraction.",
+  "rootSurfaceId": "s_root",
+  "activeSurfaceId": "s_root",
+  "surfaces": {
+    "s_root": {
+      "id": "s_root",
+      "rootBlockId": "blk_root",
+      "title": "Method",
+      "content": {
+        "kind": "markdown",
+        "markdown": "# Method\n\nWe describe the method.\n\n## Data\n\nThe dataset is eICU.\n\n- cohort selection\n  - inclusion criteria\n  - exclusion criteria\n- preprocessing\n\n## Model\n\nAn EQ-based forecaster.\n\n### Architecture\n\nDetails of the architecture.\n\n## Eval\n\n- [ ] AUROC\n- [ ] calibration\n"
+      }
+    }
+  },
+  "branchEdges": []
+}

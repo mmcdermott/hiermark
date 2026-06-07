@@ -1,0 +1,18 @@
+{
+  "name": "simple-branching",
+  "description": "A single root surface with a checklist; no branches yet.",
+  "rootSurfaceId": "s_root",
+  "activeSurfaceId": "s_root",
+  "surfaces": {
+    "s_root": {
+      "id": "s_root",
+      "rootBlockId": "blk_root",
+      "title": "Project overview",
+      "content": {
+        "kind": "markdown",
+        "markdown": "# Project overview\n\nBackground text for the project.\n\n## Experiment plan\n\n- [ ] Run baseline\n- [ ] Collect eICU cohort\n"
+      }
+    }
+  },
+  "branchEdges": []
+}
