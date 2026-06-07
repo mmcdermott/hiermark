@@ -196,6 +196,25 @@ export interface HamCollaborationUser {
   color?: string;
 }
 
+/** A transport provider (e.g. Hocuspocus) — the subset HAM relies on. */
+export interface HamCollaborationProvider {
+  synced: boolean;
+  hasUnsyncedChanges: boolean;
+  awareness?: unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on(event: string, handler: (...args: any[]) => void): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  off(event: string, handler: (...args: any[]) => void): void;
+  destroy(): void;
+}
+
+/** A collaboration runtime: a Y.Doc plus a way to open its transport. */
+export interface HamCollaborationRuntime {
+  /** The Yjs document (typed as unknown to avoid leaking the yjs type here). */
+  ydoc: unknown;
+  connect(): Promise<HamCollaborationProvider>;
+}
+
 export interface HamCollaborationConfig {
   enabled: boolean;
   documentName: string;
@@ -204,6 +223,10 @@ export interface HamCollaborationConfig {
   token?: string;
   user?: HamCollaborationUser;
   initialSyncTimeoutMs?: number;
+  /** Reuse an existing Y.Doc instead of creating one (e.g. for tests). */
+  ydoc?: unknown;
+  /** Inject a custom runtime (custom transport or a test double). */
+  runtime?: HamCollaborationRuntime;
 }
 
 // ---------------------------------------------------------------------------

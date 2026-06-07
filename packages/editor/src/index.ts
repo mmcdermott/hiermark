@@ -7,7 +7,13 @@ export { HamEditor } from "./HamEditor";
 
 // Extensions
 export { createHamEditorExtensions } from "./extensions/createHamEditorExtensions";
-export type { HamEditorExtensionOptions } from "./extensions/createHamEditorExtensions";
+export type {
+  HamEditorExtensionOptions,
+  HamCollabBinding,
+} from "./extensions/createHamEditorExtensions";
+
+// Collaboration
+export { createHocuspocusCollab, flushAndDestroy } from "./collab/hocuspocus";
 export { BlockId } from "./extensions/block-id";
 export type { BlockIdOptions } from "./extensions/block-id";
 export { BlockGutter, blockGutterKey } from "./extensions/block-gutter";
