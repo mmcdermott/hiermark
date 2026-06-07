@@ -23,10 +23,12 @@ The key architectural split:
 @ham/canvas owns the inter-surface 2D topology.
 ```
 
-## Status
+## 📖 Documentation & live demos
 
-🚧 **Under active development.** See the [design spec](./docs/design-spec.md) and
-the staged implementation plan. The packages are not yet published to npm.
+**→ [mmcdermott.github.io/ham](https://mmcdermott.github.io/ham/)** — an
+interactive documentation site (in `apps/docs`) with live, editable demos of the
+editor, the canvas, progressive paper decomposition, and real-time
+collaboration. It is the best way to see what HAM is and how to use it.
 
 ## Packages
 
@@ -35,10 +37,21 @@ the staged implementation plan. The packages are not yet published to npm.
 | `@ham/editor` | One collaborative, block-centric markdown surface (Tiptap 3).     |
 | `@ham/canvas` | A 2D canvas of surfaces connected by block-anchored branch edges. |
 
-## Documentation & live demo
+## Features
 
-A documentation site with live, interactive examples is published via GitHub
-Pages (see `apps/docs`). It is the best way to see what HAM is and how to use it.
+- **Stable block ids** on every structural block (split/paste-safe, never remapped).
+- **Tree-shaped surface snapshots** from the live editor (heading + list containment).
+- **Block-anchored branching** — branch any block into a child surface; multiple
+  surfaces per column; ordered siblings; drag-to-reorder.
+- **Pluggable annotation layer** — recognizer × placement registry with
+  deterministic conflict resolution; bundled task / citation / mention / URL
+  recognizers and Floating-UI popovers.
+- **Heading fold**, keyboard navigation, compact rail/outline modes, and
+  accessibility (tree roles, keyboard-reachable affordances).
+- **Real-time collaboration** via Yjs / Hocuspocus, with a sync-gated mount that
+  never duplicates initial content.
+- **Host-owned persistence** — the packages call handlers; your app stores or
+  rejects each operation.
 
 ## Development
 
@@ -47,10 +60,12 @@ pnpm install        # install the workspace
 pnpm build          # build both packages (tsup -> dist/)
 pnpm test           # run the full test suite (vitest)
 pnpm typecheck      # type-check every package
-pnpm dev            # run the docs / playground app (Vite)
+pnpm dev            # run the docs site (Vite); run `pnpm build` first
 ```
 
-Requires Node ≥ 22.13 and pnpm ≥ 10.33.
+Requires Node ≥ 22.13 and pnpm ≥ 10.33. Each phase of work is documented in
+[`docs/PHASE_*.md`](./docs); the authoritative design is
+[`docs/design-spec.md`](./docs/design-spec.md).
 
 ## License
 

@@ -8,19 +8,27 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@ham/canvas": "workspace:^",
     "@ham/editor": "workspace:^",
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "yjs": "^13"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10",
+    "@testing-library/jest-dom": "^6",
+    "@testing-library/react": "^16",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6",
+    "jsdom": "^29",
     "typescript": "^5",
-    "vite": "^8"
+    "vite": "^8",
+    "vitest": "^4"
   }
 }
