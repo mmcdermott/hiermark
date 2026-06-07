@@ -9,6 +9,7 @@ import { Collaboration } from "@tiptap/extension-collaboration";
 import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
 
 import { BlockId } from "./block-id";
+import { TaskInputRules } from "./task-input-rules";
 import type { HamCollaborationProvider, HamCollaborationUser } from "../types";
 
 export interface HamCollabBinding {
@@ -50,6 +51,7 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
     }),
     TaskList,
     TaskItem.configure({ nested: true }),
+    TaskInputRules,
     Placeholder.configure({ placeholder }),
     Markdown,
     BlockId.configure(blockIdTypes ? { types: blockIdTypes } : {}),

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/core";
 import type { EditorState } from "@tiptap/pm/state";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { createPortal } from "react-dom";
 import * as Y from "yjs";
 
 import { AnnotationPopover, type OpenAnnotation } from "./annotations/AnnotationPopover";
@@ -12,7 +13,13 @@ import {
 } from "./annotations/plugin";
 import { createHocuspocusCollab, flushAndDestroy } from "./collab/hocuspocus";
 import { BlockFold, blockFoldKey, type BlockFoldContext } from "./extensions/block-fold";
-import { BlockGutter, blockGutterKey, type BlockGutterContext } from "./extensions/block-gutter";
+import {
+  BlockGutter,
+  blockGutterKey,
+  type BlockGutterContext,
+  type GutterEntry,
+} from "./extensions/block-gutter";
+import { BlockGutterAffordances } from "./components/gutter";
 import {
   createHamEditorExtensions,
   type HamCollabBinding,
@@ -92,6 +99,7 @@ function HamEditorInner<AnnotationData = unknown>(
   // The gutter reads its data/handlers through a stable getter (never a cloned
   // ref object — Tiptap deep-clones extension options).
   const ctxRef = useRef<BlockGutterContext | null>(null);
+  const [gutterEntries, setGutterEntries] = useState<GutterEntry[]>([]);
   const annoCtxRef = useRef<AnnotationLayerContext | null>(null);
   const lastActiveBlock = useRef<HamBlockId | null>(null);
   // Read the latest onReady via a ref so the handle is published exactly once
@@ -171,7 +179,7 @@ function HamEditorInner<AnnotationData = unknown>(
 
   // Branch handler: capture the snapshot synchronously (spec §5.7), then emit.
   const handleBranch = useStable(
-    (blockId: HamBlockId, nativeEvent: Event) => {
+    (blockId: HamBlockId) => {
       if (!editor) return;
       const surfaceSnapshot = snapshotOf(editor);
       const blockSnapshot = surfaceSnapshot.blocks[blockId];
@@ -183,7 +191,6 @@ function HamEditorInner<AnnotationData = unknown>(
         surfaceSnapshot,
         textPreview: blockSnapshot.textPreview,
         save: async () => buildSavePayload(editor),
-        nativeEvent,
       };
       onBranchRequest?.(event);
     },
@@ -220,28 +227,19 @@ function HamEditorInner<AnnotationData = unknown>(
   }, [editor, foldedSet, editable, toggleFold]);
 
   // Keep the gutter context current and force a decoration rebuild when the
-  // branch children / active block / handlers change.
+  // branch policy / active block / editability change. (Branch children and the
+  // handlers are read React-side in the portal, so they don't trigger a rebuild.)
   useEffect(() => {
     ctxRef.current = {
       branchPolicy,
-      childrenByBlockId: props.branchChildren ?? {},
       activeBlockId: props.activeBlockId ?? null,
       editable,
-      onBranch: handleBranch,
-      onOpenChild: handleOpenChild,
+      onGutter: setGutterEntries,
     };
     if (editor) {
       editor.view.dispatch(editor.state.tr.setMeta(blockGutterKey, true));
     }
-  }, [
-    editor,
-    branchPolicy,
-    props.branchChildren,
-    props.activeBlockId,
-    editable,
-    handleBranch,
-    handleOpenChild,
-  ]);
+  }, [editor, branchPolicy, props.activeBlockId, editable]);
 
   // Keep the annotation context current and rebuild the annotation decorations.
   useEffect(() => {
@@ -336,6 +334,20 @@ function HamEditorInner<AnnotationData = unknown>(
       data-surface-id={surfaceId}
     >
       <EditorContent editor={editor} />
+      {gutterEntries.map((entry) =>
+        createPortal(
+          <BlockGutterAffordances
+            entry={entry}
+            surfaceId={surfaceId}
+            {...(props.slots ? { slots: props.slots } : {})}
+            branchChildren={props.branchChildren?.[entry.blockId] ?? []}
+            onBranch={handleBranch}
+            onOpenChild={handleOpenChild}
+          />,
+          entry.container,
+          entry.blockId,
+        ),
+      )}
       <AnnotationPopover
         open={openAnnotation}
         type={openType}
