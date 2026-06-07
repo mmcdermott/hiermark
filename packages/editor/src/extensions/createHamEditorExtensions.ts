@@ -60,12 +60,10 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
   }
 
   if (collab) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     extensions.push(Collaboration.configure({ document: collab.ydoc as any }));
     if (collab.provider?.awareness) {
       extensions.push(
         CollaborationCaret.configure({
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           provider: collab.provider as any,
           ...(collab.user ? { user: collab.user } : {}),
         }),

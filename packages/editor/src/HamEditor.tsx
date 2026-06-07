@@ -4,12 +4,14 @@ import type { EditorState } from "@tiptap/pm/state";
 import { EditorContent, useEditor } from "@tiptap/react";
 import * as Y from "yjs";
 
+import { AnnotationPopover, type OpenAnnotation } from "./annotations/AnnotationPopover";
 import {
   AnnotationLayer,
   annotationLayerKey,
   type AnnotationLayerContext,
 } from "./annotations/plugin";
 import { createHocuspocusCollab, flushAndDestroy } from "./collab/hocuspocus";
+import { BlockFold, blockFoldKey, type BlockFoldContext } from "./extensions/block-fold";
 import { BlockGutter, blockGutterKey, type BlockGutterContext } from "./extensions/block-gutter";
 import {
   createHamEditorExtensions,
@@ -62,6 +64,15 @@ function HamEditorInner<AnnotationData = unknown>(
 ) {
   const collab = props.collab;
   const seededRef = useRef(false);
+
+  // View-only fold state, seeded from collapsedBlockIds (spec §2.4, §8 fold).
+  const [foldedSet, setFoldedSet] = useState<Set<HamBlockId>>(
+    () => new Set(props.collapsedBlockIds ?? []),
+  );
+  const foldRef = useRef<BlockFoldContext | null>(null);
+  // The annotation popover currently open (Floating UI).
+  const [openAnnotation, setOpenAnnotation] = useState<OpenAnnotation | null>(null);
+
   const {
     surfaceId,
     value,
@@ -111,6 +122,7 @@ function HamEditorInner<AnnotationData = unknown>(
     () => [
       ...createHamEditorExtensions(collab ? { collab } : {}),
       BlockGutter.configure({ getContext: () => ctxRef.current }),
+      BlockFold.configure({ getContext: () => foldRef.current }),
       AnnotationLayer.configure({ getContext: () => annoCtxRef.current }),
     ],
     // Extensions are intentionally built once; surface/collab identity is stable.
@@ -187,6 +199,23 @@ function HamEditorInner<AnnotationData = unknown>(
     [surfaceId, onOpenBranchChild],
   );
 
+  const toggleFold = useStable((blockId: HamBlockId) => {
+    setFoldedSet((prev) => {
+      const next = new Set(prev);
+      if (next.has(blockId)) next.delete(blockId);
+      else next.add(blockId);
+      return next;
+    });
+  }, []);
+
+  // Keep the fold context current and rebuild fold decorations.
+  useEffect(() => {
+    foldRef.current = { folded: foldedSet, editable, onToggle: toggleFold };
+    if (editor) {
+      editor.view.dispatch(editor.state.tr.setMeta(blockFoldKey, true));
+    }
+  }, [editor, foldedSet, editable, toggleFold]);
+
   // Keep the gutter context current and force a decoration rebuild when the
   // branch children / active block / handlers change.
   useEffect(() => {
@@ -219,6 +248,7 @@ function HamEditorInner<AnnotationData = unknown>(
           context: props.annotationContext ?? {},
           surfaceId,
           rootBlockId,
+          onOpen: (hit, rect) => setOpenAnnotation({ hit, rect }),
         }
       : null;
     if (editor) {
@@ -249,11 +279,16 @@ function HamEditorInner<AnnotationData = unknown>(
       getMarkdown: () => editor.getMarkdown(),
       getJSON: () => editor.getJSON(),
       save: async () => buildSavePayload(editor),
-      collapseBlock() {
-        /* fold support arrives in Phase 4 */
+      collapseBlock(blockId) {
+        setFoldedSet((prev) => (prev.has(blockId) ? prev : new Set(prev).add(blockId)));
       },
-      expandBlock() {
-        /* fold support arrives in Phase 4 */
+      expandBlock(blockId) {
+        setFoldedSet((prev) => {
+          if (!prev.has(blockId)) return prev;
+          const next = new Set(prev);
+          next.delete(blockId);
+          return next;
+        });
       },
       getUnsafeTiptapEditor: () => editor,
     };
@@ -287,12 +322,23 @@ function HamEditorInner<AnnotationData = unknown>(
     editor?.setEditable(editable);
   }, [editor, editable]);
 
+  const openType =
+    openAnnotation && props.annotations
+      ? props.annotations.types.find((t) => t.name === openAnnotation.hit.type)
+      : undefined;
+
   return (
     <div
       className={["ham-editor", className].filter(Boolean).join(" ")}
       data-surface-id={surfaceId}
     >
       <EditorContent editor={editor} />
+      <AnnotationPopover
+        open={openAnnotation}
+        type={openType}
+        context={(props.annotationContext ?? {}) as AnnotationData}
+        onClose={() => setOpenAnnotation(null)}
+      />
     </div>
   );
 }

@@ -8,6 +8,8 @@ import {
   reorderSiblingEdgesByIds,
   siblingEdges,
 } from "../src/topology/reorderBranchSiblings";
+import { pickDisplayMode } from "../src/topology/pathState";
+import { resolveLayout } from "../src/defaults";
 import type { HamBranchEdge, HamSurface, HamSurfaceId } from "../src/types";
 import type { HamSurfaceSnapshot } from "@ham/editor";
 
@@ -134,6 +136,17 @@ describe("projectHamColumns", () => {
       activeSurfaceId: "s_root",
     });
     expect(cols[1]!.items.map((i) => i.surface.id)).toEqual(["s_b", "s_a"]);
+  });
+});
+
+describe("pickDisplayMode (collapse preserves active path)", () => {
+  const layout = resolveLayout();
+  it("keeps active-path surfaces visible even when collapsed", () => {
+    expect(pickDisplayMode("active", true, layout)).toBe("expanded");
+    expect(pickDisplayMode("ancestor", true, layout)).not.toBe("hidden");
+  });
+  it("compacts collapsed unrelated surfaces to a rail/hidden", () => {
+    expect(["rail", "hidden"]).toContain(pickDisplayMode("unrelated", true, layout));
   });
 });
 

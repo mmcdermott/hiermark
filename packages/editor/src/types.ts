@@ -201,9 +201,7 @@ export interface HamCollaborationProvider {
   synced: boolean;
   hasUnsyncedChanges: boolean;
   awareness?: unknown;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on(event: string, handler: (...args: any[]) => void): void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   off(event: string, handler: (...args: any[]) => void): void;
   destroy(): void;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
   DndContext,
   KeyboardSensor,
@@ -16,7 +16,12 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { HamEditor, type HamBranchChildSummary, type HamEditorHandle } from "@ham/editor";
+import {
+  HamEditor,
+  type HamBranchChildSummary,
+  type HamEditorHandle,
+  type HamSurfaceSnapshot,
+} from "@ham/editor";
 
 import { resolveBehavior, resolveLayout } from "./defaults";
 import { useHamCanvas } from "./useHamCanvas";
@@ -113,9 +118,23 @@ function SurfaceItem({ item, canvas, props, sortable }: ItemProps) {
       className={frameClass}
       data-surface-id={surface.id}
       data-path-state={item.pathState}
+      role="treeitem"
+      aria-label={surface.title ?? "Untitled surface"}
       aria-current={item.pathState === "active" ? "true" : undefined}
+      aria-expanded={canvas.collapsedSurfaceIds.has(surface.id) ? "false" : "true"}
     >
       <header className="ham-surface-header">
+        <button
+          type="button"
+          className="ham-surface-collapse"
+          aria-label={
+            canvas.collapsedSurfaceIds.has(surface.id) ? "Expand surface" : "Collapse surface"
+          }
+          aria-expanded={canvas.collapsedSurfaceIds.has(surface.id) ? "false" : "true"}
+          onClick={() => canvas.actions.toggleCollapsed(surface.id)}
+        >
+          {canvas.collapsedSurfaceIds.has(surface.id) ? "▸" : "▾"}
+        </button>
         {sortable && (
           <button
             type="button"
@@ -193,7 +212,14 @@ function SurfaceItem({ item, canvas, props, sortable }: ItemProps) {
             onActiveBlockChange={(blockId) => canvas.actions.activate(surface.id, blockId)}
             onOpenBranchChild={(e) => canvas.actions.activate(e.childSurfaceId, null)}
           />
-        ) : (
+        ) : item.displayMode === "outline" ? (
+          <OutlineBody
+            surfaceId={surface.id}
+            snapshot={canvas.snapshotsBySurfaceId[surface.id]}
+            fallback={surface.content}
+            onActivate={() => canvas.actions.activate(surface.id, null)}
+          />
+        ) : item.displayMode === "rail" ? null : (
           <button
             type="button"
             className="ham-surface-preview"
@@ -204,6 +230,43 @@ function SurfaceItem({ item, canvas, props, sortable }: ItemProps) {
         )}
       </div>
     </section>
+  );
+}
+
+/** Compact outline of a surface's top-level blocks (or a text preview fallback). */
+function OutlineBody({
+  surfaceId,
+  snapshot,
+  fallback,
+  onActivate,
+}: {
+  surfaceId: string;
+  snapshot: HamSurfaceSnapshot | undefined;
+  fallback: { kind: string; markdown?: string };
+  onActivate: () => void;
+}) {
+  if (!snapshot) {
+    return (
+      <button type="button" className="ham-surface-preview" onClick={onActivate}>
+        {previewText(fallback)}
+      </button>
+    );
+  }
+  const top = snapshot.blocks[snapshot.rootBlockId]?.childIds ?? [];
+  return (
+    <ul className="ham-surface-outline" aria-label={`Outline of ${surfaceId}`}>
+      {top.map((id) => {
+        const block = snapshot.blocks[id];
+        if (!block) return null;
+        return (
+          <li key={id} className={`ham-outline-item ham-outline-${block.type}`}>
+            <button type="button" className="ham-outline-link" onClick={onActivate}>
+              {block.textPreview || "(empty)"}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -288,11 +351,62 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   const reorderEnabled = behavior.enableSurfaceReorder && !!props.handlers.reorderBranchSiblings;
 
+  // Keyboard navigation across surfaces/columns (spec §9.1). Alt+Arrows move
+  // along the path and among same-column siblings.
+  const navigate = (dir: "left" | "right" | "up" | "down") => {
+    const cols = canvas.columns;
+    const active = canvas.activeSurfaceId;
+    let colIdx = -1;
+    let itemIdx = -1;
+    cols.forEach((c, ci) =>
+      c.items.forEach((it, ii) => {
+        if (it.surface.id === active) {
+          colIdx = ci;
+          itemIdx = ii;
+        }
+      }),
+    );
+    if (colIdx < 0) return;
+    if (dir === "left") {
+      const parent = canvas.activePath.surfaceIds.at(-2);
+      if (parent) canvas.actions.activate(parent, null);
+    } else if (dir === "right") {
+      const child = cols[colIdx + 1]?.items.find((it) => it.parentSurfaceId === active);
+      if (child) canvas.actions.activate(child.surface.id, null);
+    } else if (dir === "down") {
+      const next = cols[colIdx]?.items[itemIdx + 1];
+      if (next) canvas.actions.activate(next.surface.id, null);
+    } else if (dir === "up") {
+      const prev = cols[colIdx]?.items[itemIdx - 1];
+      if (prev) canvas.actions.activate(prev.surface.id, null);
+    }
+  };
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!behavior.enableKeyboardNavigation || !event.altKey) return;
+    const dir = (
+      {
+        ArrowLeft: "left",
+        ArrowRight: "right",
+        ArrowUp: "up",
+        ArrowDown: "down",
+      } as const
+    )[event.key];
+    if (dir) {
+      event.preventDefault();
+      navigate(dir);
+    }
+  };
+
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <div
         className={["ham-canvas", props.className].filter(Boolean).join(" ")}
         style={{ gap: layout.columnGap, padding: layout.padding }}
+        tabIndex={0}
+        role="tree"
+        aria-label="Canvas of linked surfaces"
+        onKeyDown={onKeyDown}
       >
         {canvas.columns.map((column) => (
           <div className="ham-column" key={column.depth} data-depth={column.depth}>

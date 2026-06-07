@@ -113,6 +113,49 @@
   line-height: 1.5;
 }
 
+.ham-surface-collapse {
+  cursor: pointer;
+}
+
+.ham-canvas:focus-visible {
+  outline: 2px solid var(--ham-accent);
+  outline-offset: -2px;
+}
+
+/* Outline (compact) mode ---------------------------------------------------- */
+.ham-surface-outline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+.ham-outline-item {
+  padding: 1px 0;
+}
+.ham-outline-heading > .ham-outline-link {
+  font-weight: 600;
+}
+.ham-outline-link {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 2px 0;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ham-outline-link:hover {
+  color: var(--ham-accent);
+}
+
+.ham-surface-mode-rail {
+  min-width: 200px;
+}
+
 .ham-branch-connector {
   stroke: var(--ham-surface-border);
   stroke-width: 1.5;

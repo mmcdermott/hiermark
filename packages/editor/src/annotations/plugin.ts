@@ -22,6 +22,13 @@ export interface AnnotationLayerContext<Ctx = unknown> {
   context: Ctx;
   surfaceId: HamSurfaceId;
   rootBlockId: string;
+  /** Called when an annotation with a render component is clicked. */
+  onOpen?: (hit: HamAnnotationHit, rect: DOMRect) => void;
+}
+
+interface AnnotationPluginValue {
+  decoSet: DecorationSet;
+  hitsById: Map<string, HamAnnotationHit>;
 }
 
 export interface AnnotationLayerOptions {
@@ -29,7 +36,7 @@ export interface AnnotationLayerOptions {
 }
 
 /** Plugin key — dispatch `tr.setMeta(annotationLayerKey, true)` to rebuild on ctx change. */
-export const annotationLayerKey = new PluginKey<DecorationSet>("hamAnnotations");
+export const annotationLayerKey = new PluginKey<AnnotationPluginValue>("hamAnnotations");
 
 interface BlockTextIndex {
   /** The block's recognizable text (direct text only — nested lists excluded). */
@@ -73,8 +80,9 @@ function chipEl(hit: HamAnnotationHit): HTMLElement {
   return span;
 }
 
-function build(doc: PMNode, ctx: AnnotationLayerContext | null): DecorationSet {
-  if (!ctx) return DecorationSet.empty;
+function build(doc: PMNode, ctx: AnnotationLayerContext | null): AnnotationPluginValue {
+  if (!ctx) return { decoSet: DecorationSet.empty, hitsById: new Map() };
+  const hitsById = new Map<string, HamAnnotationHit>();
 
   const snapshot = surfaceSnapshotFromDoc(doc, {
     surfaceId: ctx.surfaceId,
@@ -112,6 +120,7 @@ function build(doc: PMNode, ctx: AnnotationLayerContext | null): DecorationSet {
     const placement = type?.placement ?? "inline";
     const index = indexByBlockId.get(hit.blockId);
     if (!index) continue;
+    if (type?.render) hitsById.set(hit.id, hit); // clickable → opens a popover
 
     if (
       (placement === "inline" || placement === "decoration" || placement === "popover") &&
@@ -145,7 +154,7 @@ function build(doc: PMNode, ctx: AnnotationLayerContext | null): DecorationSet {
     }
   }
 
-  return DecorationSet.create(doc, decos);
+  return { decoSet: DecorationSet.create(doc, decos), hitsById };
 }
 
 /**
@@ -165,7 +174,7 @@ export const AnnotationLayer = Extension.create<AnnotationLayerOptions>({
   addProseMirrorPlugins() {
     const getContext = this.options.getContext;
     return [
-      new Plugin<DecorationSet>({
+      new Plugin<AnnotationPluginValue>({
         key: annotationLayerKey,
         state: {
           init: (_config, state) => build(state.doc, getContext()),
@@ -178,7 +187,26 @@ export const AnnotationLayer = Extension.create<AnnotationLayerOptions>({
         },
         props: {
           decorations(state) {
-            return annotationLayerKey.getState(state) ?? DecorationSet.empty;
+            return annotationLayerKey.getState(state)?.decoSet ?? DecorationSet.empty;
+          },
+          // A raw DOM click handler (not handleClick, which needs layout coords
+          // jsdom lacks) so clicking an annotation opens its popover.
+          handleDOMEvents: {
+            click(view, event) {
+              const target = event.target as HTMLElement | null;
+              const el = target?.closest<HTMLElement>("[data-annotation-id]");
+              if (!el) return false;
+              const id = el.getAttribute("data-annotation-id");
+              if (!id) return false;
+              const value = annotationLayerKey.getState(view.state);
+              const hit = value?.hitsById.get(id);
+              const ctx = getContext();
+              if (hit && ctx?.onOpen) {
+                ctx.onOpen(hit, el.getBoundingClientRect());
+                return true;
+              }
+              return false;
+            },
           },
         },
       }),

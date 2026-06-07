@@ -18,6 +18,13 @@ export { BlockId } from "./extensions/block-id";
 export type { BlockIdOptions } from "./extensions/block-id";
 export { BlockGutter, blockGutterKey } from "./extensions/block-gutter";
 export type { BlockGutterContext, BlockGutterOptions } from "./extensions/block-gutter";
+export { BlockFold, blockFoldKey, computeFold } from "./extensions/block-fold";
+export type {
+  BlockFoldContext,
+  BlockFoldOptions,
+  FoldNodeMeta,
+  FoldResult,
+} from "./extensions/block-fold";
 
 // Identity
 export { generateBlockId, isBlockId } from "./id";
@@ -75,6 +82,7 @@ export {
   type AnnotationLayerContext,
   type AnnotationLayerOptions,
 } from "./annotations/plugin";
+export { AnnotationPopover, type OpenAnnotation } from "./annotations/AnnotationPopover";
 export {
   createExampleAnnotationRegistry,
   createTaskAnnotation,

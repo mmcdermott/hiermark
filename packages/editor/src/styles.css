@@ -140,3 +140,34 @@
   background: #eef1f6;
   color: var(--ham-muted);
 }
+
+/* Fold ---------------------------------------------------------------------- */
+.ham-folded {
+  display: none;
+}
+.ham-fold-toggle {
+  position: absolute;
+  left: -1.2em;
+  border: none;
+  background: transparent;
+  color: var(--ham-muted);
+  cursor: pointer;
+  font-size: 0.8em;
+  padding: 0 2px;
+  line-height: 1.4;
+}
+.ham-fold-toggle:hover {
+  color: var(--ham-accent);
+}
+
+/* Annotation popover -------------------------------------------------------- */
+.ham-annotation-popover {
+  z-index: 50;
+  max-width: 320px;
+  background: var(--ham-surface-bg);
+  border: 1px solid var(--ham-surface-border);
+  border-radius: var(--ham-radius);
+  box-shadow: 0 6px 24px rgba(20, 20, 30, 0.16);
+  padding: 10px 12px;
+  font-size: 13px;
+}

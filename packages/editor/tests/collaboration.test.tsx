@@ -102,7 +102,6 @@ describe("collaboration", () => {
     await waitFor(() => expect(handle!.getMarkdown()).toContain("Keep"));
 
     // The user deletes everything → the doc is empty.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const editor = handle!.getUnsafeTiptapEditor() as any;
     editor.chain().selectAll().deleteSelection().run();
     await waitFor(() => expect(editor.isEmpty).toBe(true));
@@ -120,7 +119,6 @@ describe("collaboration", () => {
     const a = await mountCollab(shared, rt, "a", "# One\n\nTwo\n\nThree");
     await waitFor(() => expect(a.getHandle().getMarkdown()).toContain("One"));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const editor = a.getHandle().getUnsafeTiptapEditor() as any;
     editor.chain().focus().insertContentAt(1, "Edited ").run();
 
