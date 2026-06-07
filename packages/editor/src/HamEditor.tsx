@@ -73,6 +73,10 @@ export function HamEditor<AnnotationData = unknown>(props: HamEditorProps<Annota
   const ctxRef = useRef<BlockGutterContext | null>(null);
   const annoCtxRef = useRef<AnnotationLayerContext | null>(null);
   const lastActiveBlock = useRef<HamBlockId | null>(null);
+  // Read the latest onReady via a ref so the handle is published exactly once
+  // per editor — a new onReady closure each render must not re-fire it.
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
 
   const snapshotOf = useStable(
     (editor: Editor): HamSurfaceSnapshot =>
@@ -210,7 +214,7 @@ export function HamEditor<AnnotationData = unknown>(props: HamEditorProps<Annota
 
   // Build and publish the imperative handle once the editor exists.
   useEffect(() => {
-    if (!editor || !onReady) return;
+    if (!editor || !onReadyRef.current) return;
     const handle: HamEditorHandle = {
       surfaceId,
       focusBlock(blockId, opts) {
@@ -239,8 +243,8 @@ export function HamEditor<AnnotationData = unknown>(props: HamEditorProps<Annota
       },
       getUnsafeTiptapEditor: () => editor,
     };
-    onReady(handle);
-  }, [editor, surfaceId, onReady, snapshotOf, buildSavePayload]);
+    onReadyRef.current(handle);
+  }, [editor, surfaceId, snapshotOf, buildSavePayload]);
 
   // Reflect editable changes.
   useEffect(() => {

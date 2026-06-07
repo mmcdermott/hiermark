@@ -1,7 +1,120 @@
-/* @ham/canvas default styles. Override via CSS variables; see :root below. */
+/* @ham/canvas default styles. Override via CSS variables. */
 :root {
   --ham-canvas-bg: #f6f6f9;
   --ham-column-gap: 24px;
   --ham-surface-gap: 16px;
   --ham-canvas-padding: 24px;
+  --ham-surface-bg: #ffffff;
+  --ham-surface-border: #d8d8df;
+  --ham-accent: #6f5cff;
+  --ham-accent-soft: #efecff;
+  --ham-muted: #6f6f7a;
+  --ham-radius: 12px;
+}
+
+.ham-canvas {
+  display: flex;
+  align-items: flex-start;
+  overflow-x: auto;
+  background: var(--ham-canvas-bg);
+  min-height: 320px;
+}
+
+.ham-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ham-surface-gap);
+  flex: 0 0 auto;
+  min-width: 280px;
+  max-width: 560px;
+}
+
+.ham-surface {
+  display: flex;
+  flex-direction: column;
+  background: var(--ham-surface-bg);
+  border: 1px solid var(--ham-surface-border);
+  border-radius: var(--ham-radius);
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.04);
+  overflow: hidden;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+.ham-surface-active {
+  border-color: var(--ham-accent);
+  box-shadow: 0 4px 16px rgba(111, 92, 255, 0.16);
+}
+.ham-surface-ancestor {
+  border-left: 3px solid var(--ham-accent);
+}
+.ham-surface-sibling {
+  border-style: dashed;
+}
+.ham-surface-mode-rail,
+.ham-surface-mode-hidden {
+  opacity: 0.7;
+}
+.ham-surface-mode-hidden {
+  display: none;
+}
+.ham-surface-pending {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.ham-surface-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--ham-surface-border);
+  font-size: 13px;
+  font-weight: 600;
+}
+.ham-surface-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ham-surface-spacer {
+  flex: 1;
+}
+.ham-surface-header button {
+  border: none;
+  background: transparent;
+  color: var(--ham-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 13px;
+}
+.ham-surface-header button:hover {
+  background: var(--ham-accent-soft);
+  color: var(--ham-accent);
+}
+.ham-surface-drag {
+  cursor: grab;
+  touch-action: none;
+}
+
+.ham-surface-body {
+  padding: 12px 14px;
+}
+
+.ham-surface-preview {
+  text-align: left;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--ham-muted);
+  font: inherit;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.ham-branch-connector {
+  stroke: var(--ham-surface-border);
+  stroke-width: 1.5;
+  fill: none;
 }
