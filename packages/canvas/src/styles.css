@@ -1,0 +1,7 @@
+/* @ham/canvas default styles. Override via CSS variables; see :root below. */
+:root {
+  --ham-canvas-bg: #f6f6f9;
+  --ham-column-gap: 24px;
+  --ham-surface-gap: 16px;
+  --ham-canvas-padding: 24px;
+}

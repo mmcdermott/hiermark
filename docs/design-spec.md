@@ -513,7 +513,7 @@ export type {
   HamAnnotationHit,
   HamAnnotationRegistry,
   HamBranchChildSummary,
-  HamEditorHandle
+  HamEditorHandle,
 } from "./types";
 ```
 
@@ -540,10 +540,10 @@ interface PersistedSurface {
   id: string;
   rootBlockId: string;
   title: string;
-  tiptapJson: unknown;      // preferred canonical rich editor state
-  markdown: string;         // derived/export state, updated on save
+  tiptapJson: unknown; // preferred canonical rich editor state
+  markdown: string; // derived/export state, updated on save
   blockSnapshot: HamSurfaceSnapshot;
-  yjsState?: Uint8Array;    // if collaborative editing is enabled
+  yjsState?: Uint8Array; // if collaborative editing is enabled
 }
 ```
 
@@ -776,15 +776,17 @@ const taskAnnotation: HamAnnotationType<TaskContext> = {
   placement: "block-chip",
   recognize({ block, text, context }) {
     if (block.type !== "taskItem") return [];
-    return [{
-      id: `task:${block.id}`,
-      type: "task",
-      blockId: block.id,
-      label: text.replace(/^\s*[-*]\s*\[[ x]\]\s*/, ""),
-      data: context.tasksByBlockId[block.id]
-    }];
+    return [
+      {
+        id: `task:${block.id}`,
+        type: "task",
+        blockId: block.id,
+        label: text.replace(/^\s*[-*]\s*\[[ x]\]\s*/, ""),
+        data: context.tasksByBlockId[block.id],
+      },
+    ];
   },
-  render: TaskChip
+  render: TaskChip,
 };
 ```
 
@@ -868,7 +870,7 @@ export type {
   HamCanvasOperation,
   HamCanvasHandlers,
   HamCanvasHandle,
-  HamCanvasLayoutConfig
+  HamCanvasLayoutConfig,
 } from "./types";
 ```
 
@@ -893,10 +895,7 @@ export interface HamCanvasProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
   handlers: HamCanvasHandlers<SurfaceMeta, EdgeMeta>;
 
   onReady?: (handle: HamCanvasHandle) => void;
-  onActiveChange?: (active: {
-    surfaceId: HamSurfaceId;
-    blockId?: HamBlockId | null;
-  }) => void;
+  onActiveChange?: (active: { surfaceId: HamSurfaceId; blockId?: HamBlockId | null }) => void;
 }
 ```
 
@@ -937,7 +936,7 @@ const defaultLayout: HamCanvasLayoutConfig = {
   inactiveColumnMode: "card",
   autoScroll: true,
   virtualizeColumns: false,
-  virtualizeSurfaces: false
+  virtualizeSurfaces: false,
 };
 ```
 
@@ -967,7 +966,7 @@ const defaultBehavior: HamCanvasBehaviorConfig = {
   enableKeyboardNavigation: true,
   branchPolicy: "any-nonempty-block",
   deleteSurfacePolicy: "prevent-if-has-children",
-  pendingOperationMode: "pessimistic"
+  pendingOperationMode: "pessimistic",
 };
 ```
 
@@ -977,9 +976,13 @@ Use pessimistic topology updates by default. Content editing can be local/optimi
 
 ```ts
 export interface HamCanvasHandlers<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  createSurfaceFromBlock(event: HamCreateSurfaceFromBlockEvent): Promise<HamCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
+  createSurfaceFromBlock(
+    event: HamCreateSurfaceFromBlockEvent,
+  ): Promise<HamCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
 
-  createSiblingSurface?(event: HamCreateSiblingSurfaceEvent): Promise<HamCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
+  createSiblingSurface?(
+    event: HamCreateSiblingSurfaceEvent,
+  ): Promise<HamCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
 
   reorderBranchSiblings?(event: HamReorderBranchSiblingsEvent): Promise<HamBranchEdge<EdgeMeta>[]>;
 
@@ -1081,7 +1084,7 @@ function projectHamColumns(input: HamProjectionInput): HamCanvasColumn[] {
   let depth = 0;
 
   while (current.length > 0) {
-    const items = current.map(surfaceId => buildCanvasItem(surfaceId, depth));
+    const items = current.map((surfaceId) => buildCanvasItem(surfaceId, depth));
     columns.push({ depth, items });
 
     const next: HamSurfaceId[] = [];
@@ -1091,7 +1094,7 @@ function projectHamColumns(input: HamProjectionInput): HamCanvasColumn[] {
       const blockRank = new Map(blockOrder.map((id, i) => [id, i]));
 
       const outgoing = input.branchEdges
-        .filter(e => e.fromSurfaceId === surfaceId)
+        .filter((e) => e.fromSurfaceId === surfaceId)
         .sort((a, b) => {
           const ar = blockRank.get(a.fromBlockId) ?? Number.MAX_SAFE_INTEGER;
           const br = blockRank.get(b.fromBlockId) ?? Number.MAX_SAFE_INTEGER;
@@ -1176,7 +1179,7 @@ export function Demo() {
         async createSurfaceFromBlock(event) {
           const newSurface = makeSurface({
             title: event.sourceBlockSnapshot.textPreview || "Untitled branch",
-            initialMarkdown: `# ${event.sourceBlockSnapshot.textPreview}\n\nStart here.`
+            initialMarkdown: `# ${event.sourceBlockSnapshot.textPreview}\n\nStart here.`,
           });
 
           const newEdge = {
@@ -1184,24 +1187,24 @@ export function Demo() {
             fromSurfaceId: event.sourceSurfaceId,
             fromBlockId: event.sourceBlockId,
             toSurfaceId: newSurface.id,
-            order: nextOrder(edges, event.sourceSurfaceId, event.sourceBlockId)
+            order: nextOrder(edges, event.sourceSurfaceId, event.sourceBlockId),
           };
 
-          setSurfaces(s => ({ ...s, [newSurface.id]: newSurface }));
-          setEdges(e => [...e, newEdge]);
+          setSurfaces((s) => ({ ...s, [newSurface.id]: newSurface }));
+          setEdges((e) => [...e, newEdge]);
 
           return { surface: newSurface, edge: newEdge, activate: true };
         },
 
         async saveSurface(payload) {
-          setSurfaces(s => ({
+          setSurfaces((s) => ({
             ...s,
             [payload.surfaceId]: {
               ...s[payload.surfaceId],
-              content: { kind: "tiptap-json", json: payload.content.tiptapJson }
-            }
+              content: { kind: "tiptap-json", json: payload.content.tiptapJson },
+            },
           }));
-        }
+        },
       }}
     />
   );
@@ -1270,10 +1273,10 @@ Column 1
     documentName: "surface_123",
     url: "wss://collab.example.com",
     token: authToken,
-    user: { id: user.id, name: user.name, color: user.color }
+    user: { id: user.id, name: user.name, color: user.color },
   }}
-  onSnapshotChange={snapshot => updateSnapshotCache(snapshot)}
-  onChange={event => queueSave(event)}
+  onSnapshotChange={(snapshot) => updateSnapshotCache(snapshot)}
+  onChange={(event) => queueSave(event)}
 />
 ```
 
@@ -1281,12 +1284,7 @@ Column 1
 
 ```tsx
 const annotations = {
-  types: [
-    taskAnnotation,
-    citationAnnotation,
-    urlResourceAnnotation,
-    mentionAnnotation
-  ]
+  types: [taskAnnotation, citationAnnotation, urlResourceAnnotation, mentionAnnotation],
 };
 
 <HamCanvas
@@ -1296,7 +1294,7 @@ const annotations = {
   annotationRegistry={annotations}
   editorDefaults={{ annotationContext: { tasks, references, people } }}
   handlers={handlers}
-/>
+/>;
 ```
 
 ### 7.5 Custom surface frame
@@ -1315,7 +1313,7 @@ const annotations = {
           {children}
         </section>
       );
-    }
+    },
   }}
 />
 ```
@@ -1698,13 +1696,40 @@ Create JSON fixtures that drive both unit tests and playground stories.
 {
   "rootSurfaceId": "s_root",
   "surfaces": {
-    "s_root": { "id": "s_root", "rootBlockId": "blk_root", "title": "Root", "content": { "kind": "markdown", "markdown": "# Root\n\n## A\n\n## B" } },
-    "s_a": { "id": "s_a", "rootBlockId": "blk_a_root", "title": "Branch from A", "content": { "kind": "markdown", "markdown": "# Branch from A" } },
-    "s_b": { "id": "s_b", "rootBlockId": "blk_b_root", "title": "Branch from B", "content": { "kind": "markdown", "markdown": "# Branch from B" } }
+    "s_root": {
+      "id": "s_root",
+      "rootBlockId": "blk_root",
+      "title": "Root",
+      "content": { "kind": "markdown", "markdown": "# Root\n\n## A\n\n## B" }
+    },
+    "s_a": {
+      "id": "s_a",
+      "rootBlockId": "blk_a_root",
+      "title": "Branch from A",
+      "content": { "kind": "markdown", "markdown": "# Branch from A" }
+    },
+    "s_b": {
+      "id": "s_b",
+      "rootBlockId": "blk_b_root",
+      "title": "Branch from B",
+      "content": { "kind": "markdown", "markdown": "# Branch from B" }
+    }
   },
   "branchEdges": [
-    { "id": "e_a", "fromSurfaceId": "s_root", "fromBlockId": "blk_A", "toSurfaceId": "s_a", "order": 0 },
-    { "id": "e_b", "fromSurfaceId": "s_root", "fromBlockId": "blk_B", "toSurfaceId": "s_b", "order": 0 }
+    {
+      "id": "e_a",
+      "fromSurfaceId": "s_root",
+      "fromBlockId": "blk_A",
+      "toSurfaceId": "s_a",
+      "order": 0
+    },
+    {
+      "id": "e_b",
+      "fromSurfaceId": "s_root",
+      "fromBlockId": "blk_B",
+      "toSurfaceId": "s_b",
+      "order": 0
+    }
   ]
 }
 ```
@@ -1714,8 +1739,20 @@ Create JSON fixtures that drive both unit tests and playground stories.
 ```json
 {
   "branchEdges": [
-    { "id": "e_1", "fromSurfaceId": "s_root", "fromBlockId": "blk_A", "toSurfaceId": "s_a1", "order": 0 },
-    { "id": "e_2", "fromSurfaceId": "s_root", "fromBlockId": "blk_A", "toSurfaceId": "s_a2", "order": 1 }
+    {
+      "id": "e_1",
+      "fromSurfaceId": "s_root",
+      "fromBlockId": "blk_A",
+      "toSurfaceId": "s_a1",
+      "order": 0
+    },
+    {
+      "id": "e_2",
+      "fromSurfaceId": "s_root",
+      "fromBlockId": "blk_A",
+      "toSurfaceId": "s_a2",
+      "order": 1
+    }
   ]
 }
 ```

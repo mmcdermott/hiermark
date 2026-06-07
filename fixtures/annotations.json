@@ -1,0 +1,26 @@
+{
+  "name": "annotations",
+  "description": "A surface whose prose contains tasks, a citation, a URL, and a mention, used to exercise the annotation registry.",
+  "rootSurfaceId": "s_root",
+  "activeSurfaceId": "s_root",
+  "surfaces": {
+    "s_root": {
+      "id": "s_root",
+      "rootBlockId": "blk_root",
+      "title": "Related work",
+      "content": {
+        "kind": "markdown",
+        "markdown": "# Related work\n\nThe transformer was introduced by @vaswani2017 and remains relevant.\nSee https://arxiv.org/abs/1706.03762 for details. Ask @alice to review.\n\n## Tasks\n\n- [ ] summarize @vaswani2017\n- [x] import the .bib file\n"
+      }
+    }
+  },
+  "branchEdges": [],
+  "annotationContext": {
+    "references": {
+      "vaswani2017": { "title": "Attention Is All You Need", "year": 2017 }
+    },
+    "people": {
+      "alice": { "name": "Alice Researcher" }
+    }
+  }
+}

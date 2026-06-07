@@ -30,10 +30,10 @@ the staged implementation plan. The packages are not yet published to npm.
 
 ## Packages
 
-| Package        | Description                                                       |
-| -------------- | ----------------------------------------------------------------- |
-| `@ham/editor`  | One collaborative, block-centric markdown surface (Tiptap 3).     |
-| `@ham/canvas`  | A 2D canvas of surfaces connected by block-anchored branch edges.  |
+| Package       | Description                                                       |
+| ------------- | ----------------------------------------------------------------- |
+| `@ham/editor` | One collaborative, block-centric markdown surface (Tiptap 3).     |
+| `@ham/canvas` | A 2D canvas of surfaces connected by block-anchored branch edges. |
 
 ## Documentation & live demo
 
