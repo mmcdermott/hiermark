@@ -47,10 +47,10 @@ const SECTIONS: Section[] = [
       <section className="page">
         <h2>The canvas</h2>
         <p className="lede">
-          Branch a block (hover for the ↳ button) and it becomes a surface in the next column.
-          Branch from a second block and it joins the same column; branch the same block twice for
-          ordered siblings you can drag to reorder. Click a card to focus it, or navigate with
-          Alt+Arrows.
+          Branch a block (hover it for the <strong>+</strong> button on its right) and it becomes a
+          surface in the next column. Branch from a second block and it joins the same column;
+          branch the same block twice for ordered siblings you can drag to reorder. Click a card to
+          focus it, or navigate with Alt+Arrows.
         </p>
         <CanvasDemo />
       </section>

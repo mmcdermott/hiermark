@@ -17,7 +17,17 @@ export { createHocuspocusCollab, flushAndDestroy } from "./collab/hocuspocus";
 export { BlockId } from "./extensions/block-id";
 export type { BlockIdOptions } from "./extensions/block-id";
 export { BlockGutter, blockGutterKey } from "./extensions/block-gutter";
-export type { BlockGutterContext, BlockGutterOptions } from "./extensions/block-gutter";
+export type {
+  BlockGutterContext,
+  BlockGutterOptions,
+  GutterEntry,
+} from "./extensions/block-gutter";
+export { TaskInputRules } from "./extensions/task-input-rules";
+export {
+  DefaultBranchButton,
+  DefaultBranchChildChip,
+  BlockGutterAffordances,
+} from "./components/gutter";
 export { BlockFold, blockFoldKey, computeFold } from "./extensions/block-fold";
 export type {
   BlockFoldContext,

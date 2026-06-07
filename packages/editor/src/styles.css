@@ -1,4 +1,6 @@
 /* @ham/editor default styles. Override via the CSS variables below. */
+@import "katex/dist/katex.min.css";
+
 :root {
   --ham-bg: #ffffff;
   --ham-surface-bg: #ffffff;
@@ -11,6 +13,8 @@
   --ham-radius: 12px;
   --ham-column-gap: 24px;
   --ham-surface-gap: 16px;
+  --ham-gutter-right: 2em;
+  --ham-gutter-left: 1.4em;
 }
 
 .ham-editor {
@@ -25,10 +29,17 @@
 .ham-editor .ProseMirror {
   outline: none;
   white-space: pre-wrap;
+  word-wrap: break-word;
+  /* Reserve a left gutter for fold toggles and a right gutter for branch
+     affordances, so neither is clipped by the editor / surface card edge. */
+  padding: 2px var(--ham-gutter-right) 2px var(--ham-gutter-left);
 }
 
 .ham-editor .ProseMirror > * {
-  margin: 0.4em 0;
+  margin: 0.5em 0;
+}
+.ham-editor .ProseMirror > *:first-child {
+  margin-top: 0;
 }
 
 .ham-editor .ProseMirror p.is-editor-empty:first-child::before {
@@ -39,6 +50,87 @@
   pointer-events: none;
 }
 
+/* Content elements ---------------------------------------------------------- */
+.ham-editor .ProseMirror h1 {
+  font-size: 1.6em;
+  line-height: 1.25;
+}
+.ham-editor .ProseMirror h2 {
+  font-size: 1.3em;
+}
+.ham-editor .ProseMirror h3 {
+  font-size: 1.12em;
+}
+.ham-editor .ProseMirror ul,
+.ham-editor .ProseMirror ol {
+  padding-left: 1.4em;
+  margin: 0.4em 0;
+}
+.ham-editor .ProseMirror blockquote {
+  border-left: 3px solid var(--ham-surface-border);
+  margin-left: 0;
+  padding-left: 1em;
+  color: var(--ham-muted);
+}
+.ham-editor .ProseMirror pre {
+  background: #16161f;
+  color: #e7e7f3;
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.86em;
+}
+.ham-editor .ProseMirror code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.88em;
+  background: #f1f0f8;
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+.ham-editor .ProseMirror pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Task lists — checkbox INLINE with its text ------------------------------- */
+.ham-editor .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0.1em;
+  margin-left: 0;
+}
+.ham-editor .ProseMirror li[data-type="taskItem"] {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+  margin: 0.25em 0;
+}
+.ham-editor .ProseMirror li[data-type="taskItem"] > label {
+  flex: 0 0 auto;
+  margin-top: 0.18em;
+  user-select: none;
+}
+.ham-editor .ProseMirror li[data-type="taskItem"] > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ham-editor .ProseMirror li[data-type="taskItem"] > div > p {
+  margin: 0;
+}
+.ham-editor .ProseMirror li[data-type="taskItem"][data-checked="true"] > div {
+  color: var(--ham-muted);
+  text-decoration: line-through;
+}
+/* Nested task lists get their own indent. */
+.ham-editor .ProseMirror li[data-type="taskItem"] ul[data-type="taskList"] {
+  padding-left: 1.2em;
+}
+
+/* Math ---------------------------------------------------------------------- */
+.ham-editor .ProseMirror .katex {
+  font-size: 1.04em;
+}
+
 /* Block hover host + active block ------------------------------------------ */
 .ham-block {
   position: relative;
@@ -47,50 +139,81 @@
   box-shadow: -2px 0 0 0 var(--ham-accent);
 }
 
-/* Branch gutter ------------------------------------------------------------- */
-.ham-branch-button {
+/* Branch gutter — RIGHT side (children appear to the right) ----------------- */
+.ham-block-gutter {
   position: absolute;
-  left: -1.6em;
+  inset: 0;
+  pointer-events: none;
+}
+.ham-block-gutter-affordances {
+  position: absolute;
+  right: calc(-1 * var(--ham-gutter-right));
+  top: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  pointer-events: none;
+}
+.ham-block-gutter-affordances > * {
+  pointer-events: auto;
+}
+
+.ham-branch-button {
+  align-self: stretch;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.25em;
-  height: 1.25em;
+  width: 1.5em;
+  min-height: 1.5em;
   padding: 0;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
   color: var(--ham-muted);
   font-size: 0.95em;
+  line-height: 1;
   cursor: pointer;
-  opacity: 0;
+  /* A faint resting state hints the affordance exists; full on hover/focus. */
+  opacity: 0.18;
   transition:
     opacity 0.12s ease,
-    background 0.12s ease;
+    background 0.12s ease,
+    border-color 0.12s ease;
 }
-.ham-block:hover > .ham-branch-button,
+.ham-block:hover .ham-branch-button,
+.ham-block-active .ham-branch-button,
 .ham-branch-button:focus-visible {
   opacity: 1;
 }
 .ham-branch-button:hover {
   background: var(--ham-accent-soft);
+  border-color: var(--ham-accent);
   color: var(--ham-accent);
 }
 
 .ham-branch-children {
   display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 4px;
-  margin-left: 8px;
-  vertical-align: middle;
 }
 .ham-branch-child-chip {
   border: 1px solid var(--ham-surface-border);
   border-radius: 999px;
+  /* Opaque background + clamped width so a chip stays readable and can't run far
+     over a full-width block's text. */
   background: var(--ham-surface-bg);
   color: var(--ham-muted);
-  font-size: 0.8em;
+  font-size: 0.74em;
   padding: 0 8px;
-  line-height: 1.6;
+  line-height: 1.7;
+  max-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
 }
 .ham-branch-child-chip:hover {
@@ -103,6 +226,31 @@
   background: var(--ham-accent-soft);
 }
 
+/* Fold — disclosure triangle in the LEFT gutter (never clipped) ------------- */
+.ham-fold-toggle {
+  position: absolute;
+  left: calc(-1 * var(--ham-gutter-left));
+  top: 0.15em;
+  width: 1.1em;
+  height: 1.4em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--ham-muted);
+  cursor: pointer;
+  font-size: 0.7em;
+  line-height: 1;
+  z-index: 1;
+}
+.ham-fold-toggle:hover {
+  color: var(--ham-accent);
+}
+.ham-folded {
+  display: none;
+}
+
 /* Annotations --------------------------------------------------------------- */
 .ham-annotation {
   border-radius: 3px;
@@ -111,6 +259,7 @@
   color: var(--ham-accent);
   background: var(--ham-accent-soft);
   padding: 0 1px;
+  cursor: pointer;
 }
 .ham-citation-unknown {
   color: var(--ham-danger);
@@ -120,6 +269,7 @@
   color: #0a7d4f;
   background: #e6f6ee;
   padding: 0 1px;
+  cursor: pointer;
 }
 .ham-annotation-url {
   color: #1b6ec2;
@@ -139,25 +289,6 @@
 .ham-annotation-chip-task {
   background: #eef1f6;
   color: var(--ham-muted);
-}
-
-/* Fold ---------------------------------------------------------------------- */
-.ham-folded {
-  display: none;
-}
-.ham-fold-toggle {
-  position: absolute;
-  left: -1.2em;
-  border: none;
-  background: transparent;
-  color: var(--ham-muted);
-  cursor: pointer;
-  font-size: 0.8em;
-  padding: 0 2px;
-  line-height: 1.4;
-}
-.ham-fold-toggle:hover {
-  color: var(--ham-accent);
 }
 
 /* Annotation popover -------------------------------------------------------- */

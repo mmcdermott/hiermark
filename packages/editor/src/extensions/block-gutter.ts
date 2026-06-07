@@ -4,15 +4,22 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
 import { isEmptyBlockNode, isHamBlockNode } from "../snapshot/blockTreePolicy";
-import type { HamBlockId, HamBranchChildSummary, HamBranchPolicy } from "../types";
+import type { HamBlockId, HamBranchPolicy } from "../types";
+
+/** One block's gutter overlay; React renders the branch button + child chips into `container`. */
+export interface GutterEntry {
+  blockId: HamBlockId;
+  blockType: string;
+  branchable: boolean;
+  container: HTMLElement;
+}
 
 export interface BlockGutterContext {
   branchPolicy: HamBranchPolicy;
-  childrenByBlockId: Record<HamBlockId, HamBranchChildSummary[]>;
   activeBlockId: HamBlockId | null;
   editable: boolean;
-  onBranch: (blockId: HamBlockId, nativeEvent: Event) => void;
-  onOpenChild: (child: HamBranchChildSummary, blockId: HamBlockId) => void;
+  /** Receives the current gutter entries so React can portal affordances in. */
+  onGutter: (entries: GutterEntry[]) => void;
 }
 
 export interface BlockGutterOptions {
@@ -20,7 +27,12 @@ export interface BlockGutterOptions {
 }
 
 /** Plugin key — dispatch `tr.setMeta(blockGutterKey, true)` to force a rebuild. */
-export const blockGutterKey = new PluginKey<DecorationSet>("hamBlockGutter");
+export const blockGutterKey = new PluginKey<GutterState>("hamBlockGutter");
+
+interface GutterState {
+  decoSet: DecorationSet;
+  entries: GutterEntry[];
+}
 
 function gutterBranchable(node: PMNode, parent: PMNode | null, policy: HamBranchPolicy): boolean {
   if (!isHamBlockNode(node, parent)) return false;
@@ -37,55 +49,15 @@ function gutterBranchable(node: PMNode, parent: PMNode | null, policy: HamBranch
   }
 }
 
-type GetContext = () => BlockGutterContext | null;
-
-// ProseMirror reuses widget DOM across rebuilds when the decoration key is
-// unchanged, so the click handler must be resolved from the live context at
-// click time — capturing `ctx.onBranch` here would bind a stale closure.
-function branchButton(blockId: HamBlockId, getContext: GetContext): HTMLElement {
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "ham-branch-button";
-  btn.textContent = "↳";
-  btn.setAttribute("aria-label", "Branch from this block");
-  btn.setAttribute("data-ham-branch-for", blockId);
-  btn.addEventListener("mousedown", (e) => e.preventDefault()); // keep editor selection
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    getContext()?.onBranch(blockId, e);
-  });
-  return btn;
-}
-
-function childChips(
-  blockId: HamBlockId,
-  children: HamBranchChildSummary[],
-  getContext: GetContext,
-): HTMLElement {
-  const wrap = document.createElement("span");
-  wrap.className = "ham-branch-children";
-  wrap.contentEditable = "false";
-  for (const child of [...children].sort((a, b) => a.order - b.order)) {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className =
-      "ham-branch-child-chip" + (child.active ? " ham-branch-child-chip-active" : "");
-    chip.textContent = `→ ${child.title ?? "Untitled"}`;
-    chip.setAttribute("aria-label", `Open branch child: ${child.title ?? "Untitled"}`);
-    chip.addEventListener("mousedown", (e) => e.preventDefault());
-    chip.addEventListener("click", (e) => {
-      e.preventDefault();
-      getContext()?.onOpenChild(child, blockId);
-    });
-    wrap.appendChild(chip);
-  }
-  return wrap;
-}
-
-function build(doc: PMNode, getContext: () => BlockGutterContext | null): DecorationSet {
+function build(
+  doc: PMNode,
+  getContext: () => BlockGutterContext | null,
+  containers: Map<string, HTMLElement>,
+): GutterState {
   const ctx = getContext();
-  if (!ctx) return DecorationSet.empty;
   const decos: Decoration[] = [];
+  const entries: GutterEntry[] = [];
+  const live = new Set<string>();
 
   doc.descendants((node, pos, parent) => {
     if (!isHamBlockNode(node, parent)) return;
@@ -93,41 +65,48 @@ function build(doc: PMNode, getContext: () => BlockGutterContext | null): Decora
     if (!blockId) return;
 
     const classes = ["ham-block"];
-    if (blockId === ctx.activeBlockId) classes.push("ham-block-active");
+    if (ctx && blockId === ctx.activeBlockId) classes.push("ham-block-active");
     decos.push(Decoration.node(pos, pos + node.nodeSize, { class: classes.join(" ") }));
 
-    if (ctx.editable && gutterBranchable(node, parent, ctx.branchPolicy)) {
-      decos.push(
-        Decoration.widget(pos + 1, () => branchButton(blockId, getContext), {
-          side: -1,
-          key: `branch-${blockId}`,
-          ignoreSelection: true,
-        }),
-      );
+    // A stable overlay container per block (PM reuses it across rebuilds via the
+    // decoration key), into which React portals the affordances.
+    let el = containers.get(blockId);
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "ham-block-gutter";
+      el.contentEditable = "false";
+      // Distinct from the block node's own `data-block-id` so DOM queries for
+      // block ids don't double-count the gutter overlay.
+      el.setAttribute("data-ham-gutter-for", blockId);
+      containers.set(blockId, el);
     }
+    live.add(blockId);
 
-    const kids = ctx.childrenByBlockId[blockId];
-    if (kids && kids.length > 0) {
-      const sig = kids.map((k) => `${k.edgeId}:${k.active ? 1 : 0}`).join(",");
-      decos.push(
-        Decoration.widget(pos + node.nodeSize - 1, () => childChips(blockId, kids, getContext), {
-          side: 1,
-          key: `kids-${blockId}-${sig}`,
-          ignoreSelection: true,
-        }),
-      );
-    }
+    const branchable = !!ctx && ctx.editable && gutterBranchable(node, parent, ctx.branchPolicy);
+    entries.push({ blockId, blockType: node.type.name, branchable, container: el });
+    decos.push(
+      Decoration.widget(pos + 1, el, {
+        side: -1,
+        key: `gutter-${blockId}`,
+        ignoreSelection: true,
+      }),
+    );
   });
 
-  return DecorationSet.create(doc, decos);
+  for (const key of [...containers.keys()]) {
+    if (!live.has(key)) containers.delete(key);
+  }
+
+  return { decoSet: DecorationSet.create(doc, decos), entries };
 }
 
 /**
- * Renders per-block branch affordances (a branch button on each branchable
- * block, plus chips for any existing branch children) as ProseMirror
- * decorations. Data and handlers are supplied through a `getContext` getter so
- * the plugin stays decoupled from React; push `tr.setMeta(blockGutterKey, true)`
- * to rebuild when children or the active block change without a doc edit.
+ * Hosts a per-block gutter overlay (`.ham-block-gutter`) and a `.ham-block`
+ * node decoration. The overlay containers are stable across rebuilds; React
+ * (in `HamEditor`) portals the branch button and child chips into them, so the
+ * affordances are fully customizable via `HamEditorSlots`. Entries are pushed to
+ * the host through `getContext().onGutter` only when the block set / branchable
+ * state changes (a `view().update` signature gate), keeping typing cheap.
  */
 export const BlockGutter = Extension.create<BlockGutterOptions>({
   name: "hamBlockGutter",
@@ -138,23 +117,37 @@ export const BlockGutter = Extension.create<BlockGutterOptions>({
 
   addProseMirrorPlugins() {
     const getContext = this.options.getContext;
+    const containers = new Map<string, HTMLElement>();
+    let lastSig: string | null = null;
+
     return [
-      new Plugin<DecorationSet>({
+      new Plugin<GutterState>({
         key: blockGutterKey,
         state: {
-          init: (_config, state) => build(state.doc, getContext),
+          init: (_config, state) => build(state.doc, getContext, containers),
           apply(tr, value, _oldState, newState) {
             if (tr.docChanged || tr.getMeta(blockGutterKey)) {
-              return build(newState.doc, getContext);
+              return build(newState.doc, getContext, containers);
             }
             return value;
           },
         },
         props: {
           decorations(state) {
-            return blockGutterKey.getState(state) ?? DecorationSet.empty;
+            return blockGutterKey.getState(state)?.decoSet ?? DecorationSet.empty;
           },
         },
+        view: () => ({
+          update(view) {
+            const st = blockGutterKey.getState(view.state);
+            if (!st) return;
+            const sig = st.entries.map((e) => `${e.blockId}:${e.branchable ? 1 : 0}`).join(",");
+            if (sig !== lastSig) {
+              lastSig = sig;
+              getContext()?.onGutter(st.entries);
+            }
+          },
+        }),
       }),
     ];
   },

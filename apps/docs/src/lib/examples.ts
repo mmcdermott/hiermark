@@ -35,7 +35,7 @@ export const overviewCanvas: DemoCanvasState = {
       content: {
         kind: "markdown",
         markdown:
-          "# EQ-based forecasting\n\nWe show that EQ-based forecasting beats the baseline on eICU.\n\n## Background\n\nClinical forecasting is hard; calibration matters.\n\n## Experiment plan\n\n- [ ] pull the eICU cohort\n- [ ] train the EQ model\n- [ ] evaluate calibration\n\nHover a block and click ↳ to branch it into its own surface.",
+          "# EQ-based forecasting\n\nWe show that EQ-based forecasting beats the baseline on eICU.\n\n## Background\n\nClinical forecasting is hard; calibration matters.\n\n## Experiment plan\n\n- [ ] pull the eICU cohort\n- [ ] train the EQ model\n- [ ] evaluate calibration\n\nHover a block and click the + on its right to branch it into its own surface.",
       },
     },
   },

@@ -68,6 +68,24 @@ function App() {
   );
 }`}</Code>
 
+      <h3>Customizing the branch affordance</h3>
+      <p>
+        The branch button (a full-height <code>+</code> on each block's right) and the branch-child
+        chips are replaceable via <code>HamEditorSlots</code> — pass any component you like.
+      </p>
+      <Code>{`<HamEditor
+  surfaceId="s1"
+  value={{ kind: "markdown", markdown }}
+  slots={{
+    BlockBranchButton: ({ blockId, onBranch }) => (
+      <button className="my-branch" onClick={onBranch} aria-label="Branch">＋</button>
+    ),
+    BranchChildChip: ({ child, onOpen }) => (
+      <button onClick={onOpen}>{child.title}</button>
+    ),
+  }}
+/>`}</Code>
+
       <h3>Collaboration</h3>
       <p>
         Pass a <code>collaboration</code> config to <code>HamEditor</code>. The editor owns the
