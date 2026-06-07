@@ -61,7 +61,7 @@ pnpm format:check ✓
 
 ## Deferred (with rationale)
 
-- **Snapshots for non-mounted (card) surfaces** — child columns of the *active*
+- **Snapshots for non-mounted (card) surfaces** — child columns of the _active_
   surface order correctly (its editor provides a snapshot); ancestor columns fall
   back to a deterministic id/order sort. Computing snapshots for cards (without
   mounting an editor) is a Phase 4 optimization.
