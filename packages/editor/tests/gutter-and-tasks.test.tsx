@@ -31,13 +31,26 @@ async function mount(extra: Partial<HamEditorProps> = {}, markdown = "# Title\n\
 // is where the user would be typing — not at the document end.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function typeFinalSpace(editor: any) {
+  // Type at the end of the `[ ]` marker text node (it may not be the first one
+  // in a nested list).
   let pos: number | null = null;
   editor.state.doc.descendants((node: any, p: number) => {
-    if (pos == null && node.isText) pos = p + node.nodeSize;
+    if (pos == null && node.isText && node.text?.includes("[")) pos = p + node.nodeSize;
   });
+  if (pos == null) {
+    editor.state.doc.descendants((node: any, p: number) => {
+      if (pos == null && node.isText) pos = p + node.nodeSize;
+    });
+  }
   pos = pos ?? editor.state.selection.from;
   editor.commands.setTextSelection(pos);
   editor.view.someProp("handleTextInput", (f: any) => f(editor.view, pos, pos, " "));
+}
+
+function topLevelTypes(editor: any): string[] {
+  const out: string[] = [];
+  editor.state.doc.forEach((n: any) => out.push(n.type.name));
+  return out;
 }
 
 function nodeTypes(editor: any): string[] {
@@ -66,6 +79,31 @@ describe("task creation by typing", () => {
       const types = nodeTypes(editor);
       expect(types).toContain("taskItem");
       expect(types).not.toContain("bulletList");
+    });
+  });
+
+  it("does not corrupt a nested list when typing [ ] in a sub-item", async () => {
+    const { getHandle } = await mount({}, "");
+    const editor = getHandle().getUnsafeTiptapEditor() as any;
+    editor.commands.setContent("<ul><li><p>parent</p><ul><li><p>[ ]</p></li></ul></li></ul>");
+    typeFinalSpace(editor);
+    await waitFor(() => {
+      // The outline must NOT be flattened into multiple sibling lists, and no
+      // text is lost.
+      expect(topLevelTypes(editor).filter((t) => t === "bulletList").length).toBe(1);
+      expect(editor.getText()).toContain("parent");
+    });
+  });
+
+  it("preserves a top-level bullet that has a sublist (does not eat the marker)", async () => {
+    const { getHandle } = await mount({}, "");
+    const editor = getHandle().getUnsafeTiptapEditor() as any;
+    editor.commands.setContent("<ul><li><p>[ ]</p><ul><li><p>child</p></li></ul></li></ul>");
+    typeFinalSpace(editor);
+    await waitFor(() => {
+      // The child is intact and the marker text was not silently deleted.
+      expect(editor.getText()).toContain("child");
+      expect(editor.getText()).toContain("[");
     });
   });
 

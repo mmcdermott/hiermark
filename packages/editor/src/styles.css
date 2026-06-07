@@ -203,11 +203,16 @@
 .ham-branch-child-chip {
   border: 1px solid var(--ham-surface-border);
   border-radius: 999px;
+  /* Opaque background + clamped width so a chip stays readable and can't run far
+     over a full-width block's text. */
   background: var(--ham-surface-bg);
   color: var(--ham-muted);
   font-size: 0.74em;
   padding: 0 8px;
   line-height: 1.7;
+  max-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
 }

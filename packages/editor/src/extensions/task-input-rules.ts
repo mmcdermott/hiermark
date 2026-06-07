@@ -19,24 +19,48 @@ export const TaskInputRules = Extension.create({
         find: TASK_INPUT,
         handler: ({ state, chain, range, match }) => {
           const checked = /[xX]/.test(match[1] ?? "");
-
-          // If the cursor is inside a plain bullet/ordered list item (the `- [ ]`
-          // case, where StarterKit already made a bullet), lift it out first so
-          // toggleTaskList wraps a fresh paragraph into a task list.
           const $from = state.doc.resolve(range.from);
-          let inPlainList = false;
+
+          // Find the nearest enclosing list item.
+          let liDepth = -1;
           for (let depth = $from.depth; depth > 0; depth--) {
             const name = $from.node(depth).type.name;
-            if (name === "taskItem") {
-              inPlainList = false;
+            if (name === "taskItem") return null; // already a checklist item
+            if (name === "listItem") {
+              liDepth = depth;
               break;
             }
-            if (name === "listItem") inPlainList = true;
           }
 
-          const c = chain().deleteRange(range);
-          if (inPlainList) c.liftListItem("listItem");
-          c.toggleTaskList().updateAttributes("taskItem", { checked }).run();
+          if (liDepth === -1) {
+            // A plain paragraph (or blockquote) — wrap it into a task list.
+            chain()
+              .deleteRange(range)
+              .toggleTaskList()
+              .updateAttributes("taskItem", { checked })
+              .run();
+            return;
+          }
+
+          // Inside a bullet/ordered item. Only a SIMPLE, TOP-LEVEL item (one
+          // paragraph, not nested under another item) can be lifted + converted
+          // without corrupting surrounding/nested list structure. For anything
+          // deeper, do nothing — leaving the typed `[ ]` as literal text rather
+          // than silently flattening the user's outline.
+          const li = $from.node(liDepth);
+          const grandparent = liDepth - 2 >= 0 ? $from.node(liDepth - 2) : null;
+          const nestedUnderItem =
+            !!grandparent &&
+            (grandparent.type.name === "listItem" || grandparent.type.name === "taskItem");
+          const hasSublistOrExtra = li.childCount > 1;
+          if (nestedUnderItem || hasSublistOrExtra) return null;
+
+          chain()
+            .deleteRange(range)
+            .liftListItem("listItem")
+            .toggleTaskList()
+            .updateAttributes("taskItem", { checked })
+            .run();
         },
       }),
     ];
