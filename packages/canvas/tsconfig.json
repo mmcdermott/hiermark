@@ -1,8 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": ".",
+    "noEmit": true,
     "types": ["vitest/globals", "node"],
     "paths": {
       "@ham/editor": ["../editor/src/index.ts"]

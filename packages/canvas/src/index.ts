@@ -1,8 +1,27 @@
 // @ham/canvas — a 2D canvas of editable HAM surfaces linked by branch edges.
-//
-// This is the package entry point. Real exports (surface/edge model, column
-// projection, active path, the HamCanvas component, and interactions) are added
-// per implementation phase. The scaffolded stub keeps the package installable
-// and the build/test toolchain green from day one.
 
 export const HAM_CANVAS_VERSION = "0.1.0";
+
+// Component + hook
+export { HamCanvas } from "./HamCanvas";
+export { useHamCanvas, siblingEdges, buildReorderEvent } from "./useHamCanvas";
+export type { UseHamCanvasResult, HamCanvasActions } from "./useHamCanvas";
+
+// Pure topology
+export { projectHamColumns } from "./topology/projectHamColumns";
+export { getHamActivePath } from "./topology/getHamActivePath";
+export { buildIndices, collectDescendants } from "./topology/buildIndices";
+export type { HamTopologyIndices } from "./topology/buildIndices";
+export { computePathState, pickDisplayMode, buildPathStateContext } from "./topology/pathState";
+export type { PathStateContext } from "./topology/pathState";
+export {
+  reorderSiblingEdgesByIndex,
+  reorderSiblingEdgesByIds,
+  areSameAnchorSiblings,
+} from "./topology/reorderBranchSiblings";
+
+// Config defaults
+export { defaultLayout, defaultBehavior, resolveLayout, resolveBehavior } from "./defaults";
+
+// Public types
+export type * from "./types";

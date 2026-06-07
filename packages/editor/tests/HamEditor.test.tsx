@@ -99,7 +99,6 @@ describe("HamEditor", () => {
 
   it("repairs duplicate block ids introduced by paste/import", async () => {
     const { getHandle, container } = await mountEditor();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const editor = getHandle().getUnsafeTiptapEditor() as any;
 
     // Force a collision: stamp the same id onto the first two blocks in one

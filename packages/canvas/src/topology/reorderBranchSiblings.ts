@@ -1,0 +1,107 @@
+import type {
+  HamBranchEdge,
+  HamBranchEdgeId,
+  HamReorderBranchSiblingsEvent,
+  HamSurfaceId,
+} from "../types";
+
+/** The edges branching from one source block, in current order. */
+export function siblingEdges<EdgeMeta>(
+  branchEdges: HamBranchEdge<EdgeMeta>[],
+  fromSurfaceId: HamSurfaceId,
+  fromBlockId: string,
+): HamBranchEdge<EdgeMeta>[] {
+  return branchEdges
+    .filter((e) => e.fromSurfaceId === fromSurfaceId && e.fromBlockId === fromBlockId)
+    .sort((a, b) => a.order - b.order);
+}
+
+/**
+ * Whether every edge id refers to an edge sharing the same
+ * `(fromSurfaceId, fromBlockId)` — the strict reorder eligibility rule (spec
+ * §8.3). Cross-anchor drops must be rejected.
+ */
+export function areSameAnchorSiblings<EdgeMeta>(
+  branchEdges: HamBranchEdge<EdgeMeta>[],
+  orderedEdgeIds: HamBranchEdgeId[],
+): boolean {
+  const byId = new Map(branchEdges.map((e) => [e.id, e]));
+  let anchor: { s: HamSurfaceId; b: string } | null = null;
+  for (const id of orderedEdgeIds) {
+    const edge = byId.get(id);
+    if (!edge) return false;
+    if (anchor == null) anchor = { s: edge.fromSurfaceId, b: edge.fromBlockId };
+    else if (edge.fromSurfaceId !== anchor.s || edge.fromBlockId !== anchor.b) return false;
+  }
+  return anchor != null;
+}
+
+/**
+ * Reorder same-anchor sibling edges by moving the sibling at `from` to `to`
+ * (splice with `to` clamped into range). Returns the **same array reference**
+ * when `from` is out of range (no-op contract preserved from the reference), and
+ * otherwise a new array where the moved group's `order` is renormalized to a
+ * dense 0..n-1 and all other edges are untouched.
+ */
+export function reorderSiblingEdgesByIndex<EdgeMeta>(
+  branchEdges: HamBranchEdge<EdgeMeta>[],
+  fromSurfaceId: HamSurfaceId,
+  fromBlockId: string,
+  from: number,
+  to: number,
+): HamBranchEdge<EdgeMeta>[] {
+  const group = siblingEdges(branchEdges, fromSurfaceId, fromBlockId);
+  if (from < 0 || from >= group.length) return branchEdges;
+  const reordered = [...group];
+  const [moved] = reordered.splice(from, 1);
+  if (!moved) return branchEdges;
+  reordered.splice(Math.max(0, Math.min(to, reordered.length)), 0, moved);
+  return applyOrder(branchEdges, reordered);
+}
+
+/**
+ * Apply an explicit sibling order (e.g. from a dnd-kit drop) identified by edge
+ * ids. Validates same-anchor membership; returns the same reference (unchanged)
+ * if the order is invalid or a no-op.
+ */
+export function reorderSiblingEdgesByIds<EdgeMeta>(
+  branchEdges: HamBranchEdge<EdgeMeta>[],
+  orderedEdgeIds: HamBranchEdgeId[],
+): HamBranchEdge<EdgeMeta>[] {
+  if (!areSameAnchorSiblings(branchEdges, orderedEdgeIds)) return branchEdges;
+  const byId = new Map(branchEdges.map((e) => [e.id, e]));
+  const reordered = orderedEdgeIds.map((id) => byId.get(id)!);
+  return applyOrder(branchEdges, reordered);
+}
+
+/** Renormalize `order` across the reordered group and splice them back. */
+function applyOrder<EdgeMeta>(
+  branchEdges: HamBranchEdge<EdgeMeta>[],
+  reorderedGroup: HamBranchEdge<EdgeMeta>[],
+): HamBranchEdge<EdgeMeta>[] {
+  const newOrderById = new Map<HamBranchEdgeId, number>();
+  reorderedGroup.forEach((e, i) => newOrderById.set(e.id, i));
+  let changed = false;
+  const next = branchEdges.map((e) => {
+    const order = newOrderById.get(e.id);
+    if (order == null || order === e.order) return e;
+    changed = true;
+    return { ...e, order };
+  });
+  return changed ? next : branchEdges;
+}
+
+/** Build the host event for a confirmed sibling reorder. */
+export function buildReorderEvent<EdgeMeta>(
+  branchEdges: HamBranchEdge<EdgeMeta>[],
+  fromSurfaceId: HamSurfaceId,
+  fromBlockId: string,
+): HamReorderBranchSiblingsEvent {
+  const group = siblingEdges(branchEdges, fromSurfaceId, fromBlockId);
+  return {
+    fromSurfaceId,
+    fromBlockId,
+    orderedEdgeIds: group.map((e) => e.id),
+    orderedSurfaceIds: group.map((e) => e.toSurfaceId),
+  };
+}
