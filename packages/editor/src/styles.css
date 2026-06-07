@@ -1,4 +1,4 @@
-/* @ham/editor default styles. Override via CSS variables; see :root below. */
+/* @ham/editor default styles. Override via the CSS variables below. */
 :root {
   --ham-bg: #ffffff;
   --ham-surface-bg: #ffffff;
@@ -6,8 +6,137 @@
   --ham-text: #16161a;
   --ham-muted: #6f6f7a;
   --ham-accent: #6f5cff;
+  --ham-accent-soft: #efecff;
   --ham-danger: #c73b3b;
   --ham-radius: 12px;
   --ham-column-gap: 24px;
   --ham-surface-gap: 16px;
+}
+
+.ham-editor {
+  position: relative;
+  color: var(--ham-text);
+  font:
+    15px/1.6 system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.ham-editor .ProseMirror {
+  outline: none;
+  white-space: pre-wrap;
+}
+
+.ham-editor .ProseMirror > * {
+  margin: 0.4em 0;
+}
+
+.ham-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--ham-muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Block hover host + active block ------------------------------------------ */
+.ham-block {
+  position: relative;
+}
+.ham-block-active {
+  box-shadow: -2px 0 0 0 var(--ham-accent);
+}
+
+/* Branch gutter ------------------------------------------------------------- */
+.ham-branch-button {
+  position: absolute;
+  left: -1.6em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ham-muted);
+  font-size: 0.95em;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.12s ease,
+    background 0.12s ease;
+}
+.ham-block:hover > .ham-branch-button,
+.ham-branch-button:focus-visible {
+  opacity: 1;
+}
+.ham-branch-button:hover {
+  background: var(--ham-accent-soft);
+  color: var(--ham-accent);
+}
+
+.ham-branch-children {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.ham-branch-child-chip {
+  border: 1px solid var(--ham-surface-border);
+  border-radius: 999px;
+  background: var(--ham-surface-bg);
+  color: var(--ham-muted);
+  font-size: 0.8em;
+  padding: 0 8px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.ham-branch-child-chip:hover {
+  border-color: var(--ham-accent);
+  color: var(--ham-accent);
+}
+.ham-branch-child-chip-active {
+  border-color: var(--ham-accent);
+  color: var(--ham-accent);
+  background: var(--ham-accent-soft);
+}
+
+/* Annotations --------------------------------------------------------------- */
+.ham-annotation {
+  border-radius: 3px;
+}
+.ham-annotation-citation {
+  color: var(--ham-accent);
+  background: var(--ham-accent-soft);
+  padding: 0 1px;
+}
+.ham-citation-unknown {
+  color: var(--ham-danger);
+  text-decoration: underline dotted;
+}
+.ham-annotation-mention {
+  color: #0a7d4f;
+  background: #e6f6ee;
+  padding: 0 1px;
+}
+.ham-annotation-url {
+  color: #1b6ec2;
+  text-decoration: underline;
+}
+
+.ham-annotation-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78em;
+  border-radius: 999px;
+  padding: 0 8px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.ham-annotation-chip-task {
+  background: #eef1f6;
+  color: var(--ham-muted);
 }
