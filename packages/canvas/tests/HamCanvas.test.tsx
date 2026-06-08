@@ -631,6 +631,34 @@ describe("HamCanvas", () => {
     expect(container.querySelector(".ham-canvas.ham-columns-scroll")).not.toBeNull();
   });
 
+  it("tags each column with its widest display mode (so rail columns are compact)", async () => {
+    const surfaces = {
+      s_root: surface("s_root", "# Root\n\n## A", "Root"),
+      s_a: surface("s_a", "# A", "A"),
+    };
+    const edges: HamBranchEdge[] = [
+      { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
+    ];
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={surfaces}
+        branchEdges={edges}
+        activeSurfaceId="s_root"
+        handlers={makeHandlers()}
+        layout={{ inactiveColumnMode: "rail" }}
+      />,
+    );
+    await waitFor(() => expect(container.querySelectorAll(".ham-column").length).toBe(2));
+    // Active root column hosts the editor (expanded); the inactive child is a rail.
+    expect(
+      container.querySelector('.ham-column[data-depth="0"]')?.getAttribute("data-col-mode"),
+    ).toBe("expanded");
+    expect(
+      container.querySelector('.ham-column[data-depth="1"]')?.getAttribute("data-col-mode"),
+    ).toBe("rail");
+  });
+
   it("renders custom SurfaceFrame and ColumnHeader slots", async () => {
     const { container } = render(
       <HamCanvas

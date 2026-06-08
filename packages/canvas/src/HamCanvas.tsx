@@ -78,6 +78,16 @@ function DefaultAddSiblingButton({ isAppend, onAddSibling }: HamAddSiblingButton
  * its identity is stable across renders. */
 const NO_BRANCH = () => false;
 
+/** How much width each display mode wants, low → high. A column sizes to its
+ * widest surface's mode (via the `data-col-mode` attribute + CSS). */
+const DISPLAY_MODE_RANK: Record<HamCanvasItem["displayMode"], number> = {
+  hidden: 0,
+  rail: 1,
+  outline: 2,
+  card: 3,
+  expanded: 4,
+};
+
 /**
  * Default sibling-group provenance header — a breadcrumb naming the parent
  * surface (and anchor block, if known) a group of surfaces branches from.
@@ -712,11 +722,18 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
           const isActiveColumn =
             layout.activeColumnMode === "expanded" &&
             column.items.some((i) => i.surface.id === canvas.activeSurfaceId);
+          // A column is only as wide as its widest surface needs — so rail/outline
+          // columns become a narrow sidebar instead of full-width empty boxes.
+          const colMode = column.items.reduce<HamCanvasItem["displayMode"]>(
+            (m, i) => (DISPLAY_MODE_RANK[i.displayMode] > DISPLAY_MODE_RANK[m] ? i.displayMode : m),
+            "hidden",
+          );
           return (
             <div
               className={"ham-column" + (isActiveColumn ? " ham-column-active" : "")}
               key={column.depth}
               data-depth={column.depth}
+              data-col-mode={colMode}
               role="group"
               aria-label={`Column ${column.depth + 1}`}
             >

@@ -31,6 +31,20 @@
   width: var(--ham-column-width, 520px);
   min-width: 240px;
 }
+/* A column is only as wide as its widest surface's display mode needs, so
+   rail/outline columns read as a compact sidebar rather than empty full-width
+   boxes. The active column (below) still overrides this. */
+.ham-column[data-col-mode="rail"] {
+  width: var(--ham-rail-column-width, 220px);
+  min-width: 0;
+}
+.ham-column[data-col-mode="outline"] {
+  width: 320px;
+  min-width: 0;
+}
+.ham-column[data-col-mode="hidden"] {
+  display: none;
+}
 /* The focused column widens when layout.activeColumnMode === "expanded", and
    GROWS to fill leftover horizontal space (so the editor uses a wide screen
    instead of being capped at the column width). When columns overflow the

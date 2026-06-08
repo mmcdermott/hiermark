@@ -144,7 +144,16 @@ body {
 /* Content ------------------------------------------------------------------- */
 .content {
   padding: 48px 56px;
-  max-width: 920px;
+  /* Wide enough that demos have real room; prose is capped separately below so
+     paragraphs stay readable. */
+  max-width: 1400px;
+}
+/* Keep running text at a comfortable measure even on the wide content column. */
+.lede,
+.page > p,
+.page > ul,
+.page > ol {
+  max-width: 880px;
 }
 .page h2 {
   font-size: 30px;
@@ -199,9 +208,11 @@ pre.block code {
 
 /* Demos --------------------------------------------------------------------- */
 .demo {
-  /* Reclaim the prose padding so demos are wider than the text column (the
-     canvas needs room); ⛶ Expand still gives the full viewport. */
-  margin: 18px -56px 8px;
+  /* Aligns with the prose (left), and sizes to its stage so dragging the
+     stage's bottom-right corner grows the bordered box rightward. */
+  width: fit-content;
+  max-width: 100%;
+  margin: 18px 0 8px;
   border: 1px solid var(--doc-border);
   border-radius: 12px;
   overflow: hidden;
@@ -336,11 +347,15 @@ pre.block code {
   transform: scale(1.4);
 }
 .demo-stage {
-  overflow: auto;
-  /* Drag the bottom-right corner to resize the canvas in both directions (or
-     use ⛶ Expand for full-viewport). min-height keeps short demos usable. */
-  resize: both;
+  /* Default size; drag the bottom-right corner to resize in both directions,
+     up to the available viewport width (⛶ Expand gives the full viewport). The
+     parent `.demo` is fit-content, so growing the stage grows the framed box. */
+  width: 820px;
+  min-width: 320px;
+  max-width: calc(100vw - 264px - 130px);
   min-height: 320px;
+  overflow: auto;
+  resize: both;
 }
 
 /* Expand a demo to (almost) full-viewport so the canvas can use a wide screen. */
@@ -437,8 +452,13 @@ pre.block code {
   .content {
     padding: 28px 20px;
   }
+  /* No sidebar column at this width, so demos can use the full content width. */
   .demo {
-    margin-inline: -20px;
+    width: auto;
+  }
+  .demo-stage {
+    width: auto;
+    max-width: calc(100vw - 40px);
   }
   .cards,
   .demo-collab {
