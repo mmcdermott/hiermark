@@ -10,7 +10,13 @@ import {
   computeSiblingInsert,
   siblingEdges,
 } from "./topology/reorderBranchSiblings";
-import type { HamActivePath, HamCanvasColumn, HamCanvasProps, HamSurfaceId } from "./types";
+import type {
+  HamActivePath,
+  HamCanvasColumn,
+  HamCanvasOperationType,
+  HamCanvasProps,
+  HamSurfaceId,
+} from "./types";
 
 export interface HamCanvasActions {
   activate(surfaceId: HamSurfaceId, blockId?: HamBlockId | null): void;
@@ -105,18 +111,26 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     });
   }, []);
 
-  const withPending = useCallback(async (surfaceId: HamSurfaceId, run: () => Promise<void>) => {
-    setPending((prev) => new Set(prev).add(surfaceId));
-    try {
-      await run();
-    } finally {
-      setPending((prev) => {
-        const next = new Set(prev);
-        next.delete(surfaceId);
-        return next;
-      });
-    }
-  }, []);
+  const onOperationError = props.onOperationError;
+  const withPending = useCallback(
+    async (surfaceId: HamSurfaceId, type: HamCanvasOperationType, run: () => Promise<void>) => {
+      setPending((prev) => new Set(prev).add(surfaceId));
+      try {
+        await run();
+      } catch (error) {
+        // Surface the rejection rather than letting it become an unhandled
+        // promise rejection; the host owns recovery.
+        onOperationError?.({ type, surfaceId, error });
+      } finally {
+        setPending((prev) => {
+          const next = new Set(prev);
+          next.delete(surfaceId);
+          return next;
+        });
+      }
+    },
+    [onOperationError],
+  );
 
   const addSibling = useCallback(
     async (
@@ -136,7 +150,7 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
           ? (group.find((e) => e.id === afterEdgeId)?.order ?? group.length - 1) + 1
           : group.length); // default: append
       const { shiftedSiblingOrders } = computeSiblingInsert(group, insertOrder);
-      await withPending(fromSurfaceId, async () => {
+      await withPending(fromSurfaceId, "create-sibling", async () => {
         const result = await props.handlers.createSiblingSurface!({
           fromSurfaceId,
           fromBlockId,
@@ -159,7 +173,9 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         await addSibling(event.surfaceId, event.blockId);
         return;
       }
-      await withPending(event.surfaceId, async () => {
+      // Respect the behavior flag even if a stray affordance fired.
+      if (!behavior.enableBranchCreation) return;
+      await withPending(event.surfaceId, "create-branch", async () => {
         const result = await props.handlers.createSurfaceFromBlock({
           sourceSurfaceId: event.surfaceId,
           sourceBlockId: event.blockId,
@@ -173,7 +189,7 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         }
       });
     },
-    [props.handlers, withPending, activate, addSibling],
+    [props.handlers, behavior.enableBranchCreation, withPending, activate, addSibling],
   );
 
   const reorderSiblings = useCallback(
@@ -184,7 +200,7 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       const orderedSurfaceIds = orderedEdgeIds.map(
         (id) => edgesRef.current.find((e) => e.id === id)!.toSurfaceId,
       );
-      await withPending(fromSurfaceId, async () => {
+      await withPending(fromSurfaceId, "reorder-siblings", async () => {
         await props.handlers.reorderBranchSiblings!({
           fromSurfaceId,
           fromBlockId,
@@ -217,7 +233,21 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
           }
         }
       }
-      await withPending(surfaceId, async () => {
+      // Enforce the protective built-in policy package-side (spec §8.4) so a
+      // host can't accidentally delete a subtree behind the default policy.
+      if (
+        behavior.deleteSurfacePolicy === "prevent-if-has-children" &&
+        descendantSurfaceIds.length
+      ) {
+        onOperationError?.({
+          type: "delete-surface",
+          surfaceId,
+          blocked: true,
+          reason: 'deleteSurfacePolicy is "prevent-if-has-children" and this surface has children',
+        });
+        return;
+      }
+      await withPending(surfaceId, "delete-surface", async () => {
         await props.handlers.deleteSurface!({
           surfaceId,
           ...(incomingEdgeId ? { incomingEdgeId } : {}),
@@ -239,7 +269,14 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         });
       });
     },
-    [props.handlers, behavior.deleteSurfacePolicy, withPending, activate, props.rootSurfaceId],
+    [
+      props.handlers,
+      behavior.deleteSurfacePolicy,
+      withPending,
+      activate,
+      props.rootSurfaceId,
+      onOperationError,
+    ],
   );
 
   const activePath = useMemo(

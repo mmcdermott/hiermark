@@ -141,6 +141,9 @@ describe("HamCanvas", () => {
           surfaces={surfaces}
           branchEdges={edges}
           handlers={handlers}
+          // Deleting an ancestor requires a subtree policy; the default
+          // "prevent-if-has-children" now blocks it package-side.
+          behavior={{ deleteSurfacePolicy: "delete-subtree" }}
           onActiveChange={onActiveChange}
         />
       );
@@ -428,6 +431,141 @@ describe("HamCanvas", () => {
     fireEvent.click(sibBtn!);
     await waitFor(() => expect(createSiblingSurface).toHaveBeenCalled());
     expect(createSiblingSurface.mock.calls[0]![0].fromSurfaceId).toBe("s_root");
+  });
+
+  it("blocks deleting a surface with children under the default policy and reports it", async () => {
+    const deleteSurface = vi.fn(async () => {});
+    const onOperationError = vi.fn();
+    const surfaces = {
+      s_root: surface("s_root", "# Root\n\n## A", "Root"),
+      s_a: surface("s_a", "# A\n\n## inner", "A"),
+      s_b: surface("s_b", "# B", "B"),
+    };
+    const edges: HamBranchEdge[] = [
+      { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
+      { id: "e_b", fromSurfaceId: "s_a", fromBlockId: "blk_inner", toSurfaceId: "s_b", order: 0 },
+    ];
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={surfaces}
+        branchEdges={edges}
+        activeSurfaceId="s_root"
+        handlers={makeHandlers({ deleteSurface })}
+        onOperationError={onOperationError}
+      />,
+    );
+    // s_a has a child (s_b); deleting it must be refused package-side.
+    let del: HTMLElement | null = null;
+    await waitFor(() => {
+      del = container.querySelector<HTMLElement>('[data-surface-id="s_a"] .ham-surface-delete');
+      expect(del).not.toBeNull();
+    });
+    fireEvent.click(del!);
+    await waitFor(() =>
+      expect(onOperationError).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "delete-surface", surfaceId: "s_a", blocked: true }),
+      ),
+    );
+    expect(deleteSurface).not.toHaveBeenCalled();
+  });
+
+  it("hides the delete control when enableSurfaceDeletion is false", async () => {
+    const surfaces = {
+      s_root: surface("s_root", "# Root\n\n## A", "Root"),
+      s_a: surface("s_a", "# A", "A"),
+    };
+    const edges: HamBranchEdge[] = [
+      { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
+    ];
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={surfaces}
+        branchEdges={edges}
+        activeSurfaceId="s_root"
+        handlers={makeHandlers({ deleteSurface: vi.fn(async () => {}) })}
+        behavior={{ enableSurfaceDeletion: false }}
+      />,
+    );
+    await waitFor(() => expect(container.querySelector('[data-surface-id="s_a"]')).not.toBeNull());
+    expect(container.querySelector(".ham-surface-delete")).toBeNull();
+  });
+
+  it("hides every branch affordance when enableBranchCreation is false", async () => {
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={{ s_root: surface("s_root", "# Root\n\nBranch me.", "Root") }}
+        branchEdges={[]}
+        activeSurfaceId="s_root"
+        handlers={makeHandlers()}
+        behavior={{ enableBranchCreation: false }}
+      />,
+    );
+    await waitFor(() => expect(container.querySelector(".ham-editor")).not.toBeNull());
+    // Give the gutter a tick to settle, then assert no branch buttons exist.
+    await new Promise((r) => setTimeout(r, 50));
+    expect(container.querySelector(".ham-branch-button")).toBeNull();
+  });
+
+  it("passes editorDefaults through to the child editor (custom branch button)", async () => {
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={{ s_root: surface("s_root", "# Root\n\nBranch me.", "Root") }}
+        branchEdges={[]}
+        activeSurfaceId="s_root"
+        handlers={makeHandlers()}
+        editorDefaults={{
+          slots: {
+            BlockBranchButton: ({ onBranch }) => (
+              <button type="button" className="my-branch" onClick={onBranch}>
+                grow
+              </button>
+            ),
+          },
+        }}
+      />,
+    );
+    await waitFor(() => expect(container.querySelector(".my-branch")).not.toBeNull());
+    expect(container.querySelector(".ham-branch-button")).toBeNull();
+  });
+
+  it("shows a non-blank preview for a surface persisted as tiptap-json", async () => {
+    const jsonSurface: HamSurface = {
+      id: "s_a",
+      rootBlockId: "s_a_root",
+      title: "A",
+      content: {
+        kind: "tiptap-json",
+        json: {
+          type: "doc",
+          content: [{ type: "paragraph", content: [{ type: "text", text: "hello json world" }] }],
+        },
+      },
+    };
+    const edges: HamBranchEdge[] = [
+      { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
+    ];
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={{ s_root: surface("s_root", "# Root\n\n## A", "Root"), s_a: jsonSurface }}
+        branchEdges={edges}
+        activeSurfaceId="s_root"
+        handlers={makeHandlers()}
+      />,
+    );
+    // s_a is inactive → card preview; its tiptap-json text must be extracted.
+    let preview: HTMLElement | null = null;
+    await waitFor(() => {
+      preview = container.querySelector<HTMLElement>(
+        '[data-surface-id="s_a"] .ham-surface-preview',
+      );
+      expect(preview).not.toBeNull();
+    });
+    expect(preview!.textContent).toContain("hello json world");
   });
 
   it("renders custom SurfaceFrame and ColumnHeader slots", async () => {

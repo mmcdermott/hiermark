@@ -130,8 +130,6 @@ export interface HamCanvasLayoutConfig {
   /** Curvature of connector paths, 0 (straight) … 1 (deeply curved). Default 0.5. */
   connectorCurvature: number;
   autoScroll: boolean;
-  virtualizeColumns: boolean;
-  virtualizeSurfaces: boolean;
 }
 
 export type HamDeleteSurfacePolicy =
@@ -300,6 +298,28 @@ export interface HamCanvasHandle {
   getColumns(): HamCanvasColumn[];
 }
 
+export type HamCanvasOperationType =
+  | "create-branch"
+  | "create-sibling"
+  | "reorder-siblings"
+  | "delete-surface"
+  | "save-surface";
+
+/** A failed (or package-blocked) canvas operation, surfaced via `onOperationError`. */
+export interface HamCanvasOperationError {
+  type: HamCanvasOperationType;
+  surfaceId?: HamSurfaceId;
+  /** The rejection from the host handler, if any. */
+  error?: unknown;
+  /**
+   * Set when the package itself refused the operation before calling the host
+   * (e.g. `deleteSurfacePolicy: "prevent-if-has-children"` with descendants).
+   */
+  blocked?: boolean;
+  /** Human-readable reason when `blocked`. */
+  reason?: string;
+}
+
 export interface HamCanvasProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
   rootSurfaceId: HamSurfaceId;
   surfaces: Record<HamSurfaceId, HamSurface<SurfaceMeta>>;
@@ -321,6 +341,12 @@ export interface HamCanvasProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
 
   onReady?: (handle: HamCanvasHandle) => void;
   onActiveChange?: (active: { surfaceId: HamSurfaceId; blockId?: HamBlockId | null }) => void;
+  /**
+   * Called when a topology/save operation is rejected by a host handler, or
+   * refused package-side (e.g. a delete blocked by `deleteSurfacePolicy`).
+   * Without it, handler rejections are swallowed.
+   */
+  onOperationError?: (error: HamCanvasOperationError) => void;
 }
 
 export type { HamBranchRequestEvent };

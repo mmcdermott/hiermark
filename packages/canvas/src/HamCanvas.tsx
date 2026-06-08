@@ -71,6 +71,11 @@ function DefaultAddSiblingButton({ isAppend, onAddSibling }: HamAddSiblingButton
   );
 }
 
+/** Branch policy used when `behavior.enableBranchCreation` is false — nothing
+ * is branchable, so the editor renders no gutter affordances. Module-level so
+ * its identity is stable across renders. */
+const NO_BRANCH = () => false;
+
 function childrenForSurface(
   surfaceId: HamSurfaceId,
   props: HamCanvasProps,
@@ -126,15 +131,24 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveSurfaceRef = useRef(props.handlers.saveSurface);
   saveSurfaceRef.current = props.handlers.saveSurface;
+  const onOperationErrorRef = useRef(props.onOperationError);
+  onOperationErrorRef.current = props.onOperationError;
+  const runSave = () => {
+    const handle = handleRef.current;
+    const save = saveSurfaceRef.current;
+    if (!handle || !save) return;
+    // Report a rejected save rather than dropping it on the floor.
+    void handle
+      .save()
+      .then((payload) => save(payload))
+      .catch((error: unknown) =>
+        onOperationErrorRef.current?.({ type: "save-surface", surfaceId: surface.id, error }),
+      );
+  };
   const scheduleSave = () => {
     if (!saveSurfaceRef.current) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      const handle = handleRef.current;
-      const save = saveSurfaceRef.current;
-      if (!handle || !save) return;
-      void handle.save().then((payload) => save(payload));
-    }, 800);
+    saveTimer.current = setTimeout(runSave, 800);
   };
   // Flush any pending edit on unmount so edits aren't lost when the surface
   // leaves the projection (navigation/reshape), not only when the timer fires.
@@ -142,10 +156,10 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
     () => () => {
       if (!saveTimer.current) return;
       clearTimeout(saveTimer.current);
-      const handle = handleRef.current;
-      const save = saveSurfaceRef.current;
-      if (handle && save) void handle.save().then((payload) => save(payload));
+      runSave();
     },
+    // runSave reads everything via refs; safe to run once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
@@ -163,9 +177,15 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
   const Frame = props.slots?.SurfaceFrame;
   const HeaderSlot = props.slots?.SurfaceHeader;
   const PreviewSlot = props.slots?.SurfacePreview;
+  const behavior = resolveBehavior(props.behavior);
   const onActivate = () => canvas.actions.activate(surface.id, null);
-  const canDelete = !!item.incomingEdge && !!props.handlers.deleteSurface;
-  const canAddSiblingFromHeader = !!item.incomingEdge && !!props.handlers.createSiblingSurface;
+  // Affordances honor the behavior flags, not just handler presence.
+  const canDelete =
+    !!item.incomingEdge && !!props.handlers.deleteSurface && behavior.enableSurfaceDeletion;
+  const canAddSiblingFromHeader =
+    !!item.incomingEdge &&
+    !!props.handlers.createSiblingSurface &&
+    behavior.enableSiblingBranchCreation;
 
   const previewNode = PreviewSlot ? (
     <PreviewSlot item={item} onActivate={onActivate} />
@@ -253,6 +273,9 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
     >
       {item.displayMode === "expanded" ? (
         <HamEditor
+          // Host-provided editor defaults flow through first; the canvas-owned
+          // wiring below (content, branch handlers, snapshot) always wins.
+          {...props.editorDefaults}
           surfaceId={surface.id}
           rootBlockId={surface.rootBlockId}
           value={surface.content}
@@ -260,7 +283,9 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
           editable={!surface.readonly}
           activeBlockId={canvas.activeBlockId}
           branchChildren={childrenForSurface(surface.id, props, activeSurfaceSet)}
-          branchPolicy={resolveBehavior(props.behavior).branchPolicy}
+          // Disabling branch creation hides every gutter affordance (the action
+          // is guarded too); otherwise use the configured policy.
+          branchPolicy={behavior.enableBranchCreation ? behavior.branchPolicy : NO_BRANCH}
           {...(props.annotationRegistry ? { annotations: props.annotationRegistry } : {})}
           {...(props.annotationContext !== undefined
             ? { annotationContext: props.annotationContext }
@@ -353,14 +378,26 @@ function OutlineBody({
   );
 }
 
-function previewText(content: { kind: string; markdown?: string }): string {
-  if (content.kind === "markdown" && content.markdown) {
-    return content.markdown
+/** Recursively collect text from a Tiptap/ProseMirror JSON document so a card
+ * preview isn't blank when a surface was persisted as `tiptap-json`. */
+function tiptapText(node: unknown): string {
+  if (!node || typeof node !== "object") return "";
+  const n = node as { text?: unknown; content?: unknown };
+  if (typeof n.text === "string") return n.text;
+  if (Array.isArray(n.content)) return n.content.map(tiptapText).join(" ");
+  return "";
+}
+
+function previewText(content: { kind: string; markdown?: string; json?: unknown }): string {
+  const clean = (s: string) =>
+    s
       .replace(/[#>*_`-]/g, "")
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 240);
-  }
+  if (content.kind === "markdown" && content.markdown) return clean(content.markdown);
+  if (content.kind === "tiptap-json" && content.json !== undefined)
+    return clean(tiptapText(content.json));
   return "";
 }
 
@@ -546,6 +583,13 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
           {
             "--ham-column-gap": `${layout.columnGap}px`,
             "--ham-surface-gap": `${layout.surfaceGap}px`,
+            "--ham-column-width": `${layout.columnWidth}px`,
+            "--ham-expanded-column-width": `${layout.expandedColumnWidth}px`,
+            "--ham-rail-column-width": `${layout.railColumnWidth}px`,
+            "--ham-min-surface-height": `${layout.minSurfaceHeight}px`,
+            ...(layout.maxSurfaceHeight != null
+              ? { "--ham-max-surface-height": `${layout.maxSurfaceHeight}px` }
+              : {}),
             padding: layout.padding,
           } as CSSProperties
         }
@@ -556,75 +600,82 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         onMouseOver={onPointerOver}
         onMouseLeave={() => hovered && setHovered(null)}
       >
-        {canvas.columns.map((column) => (
-          <div
-            className="ham-column"
-            key={column.depth}
-            data-depth={column.depth}
-            role="group"
-            aria-label={`Column ${column.depth + 1}`}
-          >
-            {ColumnHeader && <ColumnHeader depth={column.depth} count={column.items.length} />}
-            {column.items.length === 0 && EmptyColumn ? (
-              <EmptyColumn depth={column.depth} />
-            ) : (
-              groupColumn(column).map((group) => {
-                const sortable = reorderEnabled && group.items.length > 1;
-                const anchor = group.items[0]?.incomingEdge;
-                // A rail of insert points renders only for real sibling groups
-                // (anchored to a parent block) when sibling creation is enabled.
-                const showInserters = canAddSibling && !!anchor;
-                const inserter = (
-                  afterEdgeId: string | undefined,
-                  insertOrder: number,
-                  isAppend: boolean,
-                ) => (
-                  <AddSib
-                    key={`add-${group.key}-${insertOrder}`}
-                    fromSurfaceId={anchor!.fromSurfaceId}
-                    fromBlockId={anchor!.fromBlockId}
-                    {...(afterEdgeId ? { afterEdgeId } : {})}
-                    insertOrder={insertOrder}
-                    siblingCount={group.items.length}
-                    isAppend={isAppend}
-                    onAddSibling={() =>
-                      void canvas.actions.addSibling(anchor!.fromSurfaceId, anchor!.fromBlockId, {
-                        insertOrder,
-                        ...(afterEdgeId ? { afterEdgeId } : {}),
-                      })
-                    }
-                  />
-                );
-                return (
-                  <SortableContext
-                    key={group.key}
-                    items={group.items.map((i) => i.incomingEdge?.id ?? i.surface.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {showInserters && inserter(undefined, 0, false)}
-                    {group.items.map((item, i) => (
-                      <Fragment key={item.surface.id}>
-                        <SurfaceItem
-                          item={item as HamCanvasItem}
-                          canvas={canvas}
-                          props={props as HamCanvasProps}
-                          sortable={sortable}
-                          depth={column.depth}
-                        />
-                        {showInserters &&
-                          inserter(
-                            item.incomingEdge!.id,
-                            item.incomingEdge!.order + 1,
-                            i === group.items.length - 1,
-                          )}
-                      </Fragment>
-                    ))}
-                  </SortableContext>
-                );
-              })
-            )}
-          </div>
-        ))}
+        {canvas.columns.map((column) => {
+          // The active column widens to expandedColumnWidth when activeColumnMode
+          // is "expanded" (so the focused level gets more room).
+          const isActiveColumn =
+            layout.activeColumnMode === "expanded" &&
+            column.items.some((i) => i.surface.id === canvas.activeSurfaceId);
+          return (
+            <div
+              className={"ham-column" + (isActiveColumn ? " ham-column-active" : "")}
+              key={column.depth}
+              data-depth={column.depth}
+              role="group"
+              aria-label={`Column ${column.depth + 1}`}
+            >
+              {ColumnHeader && <ColumnHeader depth={column.depth} count={column.items.length} />}
+              {column.items.length === 0 && EmptyColumn ? (
+                <EmptyColumn depth={column.depth} />
+              ) : (
+                groupColumn(column).map((group) => {
+                  const sortable = reorderEnabled && group.items.length > 1;
+                  const anchor = group.items[0]?.incomingEdge;
+                  // A rail of insert points renders only for real sibling groups
+                  // (anchored to a parent block) when sibling creation is enabled.
+                  const showInserters = canAddSibling && !!anchor;
+                  const inserter = (
+                    afterEdgeId: string | undefined,
+                    insertOrder: number,
+                    isAppend: boolean,
+                  ) => (
+                    <AddSib
+                      key={`add-${group.key}-${insertOrder}`}
+                      fromSurfaceId={anchor!.fromSurfaceId}
+                      fromBlockId={anchor!.fromBlockId}
+                      {...(afterEdgeId ? { afterEdgeId } : {})}
+                      insertOrder={insertOrder}
+                      siblingCount={group.items.length}
+                      isAppend={isAppend}
+                      onAddSibling={() =>
+                        void canvas.actions.addSibling(anchor!.fromSurfaceId, anchor!.fromBlockId, {
+                          insertOrder,
+                          ...(afterEdgeId ? { afterEdgeId } : {}),
+                        })
+                      }
+                    />
+                  );
+                  return (
+                    <SortableContext
+                      key={group.key}
+                      items={group.items.map((i) => i.incomingEdge?.id ?? i.surface.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {showInserters && inserter(undefined, 0, false)}
+                      {group.items.map((item, i) => (
+                        <Fragment key={item.surface.id}>
+                          <SurfaceItem
+                            item={item as HamCanvasItem}
+                            canvas={canvas}
+                            props={props as HamCanvasProps}
+                            sortable={sortable}
+                            depth={column.depth}
+                          />
+                          {showInserters &&
+                            inserter(
+                              item.incomingEdge!.id,
+                              item.incomingEdge!.order + 1,
+                              i === group.items.length - 1,
+                            )}
+                        </Fragment>
+                      ))}
+                    </SortableContext>
+                  );
+                })
+              )}
+            </div>
+          );
+        })}
         <HamConnectorsOverlay
           rootRef={rootRef}
           edges={props.branchEdges}

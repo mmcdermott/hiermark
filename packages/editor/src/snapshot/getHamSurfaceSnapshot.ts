@@ -37,6 +37,11 @@ function directItemText(node: PMNode): string {
  * Pure and synchronous over `doc`. Callers that branch or save must capture the
  * snapshot *before* awaiting (spec §5.7), since the editor may be destroyed by
  * the time an async run executes.
+ *
+ * A block node without a `dataBlockId` attr gets a freshly generated id in the
+ * snapshot, but this does **not** write the id back into the document — it's a
+ * pure fallback. Use the live `BlockId` extension (inside `HamEditor`) for ids
+ * that persist on the doc.
  */
 export function surfaceSnapshotFromDoc(
   doc: PMNode,

@@ -308,8 +308,19 @@ export interface HamEditorHandle {
 
 export interface HamEditorProps<AnnotationData = unknown> {
   surfaceId: HamSurfaceId;
+  /**
+   * Identity of the synthetic root block. Block ids are **surface-scoped**, so
+   * the constant default (`"blk_root"`) is safe — don't treat block ids as
+   * globally unique across surfaces.
+   */
   rootBlockId?: HamBlockId;
 
+  /**
+   * **Mount-time content only** — captured once when the editor mounts; later
+   * changes to `value` are NOT applied (this is not a controlled input). To
+   * replace content after mount, remount with a new React `key`, or seed a fresh
+   * surface. A controlled `value` / `defaultValue` split may arrive later.
+   */
   value: HamEditorContent;
   title?: string;
   editable?: boolean;
@@ -331,6 +342,11 @@ export interface HamEditorProps<AnnotationData = unknown> {
   className?: string;
 
   onReady?: (handle: HamEditorHandle) => void;
+  /**
+   * Fires on every edit. The emitted content is `tiptap-json` (cheap); the
+   * markdown serialization is produced only by {@link HamEditorHandle.save} /
+   * the save payload, not on every keystroke.
+   */
   onChange?: (event: HamEditorChangeEvent) => void;
   onSnapshotChange?: (snapshot: HamSurfaceSnapshot) => void;
   onBlockEvents?: (events: HamBlockEvent[]) => void;

@@ -27,8 +27,13 @@
   flex-direction: column;
   gap: var(--ham-surface-gap);
   flex: 0 0 auto;
-  min-width: 280px;
-  max-width: 560px;
+  /* Driven by layout.columnWidth (fallback keeps a sane default if unset). */
+  width: var(--ham-column-width, 520px);
+  min-width: 240px;
+}
+/* The focused column widens when layout.activeColumnMode === "expanded". */
+.ham-column-active {
+  width: var(--ham-expanded-column-width, 720px);
 }
 
 .ham-surface {
@@ -101,6 +106,10 @@
 }
 
 .ham-surface-body {
+  /* Driven by layout.minSurfaceHeight / maxSurfaceHeight. */
+  min-height: var(--ham-min-surface-height, 0);
+  max-height: var(--ham-max-surface-height, none);
+  overflow-y: auto;
   padding: 12px 14px;
 }
 
@@ -190,7 +199,8 @@
 }
 
 .ham-surface-mode-rail {
-  min-width: 200px;
+  /* Driven by layout.railColumnWidth. */
+  min-width: var(--ham-rail-column-width, 220px);
 }
 
 /* Cross-column connectors ---------------------------------------------------- */

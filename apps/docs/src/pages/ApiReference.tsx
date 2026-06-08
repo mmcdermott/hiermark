@@ -100,6 +100,12 @@ const CANVAS_API: ApiEntry[] = [
       "Resolve a positioned sibling insert into a dense group: the new edge's order + the displaced siblings' renumber.",
   },
   {
+    name: "validateHamTopology",
+    kind: "function",
+    summary:
+      "Pure validator: reports missing/duplicate-incoming/cyclic/unreachable surfaces so a host can catch invalid topology the tolerant projection hides.",
+  },
+  {
     name: "HamCanvasProps / HamCanvasHandlers / HamSurface / HamBranchEdge",
     kind: "type",
     summary: "The core canvas types and the host handler contract.",
