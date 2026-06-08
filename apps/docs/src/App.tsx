@@ -127,8 +127,10 @@ const SECTIONS: Section[] = [
         <h2>Real-time collaboration</h2>
         <p className="lede">
           Each surface can be collaborative via Yjs. The editor owns the document and only binds
-          after the provider syncs, so initial content is never duplicated. Below, two editors share
-          one in-memory Yjs document (no server needed for the demo).
+          after the provider syncs, so initial content is never duplicated — and{" "}
+          <strong>remote cursors are shown by default</strong> (a colored, labeled caret per editor)
+          so collaborators don&apos;t edit the same spot. Below, two peers relay edits and presence
+          in-memory (no server needed for the demo).
         </p>
         <CollabDemo />
       </section>

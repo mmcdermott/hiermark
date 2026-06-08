@@ -42,6 +42,7 @@ import type {
   HamBranchMode,
   HamBranchRequestEvent,
   HamCollaborationProvider,
+  HamCollaborationUser,
   HamEditorHandle,
   HamEditorProps,
   HamEditorSavePayload,
@@ -62,6 +63,21 @@ function findBlockPos(doc: Editor["state"]["doc"], blockId: HamBlockId): number 
     return undefined;
   });
   return found;
+}
+
+/** A readable, distinct caret color when the host doesn't supply one. */
+const CARET_COLORS = [
+  "#6f5cff",
+  "#0a7d4f",
+  "#c73b3b",
+  "#1b6ec2",
+  "#b5651d",
+  "#9b2fae",
+  "#138086",
+  "#d4793b",
+];
+function randomCaretColor(): string {
+  return CARET_COLORS[Math.floor(Math.random() * CARET_COLORS.length)]!;
 }
 
 function activeBlockIdAt(state: EditorState): HamBlockId | null {
@@ -544,6 +560,7 @@ function CollabHamEditor<AnnotationData = unknown>(props: HamEditorProps<Annotat
   useEffect(() => {
     let cancelled = false;
     let created: HamCollaborationProvider | null = null;
+    let onSynced: (() => void) | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
     void (async () => {
       try {
@@ -552,10 +569,15 @@ function CollabHamEditor<AnnotationData = unknown>(props: HamEditorProps<Annotat
         created = p;
         setProvider(p);
         if (p.synced) setSynced(true);
-        else
-          p.on("synced", () => {
-            if (!cancelled) setSynced(true);
-          });
+        else {
+          onSynced = () => {
+            if (cancelled) return;
+            setSynced(true);
+            // A real sync supersedes the timeout fallback.
+            if (timer) clearTimeout(timer);
+          };
+          p.on("synced", onSynced);
+        }
         // On timeout, unblock mounting but do NOT mark synced — seeding stays
         // gated on a real sync so late server state can't be duplicated.
         if (config.initialSyncTimeoutMs) {
@@ -570,6 +592,8 @@ function CollabHamEditor<AnnotationData = unknown>(props: HamEditorProps<Annotat
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
+      // Remove the sync listener (it would otherwise leak on a reused runtime).
+      if (created && onSynced) created.off("synced", onSynced);
       setProvider(null);
       setSynced(false);
       setTimedOut(false);
@@ -577,10 +601,20 @@ function CollabHamEditor<AnnotationData = unknown>(props: HamEditorProps<Annotat
     };
   }, [runtime, config.initialSyncTimeoutMs]);
 
+  // Always give the caret a name + color so remote cursors are visible by
+  // default (CollaborationCaret needs a user to render a labeled caret) — the
+  // host's user wins; otherwise we pick a stable random color for this session.
+  const user = useMemo<HamCollaborationUser>(
+    () => ({
+      name: config.user?.name ?? "Anonymous",
+      color: config.user?.color ?? randomCaretColor(),
+    }),
+    [config.user?.name, config.user?.color],
+  );
   // Stable collab binding so the inner editor's effects don't churn on identity.
   const collab = useMemo<HamCollabBinding | null>(
-    () => (provider ? { ydoc, provider, ...(config.user ? { user: config.user } : {}) } : null),
-    [ydoc, provider, config.user],
+    () => (provider ? { ydoc, provider, user } : null),
+    [ydoc, provider, user],
   );
 
   if (error) {

@@ -131,4 +131,47 @@ describe("collaboration", () => {
       expect(new Set(ids).size).toBe(ids.length);
     });
   });
+
+  it("removes the synced listener and destroys the provider on unmount (no leak)", async () => {
+    const ydoc = new Y.Doc();
+    const calls = { on: 0, off: 0, destroy: 0 };
+    let syncedHandler: (() => void) | null = null;
+    const provider: HamCollaborationProvider = {
+      synced: false, // starts unsynced, so the gate registers a "synced" listener
+      hasUnsyncedChanges: false,
+      on(event, handler) {
+        if (event === "synced") {
+          calls.on++;
+          syncedHandler = handler as () => void;
+        }
+      },
+      off(event) {
+        if (event === "synced") calls.off++;
+      },
+      destroy() {
+        calls.destroy++;
+      },
+    };
+    const runtime: HamCollaborationRuntime = { ydoc, connect: async () => provider };
+    let handle: HamEditorHandle | null = null;
+    const { unmount } = render(
+      <HamEditor
+        surfaceId="c"
+        rootBlockId="blk_c"
+        value={{ kind: "markdown", markdown: "" }}
+        collaboration={collabConfig(ydoc, runtime)}
+        onReady={(h) => {
+          handle = h;
+        }}
+      />,
+    );
+    // The gate registered exactly one "synced" listener; firing it mounts the editor.
+    await waitFor(() => expect(calls.on).toBe(1));
+    syncedHandler!();
+    await waitFor(() => expect(handle).not.toBeNull());
+
+    unmount();
+    expect(calls.off).toBe(1); // listener removed (the leak fix)
+    await waitFor(() => expect(calls.destroy).toBe(1)); // provider torn down
+  });
 });

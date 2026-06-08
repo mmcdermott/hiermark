@@ -136,6 +136,31 @@
   font-size: 1.04em;
 }
 
+/* Remote collaborator cursors (CollaborationCaret) — the extension sets each
+   user's color inline; these rules only handle layout. ----------------------- */
+.ham-editor .collaboration-cursor__caret {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  word-break: normal;
+  pointer-events: none;
+}
+.ham-editor .collaboration-cursor__label {
+  position: absolute;
+  top: -1.45em;
+  left: -1px;
+  padding: 1px 5px;
+  border-radius: 4px 4px 4px 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+  white-space: nowrap;
+  user-select: none;
+}
+
 /* Block hover host + active block ------------------------------------------ */
 .ham-block {
   position: relative;
