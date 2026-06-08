@@ -54,6 +54,20 @@ const child = (id: string, title: string, body: string): DemoCanvasState["surfac
   content: { kind: "markdown", markdown: `# ${title}\n\n${body}` },
 });
 
+// Tiptap-JSON block helpers so anchor blocks carry STABLE ids matching the edges
+// below — that's what makes block-anchored connectors, hover, and the group-header
+// provenance preview resolve to real blocks (a markdown seed gets random ids).
+const heading = (level: number, text: string, dataBlockId?: string) => ({
+  type: "heading",
+  attrs: { level, ...(dataBlockId ? { dataBlockId } : {}) },
+  content: [{ type: "text", text }],
+});
+const para = (text: string, dataBlockId?: string) => ({
+  type: "paragraph",
+  ...(dataBlockId ? { attrs: { dataBlockId } } : {}),
+  content: [{ type: "text", text }],
+});
+
 export const galleryCanvas: DemoCanvasState = {
   surfaces: {
     s_root: {
@@ -61,19 +75,43 @@ export const galleryCanvas: DemoCanvasState = {
       rootBlockId: "blk_root",
       title: "Roadmap",
       content: {
-        kind: "markdown",
-        markdown:
-          "# Product roadmap\n\nWhere the project is heading this year.\n\n## Q1 goals\n\nShip the core editor and canvas.\n\n## Q2 goals\n\nCollaboration and offline sync.",
+        kind: "tiptap-json",
+        json: {
+          type: "doc",
+          content: [
+            heading(1, "Product roadmap"),
+            para("Where the project is heading this year."),
+            heading(2, "Q1 goals", "blk_q1"),
+            para("Ship the core editor and canvas."),
+            heading(2, "Q2 goals", "blk_q2"),
+            para("Collaboration and offline sync."),
+          ],
+        },
       },
     },
     s_q1a: child("s_q1a", "Editor MVP", "Block ids, snapshots, the branch gutter."),
     s_q1b: child("s_q1b", "Canvas MVP", "Columns, active path, reorder."),
     s_q1c: child("s_q1c", "Docs site", "Live demos and an API reference."),
-    s_q2a: child("s_q2a", "Realtime", "Yjs-backed collaborative surfaces."),
+    s_q2a: {
+      id: "s_q2a",
+      rootBlockId: "s_q2a_root",
+      title: "Realtime",
+      content: {
+        kind: "tiptap-json",
+        json: {
+          type: "doc",
+          content: [
+            heading(1, "Realtime"),
+            para("Yjs-backed collaborative surfaces.", "blk_q2a_body"),
+          ],
+        },
+      },
+    },
     s_deep: child("s_deep", "CRDT notes", "Why Yjs, and how snapshots reconcile."),
   },
-  // Three siblings off the Q1 block (a visible add-sibling rail), one off Q2,
-  // and a grandchild so there are three columns of connectors.
+  // Three siblings off the Q1 heading (a visible add-sibling rail), one off Q2,
+  // and a grandchild so there are three columns of connectors. fromBlockId values
+  // match the stable dataBlockId attrs seeded above.
   branchEdges: [
     { id: "e_q1a", fromSurfaceId: "s_root", fromBlockId: "blk_q1", toSurfaceId: "s_q1a", order: 0 },
     { id: "e_q1b", fromSurfaceId: "s_root", fromBlockId: "blk_q1", toSurfaceId: "s_q1b", order: 1 },
@@ -82,7 +120,7 @@ export const galleryCanvas: DemoCanvasState = {
     {
       id: "e_deep",
       fromSurfaceId: "s_q2a",
-      fromBlockId: "s_q2a_root",
+      fromBlockId: "blk_q2a_body",
       toSurfaceId: "s_deep",
       order: 0,
     },

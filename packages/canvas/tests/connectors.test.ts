@@ -46,6 +46,16 @@ describe("visibleEdges", () => {
     }).map((e) => e.id);
     expect(byBlock).toEqual(["e_b"]);
   });
+
+  it("falls back to surface-level edges when the hovered block has none of its own", () => {
+    // Hovering a block that isn't an anchor (or an id that doesn't resolve) still
+    // shows the surface's edges rather than nothing.
+    const shown = visibleEdges("hover", edges, activePath, {
+      surfaceId: "s_root",
+      blockId: "blk_unrelated",
+    }).map((e) => e.id);
+    expect(shown.sort()).toEqual(["e_a", "e_a2", "e_b"]);
+  });
 });
 
 describe("connectorState", () => {

@@ -44,13 +44,17 @@ export function visibleEdges<E>(
             e.fromBlockId === activePath.activeBlockId),
       );
     }
-    case "hover":
+    case "hover": {
       if (!hovered) return [];
-      return edges.filter(
-        (e) =>
-          e.fromSurfaceId === hovered.surfaceId &&
-          (!hovered.blockId || e.fromBlockId === hovered.blockId),
-      );
+      const fromSurface = edges.filter((e) => e.fromSurfaceId === hovered.surfaceId);
+      if (!hovered.blockId) return fromSurface;
+      // Narrow to the hovered block's own branches, but only if it actually has
+      // any — otherwise fall back to every edge from the surface. This keeps
+      // hover responsive anywhere on a surface (not just exactly on an anchor
+      // block) and robust to anchor ids that don't resolve to a rendered block.
+      const fromBlock = fromSurface.filter((e) => e.fromBlockId === hovered.blockId);
+      return fromBlock.length ? fromBlock : fromSurface;
+    }
     default:
       return [];
   }

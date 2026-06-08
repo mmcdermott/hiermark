@@ -44,6 +44,26 @@ describe("HamEditor", () => {
     });
   });
 
+  it("preserves explicit dataBlockId attrs from seeded tiptap-json", async () => {
+    // The canvas seeds anchor blocks with stable ids so branch edges / connectors
+    // resolve to real blocks — that relies on BlockId keeping explicit unique ids.
+    const { getHandle } = await mountEditor({
+      value: {
+        kind: "tiptap-json",
+        json: {
+          type: "doc",
+          content: [
+            { type: "heading", attrs: { level: 2, dataBlockId: "blk_anchor" }, content: [{ type: "text", text: "Q1 goals" }] },
+            { type: "paragraph", content: [{ type: "text", text: "body" }] },
+          ],
+        },
+      },
+    });
+    const snap = getHandle().getSnapshot();
+    expect(snap.blocks["blk_anchor"]).toBeDefined();
+    expect(snap.blocks["blk_anchor"]!.textPreview).toContain("Q1 goals");
+  });
+
   it("emits a tree-shaped snapshot with heading containment", async () => {
     const { getHandle } = await mountEditor();
     const snap = getHandle().getSnapshot();

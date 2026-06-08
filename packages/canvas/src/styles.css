@@ -31,9 +31,14 @@
   width: var(--ham-column-width, 520px);
   min-width: 240px;
 }
-/* The focused column widens when layout.activeColumnMode === "expanded". */
+/* The focused column widens when layout.activeColumnMode === "expanded", and
+   GROWS to fill leftover horizontal space (so the editor uses a wide screen
+   instead of being capped at the column width). When columns overflow the
+   canvas there's no free space, so it just scrolls — no layout fight. */
 .ham-column-active {
+  flex-grow: 1;
   width: var(--ham-expanded-column-width, 720px);
+  max-width: 100%;
 }
 
 /* layout.columnScroll: each column scrolls vertically on its own (needs a
