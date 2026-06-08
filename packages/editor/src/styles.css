@@ -35,6 +35,30 @@
   padding: 2px var(--ham-gutter-right) 2px var(--ham-gutter-left);
 }
 
+/* Raw-markdown source mode (handle.setMode("source")) ----------------------- */
+.ham-editor .ham-source-editor {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 9em;
+  resize: vertical;
+  border: 1px solid var(--ham-surface-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fbfbfe;
+  color: var(--ham-text);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.86em;
+  line-height: 1.55;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+}
+.ham-editor .ham-source-editor:focus {
+  outline: none;
+  border-color: var(--ham-accent);
+}
+
 .ham-editor .ProseMirror > * {
   margin: 0.5em 0;
 }
