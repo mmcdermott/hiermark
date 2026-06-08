@@ -40,7 +40,14 @@ const EDITOR_API: ApiEntry[] = [
   {
     name: "createExampleAnnotationRegistry",
     kind: "function",
-    summary: "Bundled task / citation / mention / URL recognizers.",
+    summary:
+      "Bundled task / citation / mention / URL recognizers (citation & mention support @-search).",
+  },
+  {
+    name: "AnnotationSuggest / collectSuggestions",
+    kind: "function",
+    summary:
+      "Type-ahead: an annotation type's suggest {trigger, search} opens a searchable popover; choosing a candidate inserts its token, which the recognizers pick up.",
   },
   {
     name: "resolveBranchMode / isBranchable",

@@ -307,3 +307,47 @@
   padding: 10px 12px;
   font-size: 13px;
 }
+
+/* Annotation type-ahead (search) popover ------------------------------------ */
+.ham-suggest-popover {
+  z-index: 55;
+  min-width: 220px;
+  max-width: 360px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--ham-surface-bg);
+  border: 1px solid var(--ham-surface-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(20, 20, 30, 0.18);
+  padding: 4px;
+}
+.ham-suggest-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  padding: 5px 9px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ham-text);
+}
+.ham-suggest-item-active {
+  background: var(--ham-accent-soft);
+}
+.ham-suggest-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.ham-suggest-detail {
+  font-size: 11px;
+  color: var(--ham-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}

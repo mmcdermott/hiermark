@@ -97,6 +97,16 @@ export {
 } from "./annotations/plugin";
 export { AnnotationPopover, type OpenAnnotation } from "./annotations/AnnotationPopover";
 export {
+  AnnotationSuggest,
+  annotationSuggestKey,
+  collectSuggestions,
+  dismissAnnotationSuggest,
+  type AnnotationSuggestContext,
+  type AnnotationSuggestState,
+  type AnnotationSuggestOptions,
+} from "./annotations/suggest";
+export { SuggestPopover, type SuggestPopoverProps } from "./annotations/SuggestPopover";
+export {
   createExampleAnnotationRegistry,
   createTaskAnnotation,
   createCitationAnnotation,

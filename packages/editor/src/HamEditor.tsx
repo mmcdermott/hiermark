@@ -12,6 +12,13 @@ import {
   annotationLayerKey,
   type AnnotationLayerContext,
 } from "./annotations/plugin";
+import {
+  AnnotationSuggest,
+  dismissAnnotationSuggest,
+  type AnnotationSuggestContext,
+  type AnnotationSuggestState,
+} from "./annotations/suggest";
+import { SuggestPopover } from "./annotations/SuggestPopover";
 import { createHocuspocusCollab, flushAndDestroy } from "./collab/hocuspocus";
 import { BlockFold, blockFoldKey, type BlockFoldContext } from "./extensions/block-fold";
 import {
@@ -28,6 +35,7 @@ import {
 import { stripStableIds } from "./markdown/stable-id";
 import { getHamSurfaceSnapshot, surfaceSnapshotFromDoc } from "./snapshot/getHamSurfaceSnapshot";
 import type {
+  HamAnnotationSuggestion,
   HamBlockId,
   HamBranchChildSummary,
   HamBranchMode,
@@ -81,6 +89,16 @@ function HamEditorInner<AnnotationData = unknown>(
   const foldRef = useRef<BlockFoldContext | null>(null);
   // The annotation popover currently open (Floating UI).
   const [openAnnotation, setOpenAnnotation] = useState<OpenAnnotation | null>(null);
+  // The annotation type-ahead (search) state, plus the highlighted candidate.
+  const suggestCtxRef = useRef<AnnotationSuggestContext | null>(null);
+  const [suggest, setSuggest] = useState<AnnotationSuggestState>({
+    active: false,
+    trigger: null,
+    query: "",
+    range: null,
+    items: [],
+  });
+  const [suggestIndex, setSuggestIndex] = useState(0);
 
   const {
     surfaceId,
@@ -156,6 +174,7 @@ function HamEditorInner<AnnotationData = unknown>(
       BlockGutter.configure({ getContext: () => ctxRef.current }),
       BlockFold.configure({ getContext: () => foldRef.current }),
       AnnotationLayer.configure({ getContext: () => annoCtxRef.current }),
+      AnnotationSuggest.configure({ getContext: () => suggestCtxRef.current }),
     ],
     // Extensions are intentionally built once; surface/collab identity is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -284,6 +303,62 @@ function HamEditorInner<AnnotationData = unknown>(
     }
   }, [editor, props.annotations, props.annotationContext, surfaceId, rootBlockId]);
 
+  // Insert a chosen suggestion's literal text over the trigger + query range,
+  // then let the recognizers turn it into an annotation (e.g. an @key pill).
+  const commitSuggestion = useStable(
+    (item: HamAnnotationSuggestion) => {
+      if (!editor || !suggest.range) return;
+      const { from, to } = suggest.range;
+      editor
+        .chain()
+        .focus()
+        .command(({ tr }) => {
+          tr.insertText(item.insert, from, to);
+          return true;
+        })
+        .run();
+    },
+    [editor, suggest.range],
+  );
+
+  // Keep the type-ahead context current. The keydown handler (forwarded by the
+  // plugin while the popover is open) and the rendered highlight share one
+  // host-owned index, so they never disagree.
+  useEffect(() => {
+    suggestCtxRef.current = props.annotations
+      ? {
+          registry: props.annotations as AnnotationSuggestContext["registry"],
+          context: props.annotationContext ?? {},
+          onState: (state) => {
+            setSuggest(state);
+            setSuggestIndex(0);
+          },
+          onKeyDown: (event) => {
+            if (!suggest.active || suggest.items.length === 0) return false;
+            const n = suggest.items.length;
+            if (event.key === "ArrowDown") {
+              setSuggestIndex((i) => (i + 1) % n);
+              return true;
+            }
+            if (event.key === "ArrowUp") {
+              setSuggestIndex((i) => (i - 1 + n) % n);
+              return true;
+            }
+            if (event.key === "Enter" || event.key === "Tab") {
+              const item = suggest.items[suggestIndex] ?? suggest.items[0];
+              if (item) commitSuggestion(item);
+              return true;
+            }
+            if (event.key === "Escape") {
+              if (editor) dismissAnnotationSuggest(editor);
+              return true;
+            }
+            return false;
+          },
+        }
+      : null;
+  }, [editor, props.annotations, props.annotationContext, suggest, suggestIndex, commitSuggestion]);
+
   // Build and publish the imperative handle once the editor exists.
   useEffect(() => {
     if (!editor || !onReadyRef.current) return;
@@ -380,6 +455,13 @@ function HamEditorInner<AnnotationData = unknown>(
         type={openType}
         context={(props.annotationContext ?? {}) as AnnotationData}
         onClose={() => setOpenAnnotation(null)}
+      />
+      <SuggestPopover
+        state={suggest}
+        index={suggestIndex}
+        editor={editor}
+        onHover={setSuggestIndex}
+        onSelect={commitSuggestion}
       />
     </div>
   );
