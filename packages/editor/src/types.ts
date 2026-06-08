@@ -179,6 +179,36 @@ export interface HamAnnotationRenderProps<Ctx = unknown> {
   close?: () => void;
 }
 
+/** A candidate shown in the annotation search popover. */
+export interface HamAnnotationSuggestion {
+  /** Stable id (for React keys / dedup across types sharing a trigger). */
+  id: string;
+  /** Primary label shown in the list. */
+  label: string;
+  /** Optional secondary detail line (e.g. author / year, or `@handle`). */
+  detail?: string;
+  /**
+   * Literal text inserted in place of the trigger + query when chosen
+   * (e.g. `"@vaswani2017 "`). Inserted verbatim — not parsed as markdown.
+   */
+  insert: string;
+}
+
+/**
+ * Lets an annotation type drive a type-ahead: typing the `trigger` opens a
+ * popover whose candidates come from `search(query)`; choosing one inserts its
+ * `insert` text, which the recognizers then pick up (e.g. an `@key` pill). Pure
+ * over `context`, so the editor never interprets the domain.
+ */
+export interface HamAnnotationSuggestConfig<Ctx = unknown> {
+  /** Single character that opens the search (e.g. `"@"`). */
+  trigger: string;
+  /** Allow spaces inside the query (default false — query ends at whitespace). */
+  allowSpaces?: boolean;
+  /** Ranked candidates for the current query. */
+  search: (query: string, context: Ctx) => HamAnnotationSuggestion[];
+}
+
 export interface HamAnnotationType<Ctx = unknown> {
   name: string;
   priority?: number;
@@ -189,6 +219,8 @@ export interface HamAnnotationType<Ctx = unknown> {
   opaqueBlock?: boolean;
   /** Extra CSS class for inline/decoration placements. */
   inlineClass?: (hit: HamAnnotationHit, context: Ctx) => string | undefined;
+  /** Type-ahead search for inserting this annotation (spec §5.13). */
+  suggest?: HamAnnotationSuggestConfig<Ctx>;
 }
 
 export interface HamAnnotationRegistry<Ctx = unknown> {

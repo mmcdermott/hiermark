@@ -33,10 +33,11 @@ export function EditorDemo() {
           }
         />
         <p className="demo-hint">
-          Hover a block for the <strong>+</strong> branch button on its right, click a heading's ▾
-          (left) to fold, and click the <code>@vaswani2017</code> citation or <code>@alice</code>{" "}
-          mention to open its popover. Type <code>[ ]</code> or <code>- [ ]</code> to make a
-          checklist.
+          Type <code>@</code> anywhere to <strong>search references &amp; people</strong> and insert
+          a citation/mention (↑/↓ to move, Enter to pick, Esc to dismiss). Hover a block for the{" "}
+          <strong>+</strong> branch button on its right, click a heading's ▾ (left) to fold, and
+          click an inserted <code>@vaswani2017</code> citation or <code>@alice</code> mention to
+          open its popover. Type <code>[ ]</code> or <code>- [ ]</code> to make a checklist.
         </p>
         {log.length > 0 && (
           <ul className="demo-log">

@@ -12,6 +12,14 @@ import {
   annotationLayerKey,
   type AnnotationLayerContext,
 } from "./annotations/plugin";
+import {
+  AnnotationSuggest,
+  annotationSuggestKey,
+  dismissAnnotationSuggest,
+  type AnnotationSuggestContext,
+  type AnnotationSuggestState,
+} from "./annotations/suggest";
+import { SuggestPopover } from "./annotations/SuggestPopover";
 import { createHocuspocusCollab, flushAndDestroy } from "./collab/hocuspocus";
 import { BlockFold, blockFoldKey, type BlockFoldContext } from "./extensions/block-fold";
 import {
@@ -28,6 +36,7 @@ import {
 import { stripStableIds } from "./markdown/stable-id";
 import { getHamSurfaceSnapshot, surfaceSnapshotFromDoc } from "./snapshot/getHamSurfaceSnapshot";
 import type {
+  HamAnnotationSuggestion,
   HamBlockId,
   HamBranchChildSummary,
   HamBranchMode,
@@ -81,6 +90,19 @@ function HamEditorInner<AnnotationData = unknown>(
   const foldRef = useRef<BlockFoldContext | null>(null);
   // The annotation popover currently open (Floating UI).
   const [openAnnotation, setOpenAnnotation] = useState<OpenAnnotation | null>(null);
+  // The annotation type-ahead (search) state, plus the highlighted candidate.
+  const suggestCtxRef = useRef<AnnotationSuggestContext | null>(null);
+  const [suggest, setSuggest] = useState<AnnotationSuggestState>({
+    active: false,
+    trigger: null,
+    query: "",
+    range: null,
+    items: [],
+  });
+  const [suggestIndex, setSuggestIndex] = useState(0);
+  // Mirror of the highlighted index for the keyboard handler — read synchronously
+  // so rapid keystrokes (e.g. ArrowDown then Enter) never act on a stale index.
+  const suggestIndexRef = useRef(0);
 
   const {
     surfaceId,
@@ -156,6 +178,7 @@ function HamEditorInner<AnnotationData = unknown>(
       BlockGutter.configure({ getContext: () => ctxRef.current }),
       BlockFold.configure({ getContext: () => foldRef.current }),
       AnnotationLayer.configure({ getContext: () => annoCtxRef.current }),
+      AnnotationSuggest.configure({ getContext: () => suggestCtxRef.current }),
     ],
     // Extensions are intentionally built once; surface/collab identity is stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -284,6 +307,85 @@ function HamEditorInner<AnnotationData = unknown>(
     }
   }, [editor, props.annotations, props.annotationContext, surfaceId, rootBlockId]);
 
+  // Set the highlighted index in both the ref (for the keyboard handler) and
+  // React state (for the render) so they can't diverge.
+  const setSuggestHighlight = useStable((next: number | ((i: number) => number)) => {
+    setSuggestIndex((i) => {
+      const v = typeof next === "function" ? next(i) : next;
+      suggestIndexRef.current = v;
+      return v;
+    });
+  }, []);
+
+  // Insert a chosen suggestion's literal text over the trigger + query range,
+  // then let the recognizers turn it into an annotation (e.g. an @key pill). The
+  // range is read from the live plugin state — never a captured (possibly stale)
+  // React value.
+  const commitSuggestion = useStable(
+    (item: HamAnnotationSuggestion) => {
+      if (!editor) return;
+      const range = annotationSuggestKey.getState(editor.state)?.suggest.range;
+      if (!range) return;
+      const { from, to } = range;
+      editor
+        .chain()
+        .focus()
+        .command(({ tr }) => {
+          tr.insertText(item.insert, from, to);
+          return true;
+        })
+        .run();
+    },
+    [editor],
+  );
+
+  // A STABLE keyboard handler: it reads the live items/range from plugin state
+  // and the index from a ref, so it's immune to React-render lag under rapid
+  // keystrokes (the plugin forwards keys to it while the popover is open).
+  const onSuggestKeyDown = useStable(
+    (event: KeyboardEvent): boolean => {
+      if (!editor) return false;
+      const st = annotationSuggestKey.getState(editor.state)?.suggest;
+      if (!st?.active || st.items.length === 0) return false;
+      const n = st.items.length;
+      if (event.key === "ArrowDown") {
+        setSuggestHighlight((i) => (i + 1) % n);
+        return true;
+      }
+      if (event.key === "ArrowUp") {
+        setSuggestHighlight((i) => (i - 1 + n) % n);
+        return true;
+      }
+      if (event.key === "Enter" || event.key === "Tab") {
+        const item = st.items[Math.min(suggestIndexRef.current, n - 1)] ?? st.items[0];
+        if (item) commitSuggestion(item);
+        return true;
+      }
+      if (event.key === "Escape") {
+        dismissAnnotationSuggest(editor);
+        return true;
+      }
+      return false;
+    },
+    [editor, commitSuggestion, setSuggestHighlight],
+  );
+
+  // Keep the type-ahead context current. onState/onKeyDown are stable, so the
+  // context is set once per editor — the plugin always sees a fresh handler.
+  useEffect(() => {
+    suggestCtxRef.current = props.annotations
+      ? {
+          registry: props.annotations as AnnotationSuggestContext["registry"],
+          context: props.annotationContext ?? {},
+          onState: (state) => {
+            setSuggest(state);
+            setSuggestHighlight(0);
+          },
+          onKeyDown: onSuggestKeyDown,
+        }
+      : null;
+  }, [props.annotations, props.annotationContext, onSuggestKeyDown, setSuggestHighlight]);
+
   // Build and publish the imperative handle once the editor exists.
   useEffect(() => {
     if (!editor || !onReadyRef.current) return;
@@ -380,6 +482,13 @@ function HamEditorInner<AnnotationData = unknown>(
         type={openType}
         context={(props.annotationContext ?? {}) as AnnotationData}
         onClose={() => setOpenAnnotation(null)}
+      />
+      <SuggestPopover
+        state={suggest}
+        index={suggestIndex}
+        editor={editor}
+        onHover={setSuggestIndex}
+        onSelect={commitSuggestion}
       />
     </div>
   );

@@ -63,6 +63,24 @@ export function createCitationAnnotation(): HamAnnotationType<Ctx> {
     render: ({ hit }) => (
       <span className="ham-annotation-chip ham-citation-chip">@{hit.label}</span>
     ),
+    // Type `@` to search the project's references and insert `@key`.
+    suggest: {
+      trigger: "@",
+      search: (query, context) => {
+        const q = query.toLowerCase();
+        return Object.entries(context.references ?? {})
+          .filter(
+            ([key, ref]) =>
+              key.toLowerCase().includes(q) || (ref.title ?? "").toLowerCase().includes(q),
+          )
+          .map(([key, ref]) => ({
+            id: `citation:${key}`,
+            label: key,
+            detail: [ref.title, ref.year].filter(Boolean).join(" · "),
+            insert: `@${key} `,
+          }));
+      },
+    },
   };
 }
 
@@ -96,6 +114,23 @@ export function createMentionAnnotation(): HamAnnotationType<Ctx> {
         @{(hit.data as { name?: string })?.name ?? hit.label}
       </span>
     ),
+    // Type `@` to search people and insert `@handle` (shown ahead of references).
+    suggest: {
+      trigger: "@",
+      search: (query, context) => {
+        const q = query.toLowerCase();
+        return Object.entries(context.people ?? {})
+          .filter(
+            ([key, p]) => key.toLowerCase().includes(q) || (p.name ?? "").toLowerCase().includes(q),
+          )
+          .map(([key, p]) => ({
+            id: `mention:${key}`,
+            label: p.name ?? key,
+            detail: `@${key}`,
+            insert: `@${key} `,
+          }));
+      },
+    },
   };
 }
 
