@@ -199,7 +199,9 @@ pre.block code {
 
 /* Demos --------------------------------------------------------------------- */
 .demo {
-  margin: 18px 0 8px;
+  /* Reclaim the prose padding so demos are wider than the text column (the
+     canvas needs room); ⛶ Expand still gives the full viewport. */
+  margin: 18px -56px 8px;
   border: 1px solid var(--doc-border);
   border-radius: 12px;
   overflow: hidden;
@@ -208,6 +210,10 @@ pre.block code {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* Wrap so demos with many controls (e.g. the styling gallery) never clip
+     their options — the controls flow onto a second row instead. */
+  flex-wrap: wrap;
+  gap: 8px 14px;
   background: #faf9ff;
   border-bottom: 1px solid var(--doc-border);
   padding: 8px 14px;
@@ -216,15 +222,18 @@ pre.block code {
   color: var(--doc-muted);
 }
 .demo-title {
-  white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .demo-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  justify-content: flex-end;
 }
 .demo-btn {
   border: 1px solid var(--doc-border);
@@ -328,7 +337,10 @@ pre.block code {
 }
 .demo-stage {
   overflow: auto;
-  resize: vertical;
+  /* Drag the bottom-right corner to resize the canvas in both directions (or
+     use ⛶ Expand for full-viewport). min-height keeps short demos usable. */
+  resize: both;
+  min-height: 320px;
 }
 
 /* Expand a demo to (almost) full-viewport so the canvas can use a wide screen. */
@@ -424,6 +436,9 @@ pre.block code {
   }
   .content {
     padding: 28px 20px;
+  }
+  .demo {
+    margin-inline: -20px;
   }
   .cards,
   .demo-collab {

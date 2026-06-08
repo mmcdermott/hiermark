@@ -125,11 +125,13 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
     ro.observe(root);
     root.querySelectorAll("[data-surface-id],[data-block-id]").forEach((el) => ro.observe(el));
     const onScroll = () => schedule();
-    root.addEventListener("scroll", onScroll, { passive: true });
+    // Capture phase so a column's own vertical scroll (layout.columnScroll), which
+    // doesn't bubble, also re-measures — otherwise lines lag a scrolled column.
+    root.addEventListener("scroll", onScroll, { passive: true, capture: true });
     window.addEventListener("resize", schedule);
     return () => {
       ro.disconnect();
-      root.removeEventListener("scroll", onScroll);
+      root.removeEventListener("scroll", onScroll, { capture: true } as EventListenerOptions);
       window.removeEventListener("resize", schedule);
       cancelAnimationFrame(raf.current);
     };

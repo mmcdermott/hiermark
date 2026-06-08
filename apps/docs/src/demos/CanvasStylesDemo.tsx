@@ -102,6 +102,8 @@ export function CanvasStylesDemo() {
   const [appearance, setAppearance] = useState<Appearance>("card");
   const [connectors, setConnectors] = useState<Connectors>("all");
   const [siblingStyle, setSiblingStyle] = useState<SiblingStyle>("plus");
+  const [groupHeaders, setGroupHeaders] = useState<"on" | "off">("off");
+  const [columnScroll, setColumnScroll] = useState<"on" | "off">("off");
 
   const slots = useMemo<HamCanvasSlots>(() => {
     const Btn = SIBLING_BUTTONS[siblingStyle];
@@ -110,9 +112,9 @@ export function CanvasStylesDemo() {
 
   return (
     <DemoFrame
-      title="@ham/canvas — appearances, connectors & a swappable add-sibling button"
+      title="@ham/canvas — appearances, connectors, swappable buttons & navigation"
       onReset={canvas.reset}
-      height={520}
+      height={560}
       controls={
         <span className="gallery-controls">
           <Segmented
@@ -146,6 +148,24 @@ export function CanvasStylesDemo() {
               { value: "dot", label: "Dot" },
             ]}
           />
+          <Segmented
+            label="Group headers"
+            value={groupHeaders}
+            onChange={setGroupHeaders}
+            options={[
+              { value: "off", label: "Off" },
+              { value: "on", label: "On" },
+            ]}
+          />
+          <Segmented
+            label="Column scroll"
+            value={columnScroll}
+            onChange={setColumnScroll}
+            options={[
+              { value: "off", label: "Off" },
+              { value: "on", label: "On" },
+            ]}
+          />
         </span>
       }
     >
@@ -159,6 +179,8 @@ export function CanvasStylesDemo() {
         layout={{
           appearance,
           showConnectors: connectors,
+          showGroupHeaders: groupHeaders === "on",
+          columnScroll: columnScroll === "on",
           inactiveColumnMode: "expanded",
         }}
       />

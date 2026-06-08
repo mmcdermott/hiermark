@@ -68,10 +68,12 @@ const SECTIONS: Section[] = [
         <p className="lede">
           The same tree, re-themed live. Switch <strong>cards</strong> between separate cards, flat
           columns that read as one holistic editor, and unstyled plain; toggle the cross-column{" "}
-          <strong>connector</strong> modes; and swap the <strong>add-sibling button</strong> for a
-          different component — it&apos;s passable just like the editor&apos;s branch button. Hover
-          a column to reveal the <strong>+</strong> rail between siblings to insert a branch at that
-          position.
+          <strong>connector</strong> modes; swap the <strong>add-sibling button</strong> for a
+          different component — it&apos;s passable just like the editor&apos;s branch button; turn
+          on <strong>group headers</strong> (a breadcrumb to each group&apos;s parent) and{" "}
+          <strong>column scroll</strong> (each level scrolls on its own, so selecting a surface
+          reveals its children). Hover a column to reveal the <strong>+</strong> rail between
+          siblings to insert a branch at that position; drag a card to reorder.
         </p>
         <CanvasStylesDemo />
       </section>

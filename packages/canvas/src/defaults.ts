@@ -15,6 +15,8 @@ export const defaultLayout: HamCanvasLayoutConfig = {
   showConnectors: "active",
   connectorCurvature: 0.5,
   autoScroll: true,
+  columnScroll: false,
+  showGroupHeaders: false,
 };
 
 export const defaultBehavior: HamCanvasBehaviorConfig = {

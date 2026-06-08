@@ -130,6 +130,19 @@ export interface HamCanvasLayoutConfig {
   /** Curvature of connector paths, 0 (straight) … 1 (deeply curved). Default 0.5. */
   connectorCurvature: number;
   autoScroll: boolean;
+  /**
+   * Give each column its own vertical scroll region (instead of one shared page
+   * scroll). With a bounded canvas height this lets you scroll deep into one
+   * column without moving the others — and makes "descend into a surface's
+   * children" (auto-scroll on activation) feel crisp. Default false.
+   */
+  columnScroll: boolean;
+  /**
+   * Render a small provenance header above each sibling group naming the parent
+   * surface / anchor block the group branches from. Default false. Customize via
+   * {@link HamCanvasSlots.GroupHeader}.
+   */
+  showGroupHeaders: boolean;
 }
 
 export type HamDeleteSurfacePolicy =
@@ -244,6 +257,22 @@ export interface HamColumnHeaderProps {
   count: number;
 }
 
+/** Provenance header above a sibling group: where this set of surfaces branches from. */
+export interface HamGroupHeaderProps<SurfaceMeta = unknown> {
+  /** Surface that owns the anchor block this group branches from. */
+  parentSurfaceId: HamSurfaceId;
+  /** The parent surface, if it's in the current projection. */
+  parentSurface?: HamSurface<SurfaceMeta>;
+  /** The anchor block id in the parent surface. */
+  anchorBlockId: HamBlockId;
+  /** A short text preview of the anchor block, if a snapshot is available. */
+  anchorPreview?: string;
+  /** Number of sibling surfaces in the group. */
+  count: number;
+  /** Activate the parent surface (focused on the anchor block). */
+  onActivateParent: () => void;
+}
+
 /** How prominently a connector is drawn, derived from the active path. */
 export type HamConnectorState = "active" | "ancestor" | "muted";
 
@@ -280,6 +309,8 @@ export interface HamCanvasSlots<SurfaceMeta = unknown, EdgeMeta = unknown> {
   SurfacePreview?: ComponentType<HamSurfacePreviewProps<SurfaceMeta, EdgeMeta>>;
   ColumnHeader?: ComponentType<HamColumnHeaderProps>;
   EmptyColumn?: ComponentType<{ depth: number }>;
+  /** Provenance header above each sibling group (when `layout.showGroupHeaders`). */
+  GroupHeader?: ComponentType<HamGroupHeaderProps<SurfaceMeta>>;
   /** Override per-edge connector rendering (must return an SVG element). */
   Connector?: ComponentType<HamConnectorRenderProps<EdgeMeta>>;
   /** Override the positioned add-sibling affordance in a column's sibling rail. */
@@ -291,9 +322,13 @@ export interface HamCanvasSlots<SurfaceMeta = unknown, EdgeMeta = unknown> {
 // ---------------------------------------------------------------------------
 
 export interface HamCanvasHandle {
+  /** Activate a surface (and scroll it into view). */
   focusSurface(surfaceId: HamSurfaceId): void;
+  /** Activate a surface focused on a specific block. */
   focusBlock(surfaceId: HamSurfaceId, blockId: HamBlockId): void;
   scrollSurfaceIntoView(surfaceId: HamSurfaceId): void;
+  /** Scroll a surface's child surfaces into view in the next column. */
+  revealChildren(surfaceId: HamSurfaceId): void;
   getActivePath(): HamActivePath;
   getColumns(): HamCanvasColumn[];
 }

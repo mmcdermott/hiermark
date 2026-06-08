@@ -4,6 +4,7 @@ import { render, waitFor, cleanup, fireEvent } from "@testing-library/react";
 import { HamCanvas } from "../src/HamCanvas";
 import type {
   HamBranchEdge,
+  HamCanvasHandle,
   HamCanvasHandlers,
   HamCreateSiblingSurfaceEvent,
   HamSurface,
@@ -566,6 +567,68 @@ describe("HamCanvas", () => {
       expect(preview).not.toBeNull();
     });
     expect(preview!.textContent).toContain("hello json world");
+  });
+
+  it("publishes an imperative canvas handle via onReady", async () => {
+    let handle: HamCanvasHandle | null = null;
+    render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={{ s_root: surface("s_root", "# Root", "Root") }}
+        branchEdges={[]}
+        handlers={makeHandlers()}
+        onReady={(h) => {
+          handle = h;
+        }}
+      />,
+    );
+    await waitFor(() => expect(handle).not.toBeNull());
+    expect(typeof handle!.focusSurface).toBe("function");
+    expect(typeof handle!.revealChildren).toBe("function");
+    expect(handle!.getColumns().map((c) => c.depth)).toEqual([0]);
+    expect(handle!.getActivePath().activeSurfaceId).toBe("s_root");
+  });
+
+  it("renders a sibling-group provenance header when showGroupHeaders is on", async () => {
+    const surfaces = {
+      s_root: surface("s_root", "# Root\n\n## A", "Root"),
+      s_a1: surface("s_a1", "# A1", "A1"),
+      s_a2: surface("s_a2", "# A2", "A2"),
+    };
+    const edges: HamBranchEdge[] = [
+      { id: "e_a1", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a1", order: 0 },
+      { id: "e_a2", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a2", order: 1 },
+    ];
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={surfaces}
+        branchEdges={edges}
+        activeSurfaceId="s_root"
+        handlers={makeHandlers()}
+        layout={{ showGroupHeaders: true }}
+      />,
+    );
+    let header: HTMLElement | null = null;
+    await waitFor(() => {
+      header = container.querySelector<HTMLElement>(".ham-group-header");
+      expect(header).not.toBeNull();
+    });
+    expect(header!.querySelector(".ham-group-header-parent")?.textContent).toBe("Root");
+  });
+
+  it("adds the column-scroll class when layout.columnScroll is set", async () => {
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={{ s_root: surface("s_root", "# Root", "Root") }}
+        branchEdges={[]}
+        handlers={makeHandlers()}
+        layout={{ columnScroll: true }}
+      />,
+    );
+    await waitFor(() => expect(container.querySelector(".ham-canvas")).not.toBeNull());
+    expect(container.querySelector(".ham-canvas.ham-columns-scroll")).not.toBeNull();
   });
 
   it("renders custom SurfaceFrame and ColumnHeader slots", async () => {

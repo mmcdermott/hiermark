@@ -36,6 +36,57 @@
   width: var(--ham-expanded-column-width, 720px);
 }
 
+/* layout.columnScroll: each column scrolls vertically on its own (needs a
+   bounded canvas height to be useful). */
+.ham-columns-scroll {
+  max-height: 100%;
+}
+.ham-columns-scroll .ham-column {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+/* Sibling-group provenance header (layout.showGroupHeaders). */
+.ham-group-header {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 2px 4px;
+  margin: 0;
+  font: inherit;
+  font-size: 11px;
+  color: var(--ham-muted);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ham-group-header:hover {
+  color: var(--ham-accent);
+}
+.ham-group-header-arrow {
+  flex: 0 0 auto;
+  opacity: 0.7;
+}
+.ham-group-header-parent {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ham-group-header-anchor {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Connectors can't track a surface mid-drag — fade them, re-snap on drop. */
+.ham-dragging .ham-connectors {
+  opacity: 0.25;
+  transition: opacity 0.1s ease;
+}
+
 .ham-surface {
   display: flex;
   flex-direction: column;

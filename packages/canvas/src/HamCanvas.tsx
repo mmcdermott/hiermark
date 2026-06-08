@@ -1,5 +1,6 @@
 import {
   Fragment,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -42,6 +43,7 @@ import type {
   HamCanvasColumn,
   HamCanvasItem,
   HamCanvasProps,
+  HamGroupHeaderProps,
   HamSurfaceId,
 } from "./types";
 
@@ -75,6 +77,26 @@ function DefaultAddSiblingButton({ isAppend, onAddSibling }: HamAddSiblingButton
  * is branchable, so the editor renders no gutter affordances. Module-level so
  * its identity is stable across renders. */
 const NO_BRANCH = () => false;
+
+/**
+ * Default sibling-group provenance header — a breadcrumb naming the parent
+ * surface (and anchor block, if known) a group of surfaces branches from.
+ */
+function DefaultGroupHeader({
+  parentSurface,
+  parentSurfaceId,
+  anchorPreview,
+  onActivateParent,
+}: HamGroupHeaderProps) {
+  const parent = parentSurface?.title ?? parentSurfaceId;
+  return (
+    <button type="button" className="ham-group-header" onClick={onActivateParent} title={parent}>
+      <span className="ham-group-header-arrow">↳</span>
+      <span className="ham-group-header-parent">{parent}</span>
+      {anchorPreview ? <span className="ham-group-header-anchor"> · {anchorPreview}</span> : null}
+    </button>
+  );
+}
 
 function childrenForSurface(
   surfaceId: HamSurfaceId,
@@ -430,6 +452,8 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   // Hover target for connector "hover" mode, tracked via delegation on the root
   // so it costs nothing in the other modes.
   const [hovered, setHovered] = useState<HamHoverTarget | null>(null);
+  // True while a surface is being dragged (fades connectors — see root class).
+  const [dragging, setDragging] = useState(false);
   const onPointerOver = (event: ReactMouseEvent<HTMLDivElement>) => {
     if (layout.showConnectors !== "hover") return;
     const target = event.target as HTMLElement;
@@ -500,15 +524,77 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     void canvas.actions.reorderSiblings(activeEdge.fromSurfaceId, activeEdge.fromBlockId, ordered);
   };
 
-  // Auto-scroll the active surface into view. Filter by attribute rather than
-  // interpolating the id into a selector (surface ids may contain CSS-special
-  // characters that would throw a SyntaxError).
+  // Find a surface card by id without interpolating the id into a selector
+  // (surface ids may contain CSS-special characters that would throw).
+  const surfaceEl = useCallback((surfaceId: HamSurfaceId): HTMLElement | undefined => {
+    const root = rootRef.current;
+    if (!root) return undefined;
+    return [...root.querySelectorAll<HTMLElement>("[data-surface-id]")].find(
+      (e) => e.getAttribute("data-surface-id") === surfaceId,
+    );
+  }, []);
+
+  const scrollSurfaceIntoView = useCallback(
+    (surfaceId: HamSurfaceId) => {
+      surfaceEl(surfaceId)?.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
+    },
+    [surfaceEl],
+  );
+
+  // "Descend into depth": bring a surface's child surfaces into view in the next
+  // column (the first child by order). With columnScroll the child group rises
+  // to the top of its column; otherwise it's nudged into view minimally.
+  const columnScroll = layout.columnScroll;
+  const revealChildren = useCallback(
+    (surfaceId: HamSurfaceId) => {
+      const first = props.branchEdges
+        .filter((e) => e.fromSurfaceId === surfaceId)
+        .sort((a, b) => a.order - b.order)[0];
+      if (!first) return;
+      surfaceEl(first.toSurfaceId)?.scrollIntoView({
+        behavior: "smooth",
+        block: columnScroll ? "start" : "nearest",
+        inline: "nearest",
+      });
+    },
+    [props.branchEdges, surfaceEl, columnScroll],
+  );
+
+  // Auto-scroll the active surface into view, then reveal its children so moving
+  // into a surface guides you toward what it branches into.
   useEffect(() => {
-    if (!layout.autoScroll || !rootRef.current) return;
-    const els = rootRef.current.querySelectorAll<HTMLElement>("[data-surface-id]");
-    const el = [...els].find((e) => e.getAttribute("data-surface-id") === canvas.activeSurfaceId);
-    el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [canvas.activeSurfaceId, layout.autoScroll]);
+    if (!layout.autoScroll) return;
+    scrollSurfaceIntoView(canvas.activeSurfaceId);
+    revealChildren(canvas.activeSurfaceId);
+  }, [canvas.activeSurfaceId, layout.autoScroll, scrollSurfaceIntoView, revealChildren]);
+
+  // Publish the imperative canvas handle once (live data via a ref).
+  const liveRef = useRef({ canvas, scrollSurfaceIntoView, revealChildren });
+  liveRef.current = { canvas, scrollSurfaceIntoView, revealChildren };
+  const handlePublished = useRef(false);
+  const onReady = props.onReady;
+  useEffect(() => {
+    if (handlePublished.current || !onReady) return;
+    handlePublished.current = true;
+    onReady({
+      focusSurface: (id) => {
+        liveRef.current.canvas.actions.activate(id, null);
+        liveRef.current.scrollSurfaceIntoView(id);
+      },
+      focusBlock: (id, blockId) => {
+        liveRef.current.canvas.actions.activate(id, blockId);
+        liveRef.current.scrollSurfaceIntoView(id);
+      },
+      scrollSurfaceIntoView: (id) => liveRef.current.scrollSurfaceIntoView(id),
+      revealChildren: (id) => liveRef.current.revealChildren(id),
+      getActivePath: () => liveRef.current.canvas.activePath,
+      getColumns: () => liveRef.current.canvas.columns,
+    });
+  }, [onReady]);
 
   const reorderEnabled = behavior.enableSurfaceReorder && !!props.handlers.reorderBranchSiblings;
   const canAddSibling =
@@ -516,6 +602,9 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   const AddSib = props.slots?.AddSiblingButton ?? DefaultAddSiblingButton;
   const ColumnHeader = props.slots?.ColumnHeader;
   const EmptyColumn = props.slots?.EmptyColumn;
+  const GroupHeader = layout.showGroupHeaders
+    ? (props.slots?.GroupHeader ?? DefaultGroupHeader)
+    : undefined;
 
   // Keyboard navigation across surfaces/columns (spec §9.1). Alt+Arrows move
   // along the path and among same-column siblings.
@@ -573,10 +662,27 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={() => setDragging(true)}
+      onDragEnd={(e) => {
+        setDragging(false);
+        onDragEnd(e);
+      }}
+      onDragCancel={() => setDragging(false)}
+    >
       <div
         ref={rootRef}
-        className={["ham-canvas", `ham-appearance-${layout.appearance}`, props.className]
+        className={[
+          "ham-canvas",
+          `ham-appearance-${layout.appearance}`,
+          layout.columnScroll ? "ham-columns-scroll" : "",
+          // While a surface is dragged, connectors can't track it live, so fade
+          // them to signal they're momentarily stale (re-snap on drop).
+          dragging ? "ham-dragging" : "",
+          props.className,
+        ]
           .filter(Boolean)
           .join(" ")}
         style={
@@ -651,6 +757,29 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
                       items={group.items.map((i) => i.incomingEdge?.id ?? i.surface.id)}
                       strategy={verticalListSortingStrategy}
                     >
+                      {GroupHeader && anchor && (
+                        <GroupHeader
+                          parentSurfaceId={anchor.fromSurfaceId}
+                          {...(props.surfaces[anchor.fromSurfaceId]
+                            ? { parentSurface: props.surfaces[anchor.fromSurfaceId]! }
+                            : {})}
+                          anchorBlockId={anchor.fromBlockId}
+                          {...(canvas.snapshotsBySurfaceId[anchor.fromSurfaceId]?.blocks[
+                            anchor.fromBlockId
+                          ]?.textPreview
+                            ? {
+                                anchorPreview:
+                                  canvas.snapshotsBySurfaceId[anchor.fromSurfaceId]!.blocks[
+                                    anchor.fromBlockId
+                                  ]!.textPreview,
+                              }
+                            : {})}
+                          count={group.items.length}
+                          onActivateParent={() =>
+                            canvas.actions.activate(anchor.fromSurfaceId, anchor.fromBlockId)
+                          }
+                        />
+                      )}
                       {showInserters && inserter(undefined, 0, false)}
                       {group.items.map((item, i) => (
                         <Fragment key={item.surface.id}>

@@ -114,13 +114,19 @@ const CANVAS_API: ApiEntry[] = [
     name: "HamCanvasLayoutConfig",
     kind: "type",
     summary:
-      'Layout: appearance ("card" | "flat" | "plain"), showConnectors ("off" | "all" | "active" | "hover"), column/surface sizing, and inactiveColumnMode.',
+      'Layout: appearance ("card" | "flat" | "plain"), showConnectors, column/surface sizing, inactiveColumnMode, columnScroll (per-column vertical scroll), and showGroupHeaders.',
   },
   {
     name: "HamCanvasSlots",
     kind: "type",
     summary:
-      "Replaceable chrome: SurfaceFrame / SurfaceHeader / SurfacePreview / ColumnHeader / EmptyColumn / Connector / AddSiblingButton.",
+      "Replaceable chrome: SurfaceFrame / SurfaceHeader / SurfacePreview / ColumnHeader / EmptyColumn / GroupHeader / Connector / AddSiblingButton.",
+  },
+  {
+    name: "HamCanvasHandle (onReady)",
+    kind: "type",
+    summary:
+      "Imperative canvas API: focusSurface / focusBlock / scrollSurfaceIntoView / revealChildren / getActivePath / getColumns.",
   },
 ];
 
