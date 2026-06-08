@@ -337,6 +337,32 @@ export interface HamCollaborationConfig {
 }
 
 // ---------------------------------------------------------------------------
+// Images / figures (host-owned storage)
+// ---------------------------------------------------------------------------
+
+/** The resolved location of an image after the host has stored it. */
+export interface HamUploadedImage {
+  /** Anything usable as an `<img src>`: an uploaded URL, object URL, or data URI. */
+  src: string;
+  /** Alt text; falls back to the file name when omitted. */
+  alt?: string;
+  title?: string;
+  width?: number;
+  height?: number;
+}
+
+/**
+ * Host hook that decides how an image is stored. The editor calls it for every
+ * pasted, dropped, or picker-selected image file and inserts the returned `src`
+ * — so storage (server upload, S3, object URL, base64, …) stays entirely the
+ * host's choice. Return `null` to skip a file (e.g. validation failed).
+ */
+export type HamImageUploadHandler = (
+  file: File,
+  context: { surfaceId: HamSurfaceId },
+) => Promise<HamUploadedImage | null>;
+
+// ---------------------------------------------------------------------------
 // Imperative handle (spec §5.8)
 // ---------------------------------------------------------------------------
 
@@ -354,6 +380,12 @@ export interface HamEditorHandle {
    * mount-time only). `emitUpdate` defaults to true (fires onChange/snapshot).
    */
   setContent(content: HamEditorContent, opts?: { emitUpdate?: boolean }): void;
+  /**
+   * Upload image files through {@link HamEditorProps.onImageUpload} and insert
+   * them at the cursor — the programmatic path for a host "insert image" button
+   * / file picker. No-op (resolves immediately) when no upload handler is set.
+   */
+  uploadImages(files: FileList | File[]): Promise<void>;
   collapseBlock(blockId: HamBlockId): void;
   expandBlock(blockId: HamBlockId): void;
   /**
@@ -398,6 +430,16 @@ export interface HamEditorProps<AnnotationData = unknown> {
   annotationContext?: AnnotationData;
 
   collaboration?: HamCollaborationConfig;
+
+  /**
+   * Enables image paste / drag-drop / picker insertion, routing each file
+   * through this handler so the host owns storage. Without it, image upload is
+   * inert (pasting an image file does nothing); `![alt](src)` markdown still
+   * renders regardless.
+   */
+  onImageUpload?: HamImageUploadHandler;
+  /** Reports an image upload rejection (the handler threw). */
+  onImageUploadError?: (error: unknown, file: File) => void;
 
   slots?: HamEditorSlots;
   className?: string;

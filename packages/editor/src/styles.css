@@ -93,6 +93,110 @@
   padding: 0;
 }
 
+/* Code block chrome: a header bar with the language picker + copy button ----- */
+.ham-editor .ham-code-block {
+  position: relative;
+  margin: 0.7em 0;
+}
+.ham-editor .ham-code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #1f1f2b;
+  color: #c7c7d6;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid #2c2c3a;
+  padding: 4px 7px 4px 9px;
+  font-size: 12px;
+  user-select: none;
+}
+.ham-editor .ham-code-block > pre {
+  margin: 0;
+  border-radius: 0 0 8px 8px;
+}
+.ham-editor .ham-code-lang {
+  background: transparent;
+  color: #c7c7d6;
+  border: 1px solid #3a3a4d;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 1px 4px;
+  cursor: pointer;
+}
+.ham-editor .ham-code-lang:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.ham-editor .ham-code-copy {
+  background: #2c2c3a;
+  color: #e7e7f3;
+  border: 1px solid #3a3a4d;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+.ham-editor .ham-code-copy:hover {
+  background: #39394d;
+}
+
+/* Syntax highlighting (lowlight / highlight.js token classes) — dark theme
+   tuned to the code block background. ---------------------------------------- */
+.ham-editor .ProseMirror pre code .hljs-comment,
+.ham-editor .ProseMirror pre code .hljs-quote {
+  color: #8a8aa0;
+  font-style: italic;
+}
+.ham-editor .ProseMirror pre code .hljs-keyword,
+.ham-editor .ProseMirror pre code .hljs-selector-tag,
+.ham-editor .ProseMirror pre code .hljs-tag,
+.ham-editor .ProseMirror pre code .hljs-doctag,
+.ham-editor .ProseMirror pre code .hljs-name {
+  color: #c792ea;
+}
+.ham-editor .ProseMirror pre code .hljs-string,
+.ham-editor .ProseMirror pre code .hljs-regexp,
+.ham-editor .ProseMirror pre code .hljs-addition,
+.ham-editor .ProseMirror pre code .hljs-meta .hljs-string {
+  color: #c3e88d;
+}
+.ham-editor .ProseMirror pre code .hljs-number,
+.ham-editor .ProseMirror pre code .hljs-literal,
+.ham-editor .ProseMirror pre code .hljs-symbol,
+.ham-editor .ProseMirror pre code .hljs-bullet,
+.ham-editor .ProseMirror pre code .hljs-deletion {
+  color: #f78c6c;
+}
+.ham-editor .ProseMirror pre code .hljs-title,
+.ham-editor .ProseMirror pre code .hljs-section,
+.ham-editor .ProseMirror pre code .hljs-attr,
+.ham-editor .ProseMirror pre code .hljs-attribute,
+.ham-editor .ProseMirror pre code .hljs-function .hljs-title {
+  color: #82aaff;
+}
+.ham-editor .ProseMirror pre code .hljs-built_in,
+.ham-editor .ProseMirror pre code .hljs-class .hljs-title,
+.ham-editor .ProseMirror pre code .hljs-title.class_,
+.ham-editor .ProseMirror pre code .hljs-type {
+  color: #ffcb6b;
+}
+.ham-editor .ProseMirror pre code .hljs-operator,
+.ham-editor .ProseMirror pre code .hljs-punctuation {
+  color: #89ddff;
+}
+.ham-editor .ProseMirror pre code .hljs-meta {
+  color: #b2ccd6;
+}
+.ham-editor .ProseMirror pre code .hljs-emphasis {
+  font-style: italic;
+}
+.ham-editor .ProseMirror pre code .hljs-strong {
+  font-weight: 600;
+}
+
 /* Task lists — checkbox INLINE with its text ------------------------------- */
 /* Tiptap puts data-type="taskList" on the <ul> and data-checked on each <li>
    (the <li> has NO data-type), so target the list items via the list. Each item
@@ -158,9 +262,25 @@
   pointer-events: none;
 }
 
+/* Images / figures ---------------------------------------------------------- */
+.ham-editor .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  vertical-align: middle;
+}
+.ham-editor .ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid var(--ham-accent);
+  outline-offset: 1px;
+}
+
 /* Math ---------------------------------------------------------------------- */
 .ham-editor .ProseMirror .katex {
   font-size: 1.04em;
+}
+/* A malformed expression renders as KaTeX's error token (throwOnError:false). */
+.ham-editor .ProseMirror .katex-error {
+  color: #c0392b;
 }
 
 /* Remote collaborator cursors (CollaborationCaret) — the extension sets each

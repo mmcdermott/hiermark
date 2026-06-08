@@ -33,6 +33,7 @@ import {
   createHamEditorExtensions,
   type HamCollabBinding,
 } from "./extensions/createHamEditorExtensions";
+import { uploadHamImages, type ImageUploadContext } from "./extensions/image-upload";
 import { stripStableIds } from "./markdown/stable-id";
 import { surfaceSnapshotFromDoc } from "./snapshot/getHamSurfaceSnapshot";
 import type {
@@ -134,6 +135,8 @@ function HamEditorInner<AnnotationData = unknown>(
     onBranchRequest,
     onOpenBranchChild,
     onActiveBlockChange,
+    onImageUpload,
+    onImageUploadError,
   } = props;
 
   // The gutter reads its data/handlers through a stable getter (never a cloned
@@ -146,6 +149,19 @@ function HamEditorInner<AnnotationData = unknown>(
   // per editor — a new onReady closure each render must not re-fire it.
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
+  // Live image-upload context for the ImageUpload extension + the handle's
+  // uploadImages(). Read through a ref so a new handler closure each render is
+  // picked up without rebuilding the (build-once) extension list.
+  const imageUploadRef = useRef<ImageUploadContext>({
+    upload: onImageUpload ?? null,
+    surfaceId,
+    onError: onImageUploadError,
+  });
+  imageUploadRef.current = {
+    upload: onImageUpload ?? null,
+    surfaceId,
+    onError: onImageUploadError,
+  };
   // Debounce timer for host snapshot emission (see onUpdate).
   const snapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
@@ -201,7 +217,10 @@ function HamEditorInner<AnnotationData = unknown>(
 
   const extensions = useMemo(
     () => [
-      ...createHamEditorExtensions(collab ? { collab } : {}),
+      ...createHamEditorExtensions({
+        ...(collab ? { collab } : {}),
+        imageUpload: { getContext: () => imageUploadRef.current },
+      }),
       BlockGutter.configure({ getContext: () => ctxRef.current }),
       BlockFold.configure({ getContext: () => foldRef.current }),
       AnnotationLayer.configure({ getContext: () => annoCtxRef.current }),
@@ -450,6 +469,7 @@ function HamEditorInner<AnnotationData = unknown>(
           editor.commands.setContent(content.json as object, { emitUpdate });
         }
       },
+      uploadImages: (files) => uploadHamImages(editor.view, imageUploadRef.current, files),
       collapseBlock(blockId) {
         setFoldedSet((prev) => (prev.has(blockId) ? prev : new Set(prev).add(blockId)));
       },
