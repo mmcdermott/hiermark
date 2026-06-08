@@ -53,7 +53,11 @@ describe("HamEditor", () => {
         json: {
           type: "doc",
           content: [
-            { type: "heading", attrs: { level: 2, dataBlockId: "blk_anchor" }, content: [{ type: "text", text: "Q1 goals" }] },
+            {
+              type: "heading",
+              attrs: { level: 2, dataBlockId: "blk_anchor" },
+              content: [{ type: "text", text: "Q1 goals" }],
+            },
             { type: "paragraph", content: [{ type: "text", text: "body" }] },
           ],
         },
