@@ -131,6 +131,33 @@
   padding-left: 1.2em;
 }
 
+/* Tables -------------------------------------------------------------------- */
+.ham-editor .ProseMirror table {
+  border-collapse: collapse;
+  width: max-content;
+  max-width: 100%;
+  margin: 0.5em 0;
+  overflow: hidden;
+}
+.ham-editor .ProseMirror th,
+.ham-editor .ProseMirror td {
+  border: 1px solid var(--ham-surface-border);
+  padding: 4px 9px;
+  vertical-align: top;
+  text-align: left;
+}
+.ham-editor .ProseMirror th {
+  background: #f1f0f8;
+  font-weight: 600;
+}
+.ham-editor .ProseMirror .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ham-accent-soft);
+  pointer-events: none;
+}
+
 /* Math ---------------------------------------------------------------------- */
 .ham-editor .ProseMirror .katex {
   font-size: 1.04em;

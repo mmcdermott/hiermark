@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { Overview } from "./pages/Overview";
 import { GettingStarted } from "./pages/GettingStarted";
+import { MarkdownPage } from "./pages/MarkdownPage";
+import { AnnotationsPage } from "./pages/AnnotationsPage";
 import { ApiReference } from "./pages/ApiReference";
 import { EditorDemo } from "./demos/EditorDemo";
 import { CanvasDemo } from "./demos/CanvasDemo";
@@ -24,6 +26,18 @@ const SECTIONS: Section[] = [
     label: "Getting started",
     group: "Guide",
     render: () => <GettingStarted />,
+  },
+  {
+    id: "markdown",
+    label: "Markdown & rendering",
+    group: "Concepts",
+    render: () => <MarkdownPage />,
+  },
+  {
+    id: "annotations",
+    label: "Annotations",
+    group: "Concepts",
+    render: () => <AnnotationsPage />,
   },
   {
     id: "editor",

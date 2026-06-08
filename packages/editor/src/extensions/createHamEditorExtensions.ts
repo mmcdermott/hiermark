@@ -3,6 +3,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { TaskList } from "@tiptap/extension-task-list";
 import { TaskItem } from "@tiptap/extension-task-item";
 import { Placeholder } from "@tiptap/extension-placeholder";
+import { TableKit } from "@tiptap/extension-table";
 import { Markdown } from "@tiptap/markdown";
 import { Mathematics } from "@tiptap/extension-mathematics";
 import { Collaboration } from "@tiptap/extension-collaboration";
@@ -52,6 +53,8 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
     TaskList,
     TaskItem.configure({ nested: true }),
     TaskInputRules,
+    // GFM tables (the snapshot already treats `table` as an opaque leaf block).
+    TableKit.configure({ table: { resizable: true } }),
     Placeholder.configure({ placeholder }),
     Markdown,
     BlockId.configure(blockIdTypes ? { types: blockIdTypes } : {}),

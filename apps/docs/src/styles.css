@@ -498,3 +498,45 @@ pre.block code {
 .theme-map .ham-editor {
   color: #d6e2f0;
 }
+
+/* Live-editor blocks in the concept docs ------------------------------------ */
+.doc-live {
+  margin: 16px 0 8px;
+  border: 1px solid var(--doc-border);
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 880px;
+}
+.doc-live-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 14px;
+  background: #faf9ff;
+  border-bottom: 1px solid var(--doc-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--doc-muted);
+}
+.doc-live-body {
+  padding: 14px 18px;
+  max-height: 460px;
+  overflow: auto;
+}
+.doc-code {
+  max-width: 880px;
+  overflow: auto;
+  background: #16161f;
+  color: #e7e7f3;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.doc-code code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  white-space: pre;
+}
