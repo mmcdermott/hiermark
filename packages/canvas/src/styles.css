@@ -13,8 +13,10 @@
 }
 
 .ham-canvas {
+  position: relative; /* containing block for the connectors SVG overlay */
   display: flex;
   align-items: flex-start;
+  gap: var(--ham-column-gap);
   overflow-x: auto;
   background: var(--ham-canvas-bg);
   min-height: 320px;
@@ -117,6 +119,41 @@
   cursor: pointer;
 }
 
+/* Add-sibling rail — quiet "+" in the gap between sibling surfaces ----------- */
+.ham-add-sibling-rail {
+  height: var(--ham-surface-gap, 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ham-add-sibling {
+  border: 1px dashed transparent;
+  background: transparent;
+  color: var(--ham-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  /* Quiet until the column is hovered or the button is focused — mirrors the
+     editor's branch button. */
+  opacity: 0;
+  transition:
+    opacity 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+.ham-column:hover .ham-add-sibling,
+.ham-add-sibling:focus-visible {
+  opacity: 1;
+}
+.ham-add-sibling:hover {
+  background: var(--ham-accent-soft);
+  border-color: var(--ham-accent);
+  color: var(--ham-accent);
+}
+
 .ham-canvas:focus-visible {
   outline: 2px solid var(--ham-accent);
   outline-offset: -2px;
@@ -156,8 +193,79 @@
   min-width: 200px;
 }
 
+/* Cross-column connectors ---------------------------------------------------- */
+.ham-connectors {
+  /* Sits above the cards; never intercepts pointer input (set inline too). */
+  z-index: 1;
+}
 .ham-branch-connector {
   stroke: var(--ham-surface-border);
   stroke-width: 1.5;
   fill: none;
+}
+.ham-branch-connector-muted {
+  stroke: var(--ham-surface-border);
+  opacity: 0.5;
+}
+.ham-branch-connector-ancestor {
+  stroke: var(--ham-accent);
+  opacity: 0.45;
+}
+.ham-branch-connector-active {
+  stroke: var(--ham-accent);
+  stroke-width: 2;
+  opacity: 0.9;
+}
+
+/* Appearance: flat — a column reads as one holistic editor ------------------- */
+.ham-appearance-flat .ham-column {
+  gap: 0;
+  background: var(--ham-surface-bg);
+  border: 1px solid var(--ham-surface-border);
+  border-radius: var(--ham-radius);
+  overflow: hidden;
+}
+.ham-appearance-flat .ham-surface {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+/* Hairline divider between stacked surfaces in a flat column. */
+.ham-appearance-flat .ham-surface + .ham-surface {
+  border-top: 1px solid var(--ham-surface-border);
+}
+.ham-appearance-flat .ham-surface-active {
+  box-shadow: inset 3px 0 0 0 var(--ham-accent);
+}
+.ham-appearance-flat .ham-surface-header {
+  background: transparent;
+  font-weight: 500;
+}
+
+/* Appearance: plain — no HAM chrome at all (bring your own CSS) ------------- */
+/* Collapse the canvas/column gaps to a hairline so surfaces read as one
+   continuous, unstyled stack. (The gap variables are set inline on the root, so
+   we override the resolved `gap` property directly here rather than the var.) */
+.ham-appearance-plain {
+  gap: 12px;
+  background: transparent;
+}
+.ham-appearance-plain .ham-column {
+  gap: 0;
+}
+.ham-appearance-plain .ham-surface {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.ham-appearance-plain .ham-surface-header {
+  border-bottom: none;
+  padding: 4px 14px 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ham-muted);
+}
+.ham-appearance-plain .ham-surface-active {
+  box-shadow: inset 3px 0 0 0 var(--ham-accent);
 }

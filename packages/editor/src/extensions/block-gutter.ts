@@ -3,14 +3,15 @@ import type { Node as PMNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
-import { isEmptyBlockNode, isHamBlockNode } from "../snapshot/blockTreePolicy";
-import type { HamBlockId, HamBranchPolicy } from "../types";
+import { isHamBlockNode, resolveBranchMode } from "../snapshot/blockTreePolicy";
+import type { HamBlockId, HamBranchMode, HamBranchPolicy, HamSurfaceSnapshot } from "../types";
 
 /** One block's gutter overlay; React renders the branch button + child chips into `container`. */
 export interface GutterEntry {
   blockId: HamBlockId;
   blockType: string;
-  branchable: boolean;
+  /** How this block branches right now — drives which affordance React renders. */
+  mode: HamBranchMode;
   container: HTMLElement;
 }
 
@@ -18,6 +19,14 @@ export interface BlockGutterContext {
   branchPolicy: HamBranchPolicy;
   activeBlockId: HamBlockId | null;
   editable: boolean;
+  /** Branch-edge count already anchored at each block (drives `add-sibling` mode). */
+  branchChildCounts: Record<HamBlockId, number>;
+  /**
+   * Project a snapshot from the current doc. Branchability is arity-aware (it
+   * needs childIds/depth), which only the snapshot has — so the plugin resolves
+   * each block's mode here rather than from the live PM node.
+   */
+  computeSnapshot: (doc: PMNode) => HamSurfaceSnapshot;
   /** Receives the current gutter entries so React can portal affordances in. */
   onGutter: (entries: GutterEntry[]) => void;
 }
@@ -34,21 +43,6 @@ interface GutterState {
   entries: GutterEntry[];
 }
 
-function gutterBranchable(node: PMNode, parent: PMNode | null, policy: HamBranchPolicy): boolean {
-  if (!isHamBlockNode(node, parent)) return false;
-  if (isEmptyBlockNode(node)) return false;
-  if (typeof policy === "function") return true; // authoritative check happens on create
-  switch (policy) {
-    case "root-only":
-      return false; // the whole surface branches, not individual blocks
-    case "headings-only":
-      return node.type.name === "heading";
-    case "any-nonempty-block":
-    default:
-      return true;
-  }
-}
-
 function build(
   doc: PMNode,
   getContext: () => BlockGutterContext | null,
@@ -58,6 +52,10 @@ function build(
   const decos: Decoration[] = [];
   const entries: GutterEntry[] = [];
   const live = new Set<string>();
+
+  // Resolve branchability from the snapshot (it has arity/depth the live PM node
+  // lacks). Built once per rebuild; rebuilds only run on doc change / meta.
+  const snapshot = ctx && ctx.editable ? ctx.computeSnapshot(doc) : null;
 
   doc.descendants((node, pos, parent) => {
     if (!isHamBlockNode(node, parent)) return;
@@ -82,8 +80,14 @@ function build(
     }
     live.add(blockId);
 
-    const branchable = !!ctx && ctx.editable && gutterBranchable(node, parent, ctx.branchPolicy);
-    entries.push({ blockId, blockType: node.type.name, branchable, container: el });
+    const block = snapshot?.blocks[blockId];
+    const mode: HamBranchMode =
+      ctx && snapshot && block
+        ? resolveBranchMode(block, snapshot, ctx.branchPolicy, {
+            existingChildCount: ctx.branchChildCounts[blockId] ?? 0,
+          })
+        : "none";
+    entries.push({ blockId, blockType: node.type.name, mode, container: el });
     decos.push(
       Decoration.widget(pos + 1, el, {
         side: -1,
@@ -141,7 +145,7 @@ export const BlockGutter = Extension.create<BlockGutterOptions>({
           update(view) {
             const st = blockGutterKey.getState(view.state);
             if (!st) return;
-            const sig = st.entries.map((e) => `${e.blockId}:${e.branchable ? 1 : 0}`).join(",");
+            const sig = st.entries.map((e) => `${e.blockId}:${e.mode}`).join(",");
             if (sig !== lastSig) {
               lastSig = sig;
               getContext()?.onGutter(st.entries);

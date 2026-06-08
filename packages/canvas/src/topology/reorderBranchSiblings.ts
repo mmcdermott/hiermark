@@ -16,6 +16,28 @@ export function siblingEdges<EdgeMeta>(
     .sort((a, b) => a.order - b.order);
 }
 
+export interface SiblingInsert {
+  /** The 0-based order the new sibling edge should take. */
+  insertOrder: number;
+  /** New orders for displaced existing siblings, keyed by edge id. */
+  shiftedSiblingOrders: Record<HamBranchEdgeId, number>;
+}
+
+/**
+ * Resolve a gap-insert into a dense sibling group (Option A — integer renumber,
+ * preserving the dense `0..n` invariant `applyOrder` guarantees). The new edge
+ * takes `insertOrder`; every existing sibling with `order >= insertOrder` shifts
+ * up by one. Pure, so the position math is unit-testable.
+ */
+export function computeSiblingInsert<EdgeMeta>(
+  group: HamBranchEdge<EdgeMeta>[],
+  insertOrder: number,
+): SiblingInsert {
+  const shiftedSiblingOrders: Record<HamBranchEdgeId, number> = {};
+  for (const e of group) if (e.order >= insertOrder) shiftedSiblingOrders[e.id] = e.order + 1;
+  return { insertOrder, shiftedSiblingOrders };
+}
+
 /**
  * Whether every edge id refers to an edge sharing the same
  * `(fromSurfaceId, fromBlockId)` — the strict reorder eligibility rule (spec

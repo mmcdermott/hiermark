@@ -26,7 +26,12 @@ export function useDemoCanvas(initial: DemoCanvasState): DemoCanvas {
   const edgesRef = useRef(branchEdges);
   edgesRef.current = branchEdges;
 
-  const makeChild = (fromSurfaceId: string, fromBlockId: string, title: string) => {
+  const makeChild = (
+    fromSurfaceId: string,
+    fromBlockId: string,
+    title: string,
+    opts?: { order?: number; shiftedSiblingOrders?: Record<string, number> },
+  ) => {
     const id = uid("s");
     const surface: HamSurface = {
       id,
@@ -34,9 +39,13 @@ export function useDemoCanvas(initial: DemoCanvasState): DemoCanvas {
       title,
       content: { kind: "markdown", markdown: `# ${title}\n\nElaborate this branch…` },
     };
-    const order = edgesRef.current.filter(
-      (e) => e.fromSurfaceId === fromSurfaceId && e.fromBlockId === fromBlockId,
-    ).length;
+    // Trust the canvas-computed order when provided (positioned insert); else
+    // append at the end of the sibling group.
+    const order =
+      opts?.order ??
+      edgesRef.current.filter(
+        (e) => e.fromSurfaceId === fromSurfaceId && e.fromBlockId === fromBlockId,
+      ).length;
     const edge: HamBranchEdge = {
       id: uid("e"),
       fromSurfaceId,
@@ -45,7 +54,15 @@ export function useDemoCanvas(initial: DemoCanvasState): DemoCanvas {
       order,
     };
     setSurfaces((s) => ({ ...s, [id]: surface }));
-    setEdges((e) => [...e, edge]);
+    setEdges((e) => {
+      // Apply the canvas-computed renumber for displaced siblings, then append
+      // the new edge — so an "insert between 2 and 3" actually lands there.
+      const shift = opts?.shiftedSiblingOrders;
+      const shifted = shift
+        ? e.map((x) => (shift[x.id] != null ? { ...x, order: shift[x.id]! } : x))
+        : e;
+      return [...shifted, edge];
+    });
     return { surface, edge, activate: true as const };
   };
 
@@ -53,7 +70,10 @@ export function useDemoCanvas(initial: DemoCanvasState): DemoCanvas {
     createSurfaceFromBlock: async (event) =>
       makeChild(event.sourceSurfaceId, event.sourceBlockId, event.suggestedTitle || "New branch"),
     createSiblingSurface: async (event) =>
-      makeChild(event.fromSurfaceId, event.fromBlockId, event.suggestedTitle || "New sibling"),
+      makeChild(event.fromSurfaceId, event.fromBlockId, event.suggestedTitle || "New sibling", {
+        ...(event.order != null ? { order: event.order } : {}),
+        ...(event.shiftedSiblingOrders ? { shiftedSiblingOrders: event.shiftedSiblingOrders } : {}),
+      }),
     reorderBranchSiblings: async ({ orderedEdgeIds }) => {
       const orderById = new Map(orderedEdgeIds.map((eid, i) => [eid, i]));
       // Compute the reordered array up front so the handler resolves with the

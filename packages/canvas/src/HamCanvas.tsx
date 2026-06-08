@@ -1,4 +1,14 @@
-import { useEffect, useMemo, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from "react";
 import {
   DndContext,
   KeyboardSensor,
@@ -25,7 +35,41 @@ import {
 
 import { resolveBehavior, resolveLayout } from "./defaults";
 import { useHamCanvas } from "./useHamCanvas";
-import type { HamCanvasColumn, HamCanvasItem, HamCanvasProps, HamSurfaceId } from "./types";
+import { HamConnectorsOverlay } from "./connectors/HamConnectorsOverlay";
+import type { HamHoverTarget } from "./connectors/connectors";
+import type {
+  HamAddSiblingButtonProps,
+  HamCanvasColumn,
+  HamCanvasItem,
+  HamCanvasProps,
+  HamSurfaceId,
+} from "./types";
+
+/**
+ * Default add-sibling affordance — a quiet `+` in the gap between sibling
+ * surfaces (and below the last). Mirrors the editor's branch button: same glyph,
+ * `onMouseDown` preventDefault (so it doesn't steal focus), quiet-until-hover.
+ */
+function DefaultAddSiblingButton({ isAppend, onAddSibling }: HamAddSiblingButtonProps) {
+  const label = isAppend ? "Add a sibling branch" : "Insert a sibling branch here";
+  return (
+    <div className="ham-add-sibling-rail">
+      <button
+        type="button"
+        className="ham-add-sibling"
+        title={label}
+        aria-label={label}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={(e) => {
+          e.preventDefault();
+          onAddSibling();
+        }}
+      >
+        +
+      </button>
+    </div>
+  );
+}
 
 function childrenForSurface(
   surfaceId: HamSurfaceId,
@@ -114,6 +158,145 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
     .filter(Boolean)
     .join(" ");
 
+  // Slots (spec §6.11): the canvas keeps the outer <section> (ref/role/aria/dnd)
+  // and lets a slot own the chrome inside. Omitted slots fall back to defaults.
+  const Frame = props.slots?.SurfaceFrame;
+  const HeaderSlot = props.slots?.SurfaceHeader;
+  const PreviewSlot = props.slots?.SurfacePreview;
+  const onActivate = () => canvas.actions.activate(surface.id, null);
+  const canDelete = !!item.incomingEdge && !!props.handlers.deleteSurface;
+  const canAddSiblingFromHeader = !!item.incomingEdge && !!props.handlers.createSiblingSurface;
+
+  const previewNode = PreviewSlot ? (
+    <PreviewSlot item={item} onActivate={onActivate} />
+  ) : (
+    <button type="button" className="ham-surface-preview" onClick={onActivate}>
+      {previewText(surface.content)}
+    </button>
+  );
+
+  const defaultHeader = (
+    <header className="ham-surface-header">
+      <button
+        type="button"
+        className="ham-surface-collapse"
+        aria-label={collapsed ? "Expand surface" : "Collapse surface"}
+        aria-expanded={collapsed ? "false" : "true"}
+        onClick={() => canvas.actions.toggleCollapsed(surface.id)}
+      >
+        {collapsed ? "▸" : "▾"}
+      </button>
+      {sortable && (
+        <button
+          type="button"
+          className="ham-surface-drag"
+          aria-label="Reorder surface"
+          {...attributes}
+          {...listeners}
+        >
+          ⠿
+        </button>
+      )}
+      <span className="ham-surface-title">{surface.title ?? "Untitled"}</span>
+      <span className="ham-surface-spacer" />
+      {item.pathState !== "active" && (
+        <button type="button" className="ham-surface-open" onClick={onActivate}>
+          Open
+        </button>
+      )}
+      {canDelete && (
+        <button
+          type="button"
+          className="ham-surface-delete"
+          aria-label="Delete surface"
+          onClick={() => void canvas.actions.removeSurface(surface.id)}
+        >
+          ×
+        </button>
+      )}
+    </header>
+  );
+
+  const header = HeaderSlot ? (
+    <HeaderSlot
+      item={item}
+      onActivate={onActivate}
+      {...(canDelete ? { onDelete: () => void canvas.actions.removeSurface(surface.id) } : {})}
+      {...(canAddSiblingFromHeader
+        ? {
+            onAddSibling: () =>
+              void canvas.actions.addSibling(
+                item.incomingEdge!.fromSurfaceId,
+                item.incomingEdge!.fromBlockId,
+              ),
+          }
+        : {})}
+    />
+  ) : (
+    defaultHeader
+  );
+
+  const body = (
+    <div
+      className="ham-surface-body"
+      // Activate a surface when the user interacts with its body. In expanded
+      // mode several editors are mounted at once, and clicking back into one
+      // at its existing cursor position won't fire onActiveBlockChange (the
+      // block id is unchanged), so focus-based activation is what keeps the
+      // active surface correct. No-op when this surface is already active.
+      onMouseDownCapture={() => {
+        if (item.pathState !== "active") canvas.actions.activate(surface.id, null);
+      }}
+      onFocusCapture={() => {
+        if (item.pathState !== "active") canvas.actions.activate(surface.id, null);
+      }}
+    >
+      {item.displayMode === "expanded" ? (
+        <HamEditor
+          surfaceId={surface.id}
+          rootBlockId={surface.rootBlockId}
+          value={surface.content}
+          {...(surface.title !== undefined ? { title: surface.title } : {})}
+          editable={!surface.readonly}
+          activeBlockId={canvas.activeBlockId}
+          branchChildren={childrenForSurface(surface.id, props, activeSurfaceSet)}
+          branchPolicy={resolveBehavior(props.behavior).branchPolicy}
+          {...(props.annotationRegistry ? { annotations: props.annotationRegistry } : {})}
+          {...(props.annotationContext !== undefined
+            ? { annotationContext: props.annotationContext }
+            : {})}
+          onReady={(handle) => {
+            handleRef.current = handle;
+            // Seed the snapshot cache immediately so this surface's child
+            // column orders by document preorder before any edit.
+            canvas.actions.updateSnapshot(surface.id, handle.getSnapshot());
+          }}
+          onChange={scheduleSave}
+          onBranchRequest={(event) => void canvas.actions.branchFromBlock(event)}
+          onSnapshotChange={(snapshot) => canvas.actions.updateSnapshot(surface.id, snapshot)}
+          onActiveBlockChange={(blockId) => canvas.actions.activate(surface.id, blockId)}
+          onOpenBranchChild={(e) => canvas.actions.activate(e.childSurfaceId, null)}
+        />
+      ) : item.displayMode === "outline" ? (
+        <OutlineBody
+          surfaceId={surface.id}
+          snapshot={canvas.snapshotsBySurfaceId[surface.id]}
+          fallbackPreview={previewNode}
+          onActivate={onActivate}
+        />
+      ) : item.displayMode === "rail" ? null : (
+        previewNode
+      )}
+    </div>
+  );
+
+  const inner: ReactNode = (
+    <>
+      {header}
+      {body}
+    </>
+  );
+
   return (
     <section
       ref={setNodeRef}
@@ -127,146 +310,31 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
       aria-current={item.pathState === "active" ? "true" : undefined}
       aria-expanded={hasChildren ? (collapsed ? "false" : "true") : undefined}
     >
-      <header className="ham-surface-header">
-        <button
-          type="button"
-          className="ham-surface-collapse"
-          aria-label={collapsed ? "Expand surface" : "Collapse surface"}
-          aria-expanded={collapsed ? "false" : "true"}
-          onClick={() => canvas.actions.toggleCollapsed(surface.id)}
-        >
-          {collapsed ? "▸" : "▾"}
-        </button>
-        {sortable && (
-          <button
-            type="button"
-            className="ham-surface-drag"
-            aria-label="Reorder surface"
-            {...attributes}
-            {...listeners}
-          >
-            ⠿
-          </button>
-        )}
-        <span className="ham-surface-title">{surface.title ?? "Untitled"}</span>
-        <span className="ham-surface-spacer" />
-        {item.pathState !== "active" && (
-          <button
-            type="button"
-            className="ham-surface-open"
-            onClick={() => canvas.actions.activate(surface.id, null)}
-          >
-            Open
-          </button>
-        )}
-        {item.incomingEdge && props.handlers.createSiblingSurface && (
-          <button
-            type="button"
-            className="ham-surface-add-sibling"
-            aria-label="Add sibling branch"
-            onClick={() =>
-              void canvas.actions.addSibling(
-                item.incomingEdge!.fromSurfaceId,
-                item.incomingEdge!.fromBlockId,
-                item.incomingEdge!.id,
-              )
-            }
-          >
-            +
-          </button>
-        )}
-        {item.incomingEdge && props.handlers.deleteSurface && (
-          <button
-            type="button"
-            className="ham-surface-delete"
-            aria-label="Delete surface"
-            onClick={() => void canvas.actions.removeSurface(surface.id)}
-          >
-            ×
-          </button>
-        )}
-      </header>
-
-      <div
-        className="ham-surface-body"
-        // Activate a surface when the user interacts with its body. In expanded
-        // mode several editors are mounted at once, and clicking back into one
-        // at its existing cursor position won't fire onActiveBlockChange (the
-        // block id is unchanged), so focus-based activation is what keeps the
-        // active surface correct. No-op when this surface is already active.
-        onMouseDownCapture={() => {
-          if (item.pathState !== "active") canvas.actions.activate(surface.id, null);
-        }}
-        onFocusCapture={() => {
-          if (item.pathState !== "active") canvas.actions.activate(surface.id, null);
-        }}
-      >
-        {item.displayMode === "expanded" ? (
-          <HamEditor
-            surfaceId={surface.id}
-            rootBlockId={surface.rootBlockId}
-            value={surface.content}
-            {...(surface.title !== undefined ? { title: surface.title } : {})}
-            editable={!surface.readonly}
-            activeBlockId={canvas.activeBlockId}
-            branchChildren={childrenForSurface(surface.id, props, activeSurfaceSet)}
-            branchPolicy={resolveBehavior(props.behavior).branchPolicy}
-            {...(props.annotationRegistry ? { annotations: props.annotationRegistry } : {})}
-            {...(props.annotationContext !== undefined
-              ? { annotationContext: props.annotationContext }
-              : {})}
-            onReady={(handle) => {
-              handleRef.current = handle;
-              // Seed the snapshot cache immediately so this surface's child
-              // column orders by document preorder before any edit.
-              canvas.actions.updateSnapshot(surface.id, handle.getSnapshot());
-            }}
-            onChange={scheduleSave}
-            onBranchRequest={(event) => void canvas.actions.branchFromBlock(event)}
-            onSnapshotChange={(snapshot) => canvas.actions.updateSnapshot(surface.id, snapshot)}
-            onActiveBlockChange={(blockId) => canvas.actions.activate(surface.id, blockId)}
-            onOpenBranchChild={(e) => canvas.actions.activate(e.childSurfaceId, null)}
-          />
-        ) : item.displayMode === "outline" ? (
-          <OutlineBody
-            surfaceId={surface.id}
-            snapshot={canvas.snapshotsBySurfaceId[surface.id]}
-            fallback={surface.content}
-            onActivate={() => canvas.actions.activate(surface.id, null)}
-          />
-        ) : item.displayMode === "rail" ? null : (
-          <button
-            type="button"
-            className="ham-surface-preview"
-            onClick={() => canvas.actions.activate(surface.id, null)}
-          >
-            {previewText(surface.content)}
-          </button>
-        )}
-      </div>
+      {Frame ? (
+        <Frame item={item} mode={item.displayMode}>
+          {inner}
+        </Frame>
+      ) : (
+        inner
+      )}
     </section>
   );
 }
 
-/** Compact outline of a surface's top-level blocks (or a text preview fallback). */
+/** Compact outline of a surface's top-level blocks (or a preview fallback). */
 function OutlineBody({
   surfaceId,
   snapshot,
-  fallback,
+  fallbackPreview,
   onActivate,
 }: {
   surfaceId: string;
   snapshot: HamSurfaceSnapshot | undefined;
-  fallback: { kind: string; markdown?: string };
+  /** Rendered when the snapshot isn't available yet (honors a SurfacePreview slot). */
+  fallbackPreview: ReactNode;
   onActivate: () => void;
 }) {
-  if (!snapshot) {
-    return (
-      <button type="button" className="ham-surface-preview" onClick={onActivate}>
-        {previewText(fallback)}
-      </button>
-    );
-  }
+  if (!snapshot) return <>{fallbackPreview}</>;
   const top = snapshot.blocks[snapshot.rootBlockId]?.childIds ?? [];
   return (
     <ul className="ham-surface-outline" aria-label={`Outline of ${surfaceId}`}>
@@ -322,6 +390,46 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   const layout = useMemo(() => resolveLayout(props.layout), [props.layout]);
   const behavior = useMemo(() => resolveBehavior(props.behavior), [props.behavior]);
 
+  // Hover target for connector "hover" mode, tracked via delegation on the root
+  // so it costs nothing in the other modes.
+  const [hovered, setHovered] = useState<HamHoverTarget | null>(null);
+  const onPointerOver = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (layout.showConnectors !== "hover") return;
+    const target = event.target as HTMLElement;
+    const surfaceEl = target.closest<HTMLElement>("[data-surface-id]");
+    if (!surfaceEl) return;
+    const surfaceId = surfaceEl.getAttribute("data-surface-id")!;
+    const blockId =
+      target.closest<HTMLElement>("[data-block-id]")?.getAttribute("data-block-id") ?? null;
+    setHovered((prev) =>
+      prev && prev.surfaceId === surfaceId && prev.blockId === blockId
+        ? prev
+        : { surfaceId, blockId },
+    );
+  };
+  // Drop a stale hover target if its surface leaves the projection (collapsed,
+  // hidden, or deleted) while the pointer is still inside the canvas — otherwise
+  // `hover` connectors would keep referencing a gone surface.
+  useEffect(() => {
+    if (!hovered) return;
+    const present = canvas.columns.some((c) =>
+      c.items.some((i) => i.surface.id === hovered.surfaceId),
+    );
+    if (!present) setHovered(null);
+  }, [canvas.columns, hovered]);
+
+  // A compact signature of the projected layout — connectors re-measure whenever
+  // columns reshape, the active path moves, or edges change.
+  const reshapeKey = useMemo(
+    () =>
+      canvas.columns
+        .map((c) => c.items.map((i) => `${i.surface.id}:${i.displayMode}`).join(","))
+        .join("|") +
+      `#${canvas.activeSurfaceId}:${canvas.activeBlockId ?? ""}` +
+      `#${props.branchEdges.map((e) => `${e.id}:${e.order}`).join(",")}`,
+    [canvas.columns, canvas.activeSurfaceId, canvas.activeBlockId, props.branchEdges],
+  );
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -366,6 +474,11 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   }, [canvas.activeSurfaceId, layout.autoScroll]);
 
   const reorderEnabled = behavior.enableSurfaceReorder && !!props.handlers.reorderBranchSiblings;
+  const canAddSibling =
+    behavior.enableSiblingBranchCreation && !!props.handlers.createSiblingSurface;
+  const AddSib = props.slots?.AddSiblingButton ?? DefaultAddSiblingButton;
+  const ColumnHeader = props.slots?.ColumnHeader;
+  const EmptyColumn = props.slots?.EmptyColumn;
 
   // Keyboard navigation across surfaces/columns (spec §9.1). Alt+Arrows move
   // along the path and among same-column siblings.
@@ -426,12 +539,22 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <div
         ref={rootRef}
-        className={["ham-canvas", props.className].filter(Boolean).join(" ")}
-        style={{ gap: layout.columnGap, padding: layout.padding }}
+        className={["ham-canvas", `ham-appearance-${layout.appearance}`, props.className]
+          .filter(Boolean)
+          .join(" ")}
+        style={
+          {
+            "--ham-column-gap": `${layout.columnGap}px`,
+            "--ham-surface-gap": `${layout.surfaceGap}px`,
+            padding: layout.padding,
+          } as CSSProperties
+        }
         tabIndex={0}
         role="tree"
         aria-label="Canvas of linked surfaces"
         onKeyDown={onKeyDown}
+        onMouseOver={onPointerOver}
+        onMouseLeave={() => hovered && setHovered(null)}
       >
         {canvas.columns.map((column) => (
           <div
@@ -441,29 +564,76 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
             role="group"
             aria-label={`Column ${column.depth + 1}`}
           >
-            {groupColumn(column).map((group) => {
-              const sortable = reorderEnabled && group.items.length > 1;
-              return (
-                <SortableContext
-                  key={group.key}
-                  items={group.items.map((i) => i.incomingEdge?.id ?? i.surface.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {group.items.map((item) => (
-                    <SurfaceItem
-                      key={item.surface.id}
-                      item={item as HamCanvasItem}
-                      canvas={canvas}
-                      props={props as HamCanvasProps}
-                      sortable={sortable}
-                      depth={column.depth}
-                    />
-                  ))}
-                </SortableContext>
-              );
-            })}
+            {ColumnHeader && <ColumnHeader depth={column.depth} count={column.items.length} />}
+            {column.items.length === 0 && EmptyColumn ? (
+              <EmptyColumn depth={column.depth} />
+            ) : (
+              groupColumn(column).map((group) => {
+                const sortable = reorderEnabled && group.items.length > 1;
+                const anchor = group.items[0]?.incomingEdge;
+                // A rail of insert points renders only for real sibling groups
+                // (anchored to a parent block) when sibling creation is enabled.
+                const showInserters = canAddSibling && !!anchor;
+                const inserter = (
+                  afterEdgeId: string | undefined,
+                  insertOrder: number,
+                  isAppend: boolean,
+                ) => (
+                  <AddSib
+                    key={`add-${group.key}-${insertOrder}`}
+                    fromSurfaceId={anchor!.fromSurfaceId}
+                    fromBlockId={anchor!.fromBlockId}
+                    {...(afterEdgeId ? { afterEdgeId } : {})}
+                    insertOrder={insertOrder}
+                    siblingCount={group.items.length}
+                    isAppend={isAppend}
+                    onAddSibling={() =>
+                      void canvas.actions.addSibling(anchor!.fromSurfaceId, anchor!.fromBlockId, {
+                        insertOrder,
+                        ...(afterEdgeId ? { afterEdgeId } : {}),
+                      })
+                    }
+                  />
+                );
+                return (
+                  <SortableContext
+                    key={group.key}
+                    items={group.items.map((i) => i.incomingEdge?.id ?? i.surface.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {showInserters && inserter(undefined, 0, false)}
+                    {group.items.map((item, i) => (
+                      <Fragment key={item.surface.id}>
+                        <SurfaceItem
+                          item={item as HamCanvasItem}
+                          canvas={canvas}
+                          props={props as HamCanvasProps}
+                          sortable={sortable}
+                          depth={column.depth}
+                        />
+                        {showInserters &&
+                          inserter(
+                            item.incomingEdge!.id,
+                            item.incomingEdge!.order + 1,
+                            i === group.items.length - 1,
+                          )}
+                      </Fragment>
+                    ))}
+                  </SortableContext>
+                );
+              })
+            )}
           </div>
         ))}
+        <HamConnectorsOverlay
+          rootRef={rootRef}
+          edges={props.branchEdges}
+          activePath={canvas.activePath}
+          layout={layout}
+          hovered={hovered}
+          reshapeKey={reshapeKey}
+          slots={props.slots}
+        />
       </div>
     </DndContext>
   );

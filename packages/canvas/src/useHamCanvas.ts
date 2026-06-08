@@ -7,6 +7,7 @@ import { projectHamColumns } from "./topology/projectHamColumns";
 import {
   areSameAnchorSiblings,
   buildReorderEvent,
+  computeSiblingInsert,
   siblingEdges,
 } from "./topology/reorderBranchSiblings";
 import type { HamActivePath, HamCanvasColumn, HamCanvasProps, HamSurfaceId } from "./types";
@@ -19,7 +20,7 @@ export interface HamCanvasActions {
   addSibling(
     fromSurfaceId: HamSurfaceId,
     fromBlockId: HamBlockId,
-    afterEdgeId?: string,
+    opts?: { insertOrder?: number; afterEdgeId?: string },
   ): Promise<void>;
   reorderSiblings(
     fromSurfaceId: HamSurfaceId,
@@ -117,8 +118,47 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     }
   }, []);
 
+  const addSibling = useCallback(
+    async (
+      fromSurfaceId: HamSurfaceId,
+      fromBlockId: HamBlockId,
+      opts?: { insertOrder?: number; afterEdgeId?: string },
+    ) => {
+      if (!props.handlers.createSiblingSurface) return;
+      // The canvas is the single source of order truth: resolve where the new
+      // sibling lands and which existing siblings shift, so every host gets
+      // "insert between" correct without re-deriving it.
+      const group = siblingEdges(edgesRef.current, fromSurfaceId, fromBlockId);
+      const afterEdgeId = opts?.afterEdgeId;
+      const insertOrder =
+        opts?.insertOrder ??
+        (afterEdgeId
+          ? (group.find((e) => e.id === afterEdgeId)?.order ?? group.length - 1) + 1
+          : group.length); // default: append
+      const { shiftedSiblingOrders } = computeSiblingInsert(group, insertOrder);
+      await withPending(fromSurfaceId, async () => {
+        const result = await props.handlers.createSiblingSurface!({
+          fromSurfaceId,
+          fromBlockId,
+          ...(afterEdgeId ? { insertAfterEdgeId: afterEdgeId } : {}),
+          order: insertOrder,
+          ...(Object.keys(shiftedSiblingOrders).length ? { shiftedSiblingOrders } : {}),
+        });
+        if (result?.activate !== false && result?.surface) activate(result.surface.id, null);
+      });
+    },
+    [props.handlers, withPending, activate],
+  );
+
   const branchFromBlock = useCallback(
     async (event: HamBranchRequestEvent) => {
+      // A block that already has a branch child presents an "add sibling"
+      // affordance — route it to the sibling path (append) when the host
+      // supports it, so the two affordances hit the handlers the design intends.
+      if (event.mode === "add-sibling" && props.handlers.createSiblingSurface) {
+        await addSibling(event.surfaceId, event.blockId);
+        return;
+      }
       await withPending(event.surfaceId, async () => {
         const result = await props.handlers.createSurfaceFromBlock({
           sourceSurfaceId: event.surfaceId,
@@ -133,22 +173,7 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         }
       });
     },
-    [props.handlers, withPending, activate],
-  );
-
-  const addSibling = useCallback(
-    async (fromSurfaceId: HamSurfaceId, fromBlockId: HamBlockId, afterEdgeId?: string) => {
-      if (!props.handlers.createSiblingSurface) return;
-      await withPending(fromSurfaceId, async () => {
-        const result = await props.handlers.createSiblingSurface!({
-          fromSurfaceId,
-          fromBlockId,
-          ...(afterEdgeId ? { insertAfterEdgeId: afterEdgeId } : {}),
-        });
-        if (result?.activate !== false && result?.surface) activate(result.surface.id, null);
-      });
-    },
-    [props.handlers, withPending, activate],
+    [props.handlers, withPending, activate, addSibling],
   );
 
   const reorderSiblings = useCallback(

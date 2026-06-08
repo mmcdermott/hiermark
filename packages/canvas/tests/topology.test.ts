@@ -4,6 +4,7 @@ import { getHamActivePath } from "../src/topology/getHamActivePath";
 import { buildIndices, collectDescendants } from "../src/topology/buildIndices";
 import {
   areSameAnchorSiblings,
+  computeSiblingInsert,
   reorderSiblingEdgesByIndex,
   reorderSiblingEdgesByIds,
   siblingEdges,
@@ -230,5 +231,47 @@ describe("reorder siblings (same-anchor only)", () => {
     expect(reorderSiblingEdgesByIds(edges, ["e_a"])).toBe(edges); // partial (group has 2)
     expect(reorderSiblingEdgesByIds(edges, ["e_a", "e_a"])).toBe(edges); // duplicate
     expect(reorderSiblingEdgesByIds(edges, ["e_a2", "e_a"])).not.toBe(edges); // full permutation
+  });
+});
+
+describe("computeSiblingInsert (positioned add-sibling)", () => {
+  // A sibling group of three children at dense orders 0, 1, 2.
+  const group: HamBranchEdge[] = [
+    { id: "c1", fromSurfaceId: "s_p", fromBlockId: "blk_B", toSurfaceId: "s1", order: 0 },
+    { id: "c2", fromSurfaceId: "s_p", fromBlockId: "blk_B", toSurfaceId: "s2", order: 1 },
+    { id: "c3", fromSurfaceId: "s_p", fromBlockId: "blk_B", toSurfaceId: "s3", order: 2 },
+  ];
+
+  it("inserts between 2 and 3: new order 2, the order-2 sibling shifts to 3", () => {
+    // afterEdgeId = c2 (order 1) → insertOrder 2.
+    const { insertOrder, shiftedSiblingOrders } = computeSiblingInsert(group, 2);
+    expect(insertOrder).toBe(2);
+    expect(shiftedSiblingOrders).toEqual({ c3: 3 }); // only c3 (order >= 2) shifts
+  });
+
+  it("inserts at the top: order 0, every existing sibling shifts up", () => {
+    const { insertOrder, shiftedSiblingOrders } = computeSiblingInsert(group, 0);
+    expect(insertOrder).toBe(0);
+    expect(shiftedSiblingOrders).toEqual({ c1: 1, c2: 2, c3: 3 });
+  });
+
+  it("appends at the end: order n, nothing shifts", () => {
+    const { insertOrder, shiftedSiblingOrders } = computeSiblingInsert(group, 3);
+    expect(insertOrder).toBe(3);
+    expect(shiftedSiblingOrders).toEqual({});
+  });
+
+  it("the projection places the inserted surface between its siblings", () => {
+    // Apply the renumber + the new edge, then project: order must be 1,2,3.
+    const inserted: HamBranchEdge = {
+      id: "c_new",
+      fromSurfaceId: "s_p",
+      fromBlockId: "blk_B",
+      toSurfaceId: "s_new",
+      order: 2,
+    };
+    const next = group.map((e) => (e.id === "c3" ? { ...e, order: 3 } : e)).concat(inserted);
+    const sib = siblingEdges(next, "s_p", "blk_B").map((e) => e.id);
+    expect(sib).toEqual(["c1", "c2", "c_new", "c3"]); // new surface sits between 2 and 3
   });
 });

@@ -42,6 +42,53 @@ export const overviewCanvas: DemoCanvasState = {
   branchEdges: [],
 };
 
+/**
+ * A pre-grown tree (root → a sibling group of three + a second branch → a
+ * grandchild) so the styling gallery shows connectors and the add-sibling rail
+ * immediately, without having to branch first.
+ */
+const child = (id: string, title: string, body: string): DemoCanvasState["surfaces"][string] => ({
+  id,
+  rootBlockId: `${id}_root`,
+  title,
+  content: { kind: "markdown", markdown: `# ${title}\n\n${body}` },
+});
+
+export const galleryCanvas: DemoCanvasState = {
+  surfaces: {
+    s_root: {
+      id: "s_root",
+      rootBlockId: "blk_root",
+      title: "Roadmap",
+      content: {
+        kind: "markdown",
+        markdown:
+          "# Product roadmap\n\nWhere the project is heading this year.\n\n## Q1 goals\n\nShip the core editor and canvas.\n\n## Q2 goals\n\nCollaboration and offline sync.",
+      },
+    },
+    s_q1a: child("s_q1a", "Editor MVP", "Block ids, snapshots, the branch gutter."),
+    s_q1b: child("s_q1b", "Canvas MVP", "Columns, active path, reorder."),
+    s_q1c: child("s_q1c", "Docs site", "Live demos and an API reference."),
+    s_q2a: child("s_q2a", "Realtime", "Yjs-backed collaborative surfaces."),
+    s_deep: child("s_deep", "CRDT notes", "Why Yjs, and how snapshots reconcile."),
+  },
+  // Three siblings off the Q1 block (a visible add-sibling rail), one off Q2,
+  // and a grandchild so there are three columns of connectors.
+  branchEdges: [
+    { id: "e_q1a", fromSurfaceId: "s_root", fromBlockId: "blk_q1", toSurfaceId: "s_q1a", order: 0 },
+    { id: "e_q1b", fromSurfaceId: "s_root", fromBlockId: "blk_q1", toSurfaceId: "s_q1b", order: 1 },
+    { id: "e_q1c", fromSurfaceId: "s_root", fromBlockId: "blk_q1", toSurfaceId: "s_q1c", order: 2 },
+    { id: "e_q2a", fromSurfaceId: "s_root", fromBlockId: "blk_q2", toSurfaceId: "s_q2a", order: 0 },
+    {
+      id: "e_deep",
+      fromSurfaceId: "s_q2a",
+      fromBlockId: "s_q2a_root",
+      toSurfaceId: "s_deep",
+      order: 0,
+    },
+  ],
+};
+
 /** A single-paragraph paper, to grow by progressive decomposition. */
 export const paperCanvas: DemoCanvasState = {
   surfaces: {

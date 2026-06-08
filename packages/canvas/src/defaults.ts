@@ -11,6 +11,9 @@ export const defaultLayout: HamCanvasLayoutConfig = {
   padding: 24,
   activeColumnMode: "expanded",
   inactiveColumnMode: "card",
+  appearance: "card",
+  showConnectors: "active",
+  connectorCurvature: 0.5,
   autoScroll: true,
   virtualizeColumns: false,
   virtualizeSurfaces: false,
@@ -22,7 +25,7 @@ export const defaultBehavior: HamCanvasBehaviorConfig = {
   enableSiblingBranchCreation: true,
   enableSurfaceDeletion: true,
   enableKeyboardNavigation: true,
-  branchPolicy: "any-nonempty-block",
+  branchPolicy: "smart",
   deleteSurfacePolicy: "prevent-if-has-children",
   pendingOperationMode: "pessimistic",
 };

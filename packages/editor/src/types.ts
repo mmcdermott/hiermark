@@ -34,11 +34,47 @@ export interface HamSurfaceSnapshot {
   revision?: string | number;
 }
 
-/** Which blocks may be branched from. Default: `any-nonempty-block`. */
+/** How a block may be branched at a given moment. */
+export type HamBranchMode = "branch" | "add-sibling" | "none";
+
+/**
+ * Declarative branchability evaluated against the projected snapshot tree.
+ * The `"smart"` default resolves to
+ * `{ kind: "rules", leaves: true, multiChildContainers: true,
+ *    singleChildContainers: false, passThrough: "hoist-up", alwaysHeadings: true }`.
+ */
+export interface HamBranchabilityRules {
+  kind: "rules";
+  /** Branch leaf blocks (no children). Default true. */
+  leaves?: boolean;
+  /** Branch containers that fork (>= 2 children). Default true. */
+  multiChildContainers?: boolean;
+  /** Branch a single-child intermediate container. Default false (redundant). */
+  singleChildContainers?: boolean;
+  /**
+   * Where the affordance lands when a single-child container is suppressed:
+   * `"hoist-up"` keeps the topmost container in the chain branchable;
+   * `"delegate-down"` keeps only the chain's tail (leaf). Default `"hoist-up"`.
+   */
+  passThrough?: "hoist-up" | "delegate-down";
+  /** Always allow headings regardless of arity. Default true. */
+  alwaysHeadings?: boolean;
+  /** Restrict to a maximum projected depth (root = 0). Optional. */
+  maxDepth?: number;
+}
+
+/**
+ * Which blocks may be branched from. Default `"smart"`: branch leaves and real
+ * forks, suppressing redundant single-child pass-through intermediates (see
+ * {@link HamBranchabilityRules}). The string policies stay available for hosts
+ * that want the simpler behavior.
+ */
 export type HamBranchPolicy =
+  | "smart"
   | "any-nonempty-block"
   | "headings-only"
   | "root-only"
+  | HamBranchabilityRules
   | ((block: HamBlockSnapshot, snapshot: HamSurfaceSnapshot) => boolean);
 
 // ---------------------------------------------------------------------------
@@ -78,6 +114,12 @@ export interface HamBranchRequestEvent {
   blockSnapshot: HamBlockSnapshot;
   surfaceSnapshot: HamSurfaceSnapshot;
   textPreview: string;
+  /**
+   * How the affordance was presented: `"branch"` (the block had no children) or
+   * `"add-sibling"` (it already had a branch child). Lets the host route the two
+   * to different handlers (create first child vs add a sibling).
+   */
+  mode: HamBranchMode;
   /** Persist the source surface (so the source block id exists) before branching. */
   save: () => Promise<HamEditorSavePayload>;
   nativeEvent?: Event;
@@ -161,6 +203,12 @@ export interface HamBlockSlotProps {
   surfaceId: HamSurfaceId;
   blockId: HamBlockId;
   blockType: string;
+  /**
+   * How this block branches: `"branch"` creates a first child surface,
+   * `"add-sibling"` adds another branch alongside existing children. A single
+   * slot component can render both by switching on this.
+   */
+  mode: HamBranchMode;
   onBranch: () => void;
 }
 
@@ -179,6 +227,12 @@ export interface HamBlockGutterProps {
 
 export interface HamEditorSlots {
   BlockBranchButton?: ComponentType<HamBlockSlotProps>;
+  /**
+   * Affordance shown when a block already has a branch child (mode
+   * `"add-sibling"`). Falls back to {@link HamEditorSlots.BlockBranchButton}
+   * with `mode === "add-sibling"` when omitted.
+   */
+  BlockSiblingBranchButton?: ComponentType<HamBlockSlotProps>;
   BranchChildChip?: ComponentType<HamBranchChildChipProps>;
   BlockGutter?: ComponentType<HamBlockGutterProps>;
   EmptyState?: ComponentType<{ surfaceId: HamSurfaceId }>;

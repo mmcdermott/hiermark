@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/core";
+import type { Node as PMNode } from "@tiptap/pm/model";
 import type { EditorState } from "@tiptap/pm/state";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { createPortal } from "react-dom";
@@ -25,10 +26,11 @@ import {
   type HamCollabBinding,
 } from "./extensions/createHamEditorExtensions";
 import { stripStableIds } from "./markdown/stable-id";
-import { getHamSurfaceSnapshot } from "./snapshot/getHamSurfaceSnapshot";
+import { getHamSurfaceSnapshot, surfaceSnapshotFromDoc } from "./snapshot/getHamSurfaceSnapshot";
 import type {
   HamBlockId,
   HamBranchChildSummary,
+  HamBranchMode,
   HamBranchRequestEvent,
   HamCollaborationProvider,
   HamEditorHandle,
@@ -86,7 +88,7 @@ function HamEditorInner<AnnotationData = unknown>(
     title,
     editable = true,
     rootBlockId = "blk_root",
-    branchPolicy = "any-nonempty-block",
+    branchPolicy = "smart",
     className,
     onReady,
     onChange,
@@ -116,6 +118,28 @@ function HamEditorInner<AnnotationData = unknown>(
       }),
     [surfaceId, rootBlockId, title],
   );
+
+  // Doc-based snapshot for the gutter: during a transaction's `apply` the editor
+  // still holds the old doc, so the gutter must project from the fresh `newState`
+  // doc directly (not via `editor.state`).
+  const computeSnapshot = useStable(
+    (doc: PMNode): HamSurfaceSnapshot =>
+      surfaceSnapshotFromDoc(doc, {
+        surfaceId,
+        rootBlockId,
+        ...(title !== undefined ? { title } : {}),
+      }),
+    [surfaceId, rootBlockId, title],
+  );
+
+  // Branch-edge count per block, so the gutter knows when to switch a block's
+  // `+` to an "add sibling" affordance (mode `add-sibling`).
+  const branchChildCounts = useMemo(() => {
+    const counts: Record<HamBlockId, number> = {};
+    const map = props.branchChildren;
+    if (map) for (const blockId in map) counts[blockId] = map[blockId]?.length ?? 0;
+    return counts;
+  }, [props.branchChildren]);
 
   const buildSavePayload = useStable(
     (editor: Editor): HamEditorSavePayload => ({
@@ -179,7 +203,7 @@ function HamEditorInner<AnnotationData = unknown>(
 
   // Branch handler: capture the snapshot synchronously (spec §5.7), then emit.
   const handleBranch = useStable(
-    (blockId: HamBlockId) => {
+    (blockId: HamBlockId, mode: HamBranchMode = "branch") => {
       if (!editor) return;
       const surfaceSnapshot = snapshotOf(editor);
       const blockSnapshot = surfaceSnapshot.blocks[blockId];
@@ -190,6 +214,7 @@ function HamEditorInner<AnnotationData = unknown>(
         blockSnapshot,
         surfaceSnapshot,
         textPreview: blockSnapshot.textPreview,
+        mode,
         save: async () => buildSavePayload(editor),
       };
       onBranchRequest?.(event);
@@ -227,19 +252,21 @@ function HamEditorInner<AnnotationData = unknown>(
   }, [editor, foldedSet, editable, toggleFold]);
 
   // Keep the gutter context current and force a decoration rebuild when the
-  // branch policy / active block / editability change. (Branch children and the
-  // handlers are read React-side in the portal, so they don't trigger a rebuild.)
+  // branch policy / active block / editability change, or when a block's branch
+  // children change (which can flip a block's mode to `add-sibling`).
   useEffect(() => {
     ctxRef.current = {
       branchPolicy,
       activeBlockId: props.activeBlockId ?? null,
       editable,
+      branchChildCounts,
+      computeSnapshot,
       onGutter: setGutterEntries,
     };
     if (editor) {
       editor.view.dispatch(editor.state.tr.setMeta(blockGutterKey, true));
     }
-  }, [editor, branchPolicy, props.activeBlockId, editable]);
+  }, [editor, branchPolicy, props.activeBlockId, editable, branchChildCounts, computeSnapshot]);
 
   // Keep the annotation context current and rebuild the annotation decorations.
   useEffect(() => {

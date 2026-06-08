@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import type { Editor } from "@tiptap/core";
 import { render, waitFor, cleanup } from "@testing-library/react";
 import { HamEditor } from "../src/HamEditor";
 import type { HamBlockSlotProps, HamEditorHandle, HamEditorProps } from "../src/types";
@@ -29,8 +30,7 @@ async function mount(extra: Partial<HamEditorProps> = {}, markdown = "# Title\n\
 // handling so input rules run (insertContent alone does not trigger them). We
 // place the cursor at the end of the first text node (the "[ ]" marker), which
 // is where the user would be typing — not at the document end.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function typeFinalSpace(editor: any) {
+function typeFinalSpace(editor: Editor) {
   // Type at the end of the `[ ]` marker text node (it may not be the first one
   // in a nested list).
   let pos: number | null = null;

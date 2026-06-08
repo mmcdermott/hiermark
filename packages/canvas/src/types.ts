@@ -113,6 +113,22 @@ export interface HamCanvasLayoutConfig {
    * wide screen; the others compact inactive surfaces.
    */
   inactiveColumnMode: "card" | "outline" | "rail" | "hidden" | "expanded";
+  /**
+   * Visual treatment of the surfaces. `"card"` (default) renders each surface as
+   * a separate bordered, shadowed card. `"flat"` drops the per-surface chrome and
+   * tightens gaps so a column reads as one holistic editor with hairline
+   * dividers. `"plain"` removes all chrome (no borders, shadows, or backgrounds).
+   */
+  appearance: "card" | "flat" | "plain";
+  /**
+   * Whether to draw connector lines from a source block to its child surfaces
+   * across columns. `"off"` draws none; `"active"` (default) only the active
+   * lineage; `"all"` every edge; `"hover"` only edges incident to the hovered
+   * surface (plus the active lineage).
+   */
+  showConnectors: "off" | "all" | "active" | "hover";
+  /** Curvature of connector paths, 0 (straight) … 1 (deeply curved). Default 0.5. */
+  connectorCurvature: number;
   autoScroll: boolean;
   virtualizeColumns: boolean;
   virtualizeSurfaces: boolean;
@@ -152,6 +168,18 @@ export interface HamCreateSiblingSurfaceEvent {
   fromSurfaceId: HamSurfaceId;
   fromBlockId: HamBlockId;
   insertAfterEdgeId?: HamBranchEdgeId;
+  /**
+   * The 0-based order the canvas computed for the new edge. The host SHOULD
+   * assign this to the new branch edge and shift existing siblings up (see
+   * {@link HamCreateSiblingSurfaceEvent.shiftedSiblingOrders}). If omitted
+   * (legacy hosts), append at the end.
+   */
+  order?: number;
+  /**
+   * Pre-computed new orders for the existing siblings displaced by the insert,
+   * keyed by edge id — so the host persists the renumber without re-deriving it.
+   */
+  shiftedSiblingOrders?: Record<HamBranchEdgeId, number>;
   suggestedTitle?: string;
 }
 
@@ -218,12 +246,46 @@ export interface HamColumnHeaderProps {
   count: number;
 }
 
+/** How prominently a connector is drawn, derived from the active path. */
+export type HamConnectorState = "active" | "ancestor" | "muted";
+
+export interface HamConnectorRenderProps<EdgeMeta = unknown> {
+  edge: HamBranchEdge<EdgeMeta>;
+  /** Cubic-bezier path string in canvas-content coordinates. */
+  path: string;
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  state: HamConnectorState;
+}
+
+/** Props passed to a custom add-sibling affordance (spec §6.5, §6.11). */
+export interface HamAddSiblingButtonProps {
+  /** Surface that owns the anchor block the new branch attaches to. */
+  fromSurfaceId: HamSurfaceId;
+  /** Anchor block the new sibling branches from. */
+  fromBlockId: HamBlockId;
+  /** Existing sibling edge this insertion lands after (undefined = prepend). */
+  afterEdgeId?: HamBranchEdgeId;
+  /** Resolved order the new sibling will occupy among its siblings. */
+  insertOrder: number;
+  /** Number of existing siblings in the group (for "insert" vs "append" affordances). */
+  siblingCount: number;
+  /** Whether this is the trailing (append) inserter rather than a between-gap one. */
+  isAppend: boolean;
+  /** Create the sibling at this position. */
+  onAddSibling: () => void;
+}
+
 export interface HamCanvasSlots<SurfaceMeta = unknown, EdgeMeta = unknown> {
   SurfaceFrame?: ComponentType<HamSurfaceFrameProps<SurfaceMeta, EdgeMeta>>;
   SurfaceHeader?: ComponentType<HamSurfaceHeaderProps<SurfaceMeta, EdgeMeta>>;
   SurfacePreview?: ComponentType<HamSurfacePreviewProps<SurfaceMeta, EdgeMeta>>;
   ColumnHeader?: ComponentType<HamColumnHeaderProps>;
   EmptyColumn?: ComponentType<{ depth: number }>;
+  /** Override per-edge connector rendering (must return an SVG element). */
+  Connector?: ComponentType<HamConnectorRenderProps<EdgeMeta>>;
+  /** Override the positioned add-sibling affordance in a column's sibling rail. */
+  AddSiblingButton?: ComponentType<HamAddSiblingButtonProps>;
 }
 
 // ---------------------------------------------------------------------------

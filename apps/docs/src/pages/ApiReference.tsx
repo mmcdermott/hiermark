@@ -43,9 +43,21 @@ const EDITOR_API: ApiEntry[] = [
     summary: "Bundled task / citation / mention / URL recognizers.",
   },
   {
+    name: "resolveBranchMode / isBranchable",
+    kind: "function",
+    summary:
+      'Snapshot-driven branchability: "branch" | "add-sibling" | "none". The "smart" default branches leaves and real forks, suppressing redundant single-child intermediates.',
+  },
+  {
     name: "HamEditorProps / HamEditorHandle / HamSurfaceSnapshot",
     kind: "type",
     summary: "The core editor types.",
+  },
+  {
+    name: "HamBranchPolicy / HamBranchabilityRules / HamBranchMode",
+    kind: "type",
+    summary:
+      'Branch policy: "smart" (default), the legacy string policies, a declarative rules object, or a custom predicate.',
   },
 ];
 
@@ -76,9 +88,33 @@ const CANVAS_API: ApiEntry[] = [
     summary: "Same-anchor sibling reorder + its eligibility guard.",
   },
   {
+    name: "HamConnectorsOverlay / visibleEdges / geometryFor",
+    kind: "function",
+    summary:
+      "Cross-column connector overlay + its pure helpers (mode filter, active-path state, block→card bezier geometry).",
+  },
+  {
+    name: "computeSiblingInsert",
+    kind: "function",
+    summary:
+      "Resolve a positioned sibling insert into a dense group: the new edge's order + the displaced siblings' renumber.",
+  },
+  {
     name: "HamCanvasProps / HamCanvasHandlers / HamSurface / HamBranchEdge",
     kind: "type",
     summary: "The core canvas types and the host handler contract.",
+  },
+  {
+    name: "HamCanvasLayoutConfig",
+    kind: "type",
+    summary:
+      'Layout: appearance ("card" | "flat" | "plain"), showConnectors ("off" | "all" | "active" | "hover"), column/surface sizing, and inactiveColumnMode.',
+  },
+  {
+    name: "HamCanvasSlots",
+    kind: "type",
+    summary:
+      "Replaceable chrome: SurfaceFrame / SurfaceHeader / SurfacePreview / ColumnHeader / EmptyColumn / Connector / AddSiblingButton.",
   },
 ];
 

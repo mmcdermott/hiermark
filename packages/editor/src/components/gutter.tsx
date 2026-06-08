@@ -3,27 +3,38 @@ import type {
   HamBlockSlotProps,
   HamBranchChildChipProps,
   HamBranchChildSummary,
+  HamBranchMode,
   HamBlockId,
   HamEditorSlots,
   HamSurfaceId,
 } from "../types";
 
-/** Default branch affordance: a full-height `+` button on the block's right. */
-export function DefaultBranchButton({ blockId, onBranch }: HamBlockSlotProps) {
+/**
+ * Default branch affordance: a full-height button on the block's right. Renders
+ * `+` to create the first child surface, or `⊕` once the block already has a
+ * child (mode `"add-sibling"`) — a clicked sibling-add creates another branch
+ * alongside the existing ones.
+ */
+export function DefaultBranchButton({ blockId, mode, onBranch }: HamBlockSlotProps) {
+  const sibling = mode === "add-sibling";
+  const label = sibling
+    ? "Add a sibling branch from this block"
+    : "Branch this block into a new surface";
   return (
     <button
       type="button"
-      className="ham-branch-button"
-      title="Branch this block into a new surface"
-      aria-label="Branch this block into a new surface"
+      className={"ham-branch-button" + (sibling ? " ham-branch-button-sibling" : "")}
+      title={label}
+      aria-label={label}
       data-ham-branch-for={blockId}
+      data-ham-branch-mode={mode}
       onMouseDown={(e) => e.preventDefault()}
       onClick={(e) => {
         e.preventDefault();
         onBranch();
       }}
     >
-      +
+      {sibling ? "⊕" : "+"}
     </button>
   );
 }
@@ -51,7 +62,7 @@ export interface BlockGutterAffordancesProps {
   surfaceId: HamSurfaceId;
   slots?: HamEditorSlots;
   branchChildren: HamBranchChildSummary[];
-  onBranch: (blockId: HamBlockId) => void;
+  onBranch: (blockId: HamBlockId, mode: HamBranchMode) => void;
   onOpenChild: (child: HamBranchChildSummary, blockId: HamBlockId) => void;
 }
 
@@ -70,8 +81,13 @@ export function BlockGutterAffordances({
   onOpenChild,
 }: BlockGutterAffordancesProps) {
   const BranchButton = slots?.BlockBranchButton ?? DefaultBranchButton;
+  // The sibling-add affordance defaults to the (mode-aware) branch button, so a
+  // host can style both at once via BlockBranchButton, or swap just the
+  // sibling-add via BlockSiblingBranchButton.
+  const SiblingButton = slots?.BlockSiblingBranchButton ?? BranchButton;
   const Chip = slots?.BranchChildChip ?? DefaultBranchChildChip;
   const sorted = [...branchChildren].sort((a, b) => a.order - b.order);
+  const Affordance = entry.mode === "add-sibling" ? SiblingButton : BranchButton;
 
   return (
     <div className="ham-block-gutter-affordances">
@@ -88,12 +104,13 @@ export function BlockGutterAffordances({
           ))}
         </span>
       )}
-      {entry.branchable && (
-        <BranchButton
+      {entry.mode !== "none" && (
+        <Affordance
           surfaceId={surfaceId}
           blockId={entry.blockId}
           blockType={entry.blockType}
-          onBranch={() => onBranch(entry.blockId)}
+          mode={entry.mode}
+          onBranch={() => onBranch(entry.blockId, entry.mode)}
         />
       )}
     </div>

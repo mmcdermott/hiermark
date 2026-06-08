@@ -248,6 +248,84 @@ pre.block code {
   color: var(--doc-text);
   cursor: pointer;
 }
+
+/* Styling-gallery segmented controls --------------------------------------- */
+.gallery-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.gallery-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.gallery-control-label {
+  font-size: 11px;
+  color: var(--doc-muted, #6f6f7a);
+  margin-right: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.gallery-seg {
+  border: 1px solid var(--doc-border);
+  background: #fff;
+  padding: 2px 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 0;
+}
+.gallery-seg:first-of-type {
+  border-radius: 6px 0 0 6px;
+}
+.gallery-seg:last-of-type {
+  border-radius: 0 6px 6px 0;
+}
+.gallery-seg + .gallery-seg {
+  border-left: none;
+}
+.gallery-seg-on {
+  background: var(--doc-accent, #6f5cff);
+  border-color: var(--doc-accent, #6f5cff);
+  color: #fff;
+}
+
+/* Custom add-sibling buttons used by the gallery demo ---------------------- */
+.gallery-add-labeled {
+  border: 1px dashed var(--doc-accent, #6f5cff);
+  background: #fff;
+  color: var(--doc-accent, #6f5cff);
+  border-radius: 999px;
+  padding: 1px 10px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.gallery-add-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: var(--doc-accent, #6f5cff);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+.ham-column:hover .gallery-add-labeled,
+.ham-column:hover .gallery-add-dot,
+.gallery-add-labeled:focus-visible,
+.gallery-add-dot:focus-visible {
+  opacity: 1;
+}
+.gallery-add-dot:hover {
+  transform: scale(1.4);
+}
 .demo-stage {
   overflow: auto;
   resize: vertical;

@@ -5,6 +5,7 @@ import { GettingStarted } from "./pages/GettingStarted";
 import { ApiReference } from "./pages/ApiReference";
 import { EditorDemo } from "./demos/EditorDemo";
 import { CanvasDemo } from "./demos/CanvasDemo";
+import { CanvasStylesDemo } from "./demos/CanvasStylesDemo";
 import { PaperDemo } from "./demos/PaperDemo";
 import { CollabDemo } from "./demos/CollabDemo";
 
@@ -54,6 +55,25 @@ const SECTIONS: Section[] = [
           collapses as you branch, and <strong>⛶ Expand</strong> to use the full screen.
         </p>
         <CanvasDemo />
+      </section>
+    ),
+  },
+  {
+    id: "styling",
+    label: "Styling & slots",
+    group: "Live demos",
+    render: () => (
+      <section className="page">
+        <h2>Styling &amp; slots</h2>
+        <p className="lede">
+          The same tree, re-themed live. Switch <strong>cards</strong> between separate cards, flat
+          columns that read as one holistic editor, and unstyled plain; toggle the cross-column{" "}
+          <strong>connector</strong> modes; and swap the <strong>add-sibling button</strong> for a
+          different component — it&apos;s passable just like the editor&apos;s branch button. Hover
+          a column to reveal the <strong>+</strong> rail between siblings to insert a branch at that
+          position.
+        </p>
+        <CanvasStylesDemo />
       </section>
     ),
   },
