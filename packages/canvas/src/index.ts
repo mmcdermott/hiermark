@@ -10,7 +10,12 @@ export type { SiblingInsert } from "./topology/reorderBranchSiblings";
 export type { UseHamCanvasResult, HamCanvasActions } from "./useHamCanvas";
 
 // Pure topology
-export { projectHamColumns } from "./topology/projectHamColumns";
+export {
+  projectHamColumns,
+  buildProjectionContext,
+  projectColumnsFromContext,
+} from "./topology/projectHamColumns";
+export type { HamProjectionContext, HamProjectionContextInput } from "./topology/projectHamColumns";
 export { getHamActivePath } from "./topology/getHamActivePath";
 export { buildIndices, collectDescendants } from "./topology/buildIndices";
 export type { HamTopologyIndices } from "./topology/buildIndices";

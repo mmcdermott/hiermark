@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { projectHamColumns } from "../src/topology/projectHamColumns";
+import {
+  projectHamColumns,
+  buildProjectionContext,
+  projectColumnsFromContext,
+} from "../src/topology/projectHamColumns";
 import { getHamActivePath } from "../src/topology/getHamActivePath";
 import { buildIndices, collectDescendants } from "../src/topology/buildIndices";
 import {
@@ -137,6 +141,54 @@ describe("projectHamColumns", () => {
       activeSurfaceId: "s_root",
     });
     expect(cols[1]!.items.map((i) => i.surface.id)).toEqual(["s_b", "s_a"]);
+  });
+});
+
+describe("projection split (buildProjectionContext / projectColumnsFromContext)", () => {
+  const input = {
+    rootSurfaceId: "s_root" as HamSurfaceId,
+    surfaces,
+    branchEdges: edges,
+    snapshotsBySurfaceId: snapshots,
+    activeSurfaceId: "s_a" as HamSurfaceId,
+  };
+
+  it("composes to exactly the same columns as projectHamColumns", () => {
+    const direct = projectHamColumns(input);
+    const split = projectColumnsFromContext(buildProjectionContext(input), input);
+    expect(split).toEqual(direct);
+  });
+
+  it("a snapshot-free context re-orders correctly when only snapshots change", () => {
+    // The context (display modes, path states, indices) is snapshot-independent;
+    // the same context fed two different snapshots must yield the two orderings —
+    // proving snapshot churn never needs a context rebuild.
+    const ctx = buildProjectionContext(input);
+    const order = (snaps: typeof snapshots) =>
+      projectColumnsFromContext(ctx, { ...input, snapshotsBySurfaceId: snaps })[1]!.items.map(
+        (i) => i.surface.id,
+      );
+
+    // A before B → s_a, s_a2 (A's two branches) then s_b.
+    expect(order({ s_root: snapshot("s_root", ["blk_root", "blk_A", "blk_B"]) })).toEqual([
+      "s_a",
+      "s_a2",
+      "s_b",
+    ]);
+    // Swap block preorder (B before A) using the *same* context → s_b leads.
+    expect(order({ s_root: snapshot("s_root", ["blk_root", "blk_B", "blk_A"]) })).toEqual([
+      "s_b",
+      "s_a",
+      "s_a2",
+    ]);
+  });
+
+  it("preserves path state and display mode in the precomputed items", () => {
+    const ctx = buildProjectionContext(input);
+    expect(ctx.itemBySurface.get("s_a")!.pathState).toBe("active");
+    expect(ctx.itemBySurface.get("s_a")!.displayMode).toBe("expanded");
+    expect(ctx.itemBySurface.get("s_root")!.pathState).toBe("ancestor");
+    expect(ctx.itemBySurface.get("s_a2")!.pathState).toBe("sibling");
   });
 });
 

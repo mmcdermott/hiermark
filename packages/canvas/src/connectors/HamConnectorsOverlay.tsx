@@ -45,6 +45,12 @@ interface OverlayProps<EdgeMeta = unknown> {
   hovered: HamHoverTarget | null;
   /** Identity changes whenever columns / snapshots reshape, forcing a re-measure. */
   reshapeKey: string;
+  /**
+   * Changes only when the *set* of anchor elements changes (columns, display
+   * modes, edge endpoints) — not the active path. Drives the ResizeObserver
+   * re-subscription so moving the cursor doesn't re-observe every anchor.
+   */
+  geometryKey: string;
   /** Only the EdgeMeta-typed Connector slot is relevant to the overlay. */
   slots?: { Connector?: ComponentType<HamConnectorRenderProps<EdgeMeta>> } | undefined;
 }
@@ -62,6 +68,7 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
   layout,
   hovered,
   reshapeKey,
+  geometryKey,
   slots,
 }: OverlayProps<EdgeMeta>) {
   const mode = layout.showConnectors;
@@ -135,7 +142,9 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
       window.removeEventListener("resize", schedule);
       cancelAnimationFrame(raf.current);
     };
-  }, [rootRef, mode, schedule, reshapeKey]);
+    // geometryKey (not reshapeKey) — re-subscribe only when the anchor set
+    // changes, not on every cursor/active-path move.
+  }, [rootRef, mode, schedule, geometryKey]);
 
   if (mode === "off") return null;
   const Connector = slots?.Connector ?? DefaultConnector;
