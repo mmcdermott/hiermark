@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as Y from "yjs";
+import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
 import {
   HamEditor,
   type HamCollaborationConfig,
@@ -9,43 +10,106 @@ import {
 
 import { DemoFrame } from "./DemoFrame";
 
-/** A no-server runtime: an always-synced provider over a shared in-memory Y.Doc. */
-function localRuntime(ydoc: Y.Doc): HamCollaborationRuntime {
-  const provider: HamCollaborationProvider = {
-    synced: true,
-    hasUnsyncedChanges: false,
-    on() {},
-    off() {},
-    destroy() {},
-  };
-  return { ydoc, connect: async () => provider };
+// Origin tag so a relayed update isn't relayed back (avoids an echo loop).
+const RELAY = "relay";
+
+/**
+ * Two in-memory "peers": separate Y.Docs and awareness instances with their
+ * updates relayed between them — simulating two clients over a network without a
+ * server. Separate docs ⇒ distinct clientIDs, so each editor sees the OTHER's
+ * cursor (which a single shared Y.Doc couldn't show).
+ */
+function useCollabPeers() {
+  const peers = useMemo(() => {
+    const docA = new Y.Doc();
+    const docB = new Y.Doc();
+    const awA = new Awareness(docA);
+    const awB = new Awareness(docB);
+
+    const relayDoc = (from: Y.Doc, to: Y.Doc) =>
+      from.on("update", (update: Uint8Array, origin: unknown) => {
+        if (origin !== RELAY) Y.applyUpdate(to, update, RELAY);
+      });
+    const relayAwareness = (from: Awareness, to: Awareness) =>
+      from.on(
+        "update",
+        (
+          { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
+          origin: unknown,
+        ) => {
+          if (origin === RELAY) return;
+          const changed = [...added, ...updated, ...removed];
+          applyAwarenessUpdate(to, encodeAwarenessUpdate(from, changed), RELAY);
+        },
+      );
+    relayDoc(docA, docB);
+    relayDoc(docB, docA);
+    relayAwareness(awA, awB);
+    relayAwareness(awB, awA);
+
+    const provider = (awareness: Awareness): HamCollaborationProvider => ({
+      synced: true,
+      hasUnsyncedChanges: false,
+      awareness,
+      on() {},
+      off() {},
+      destroy() {},
+    });
+    const runtime = (ydoc: Y.Doc, awareness: Awareness): HamCollaborationRuntime => ({
+      ydoc,
+      connect: async () => provider(awareness),
+    });
+
+    return {
+      runtimeA: runtime(docA, awA),
+      runtimeB: runtime(docB, awB),
+      docA,
+      docB,
+      cleanup: () => {
+        awA.destroy();
+        awB.destroy();
+        docA.destroy();
+        docB.destroy();
+      },
+    };
+  }, []);
+
+  useEffect(() => peers.cleanup, [peers]);
+  return peers;
 }
 
 export function CollabDemo() {
-  const ydoc = useMemo(() => new Y.Doc(), []);
-  const runtime = useMemo(() => localRuntime(ydoc), [ydoc]);
+  const peers = useCollabPeers();
   const configA = useMemo<HamCollaborationConfig>(
     () => ({
       enabled: true,
       provider: "hocuspocus",
       documentName: "demo",
       url: "",
-      ydoc,
-      runtime,
+      ydoc: peers.docA,
+      runtime: peers.runtimeA,
       user: { name: "Alice", color: "#6f5cff" },
     }),
-    [ydoc, runtime],
+    [peers],
   );
   const configB = useMemo<HamCollaborationConfig>(
-    () => ({ ...configA, user: { name: "Bob", color: "#0a7d4f" } }),
-    [configA],
+    () => ({
+      enabled: true,
+      provider: "hocuspocus",
+      documentName: "demo",
+      url: "",
+      ydoc: peers.docB,
+      runtime: peers.runtimeB,
+      user: { name: "Bob", color: "#0a7d4f" },
+    }),
+    [peers],
   );
 
   return (
     <DemoFrame title="Collaboration — two editors, one shared document (no server)" height="auto">
       <div className="demo-collab">
         <div className="demo-collab-pane">
-          <h4>Alice's editor</h4>
+          <h4>Alice&apos;s editor</h4>
           <HamEditor
             surfaceId="collab-a"
             rootBlockId="blk_a"
@@ -54,7 +118,7 @@ export function CollabDemo() {
           />
         </div>
         <div className="demo-collab-pane">
-          <h4>Bob's editor</h4>
+          <h4>Bob&apos;s editor</h4>
           <HamEditor
             surfaceId="collab-b"
             rootBlockId="blk_b"
@@ -64,9 +128,11 @@ export function CollabDemo() {
         </div>
       </div>
       <p className="demo-hint">
-        Both editors bind to the same Yjs document, so edits converge instantly. In a real app you
-        swap the in-memory runtime for <code>createHocuspocusCollab</code> against a Hocuspocus
-        server.
+        Edits converge instantly, and each editor shows the <strong>other&apos;s cursor</strong> (a
+        colored caret with their name) so two people don&apos;t edit the same spot — click into one
+        and watch the labeled caret appear in the other. Remote cursors are on by default whenever
+        the provider has awareness; in a real app you swap the in-memory relay for{" "}
+        <code>createHocuspocusCollab</code> against a Hocuspocus server.
       </p>
     </DemoFrame>
   );

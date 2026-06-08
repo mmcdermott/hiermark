@@ -17,6 +17,7 @@
     "@ham/editor": "workspace:^",
     "react": "^19",
     "react-dom": "^19",
+    "y-protocols": "^1",
     "yjs": "^13"
   },
   "devDependencies": {
