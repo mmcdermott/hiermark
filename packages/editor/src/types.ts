@@ -362,6 +362,14 @@ export type HamImageUploadHandler = (
   context: { surfaceId: HamSurfaceId },
 ) => Promise<HamUploadedImage | null>;
 
+/**
+ * Which surface the editor presents: the rich WYSIWYG editor (`"rich"`) or a
+ * raw-markdown `<textarea>` (`"source"`). Source mode lets a user edit the
+ * literal markdown — e.g. hand-tweak a GFM table or a math expression — and
+ * re-parses back into the rich editor on switch.
+ */
+export type HamEditorMode = "rich" | "source";
+
 // ---------------------------------------------------------------------------
 // Imperative handle (spec §5.8)
 // ---------------------------------------------------------------------------
@@ -386,6 +394,15 @@ export interface HamEditorHandle {
    * / file picker. No-op (resolves immediately) when no upload handler is set.
    */
   uploadImages(files: FileList | File[]): Promise<void>;
+  /** The current edit surface — `"rich"` or raw-markdown `"source"`. */
+  getMode(): HamEditorMode;
+  /**
+   * Switch between the rich editor and the raw-markdown source `<textarea>`.
+   * Switching to `"rich"` re-parses the edited markdown. No-op under active
+   * collaboration (source mode would clobber the shared doc) — `getMode` then
+   * stays `"rich"`.
+   */
+  setMode(mode: HamEditorMode): void;
   collapseBlock(blockId: HamBlockId): void;
   expandBlock(blockId: HamBlockId): void;
   /**
@@ -440,6 +457,9 @@ export interface HamEditorProps<AnnotationData = unknown> {
   onImageUpload?: HamImageUploadHandler;
   /** Reports an image upload rejection (the handler threw). */
   onImageUploadError?: (error: unknown, file: File) => void;
+
+  /** Fires when the edit surface toggles between rich and raw-markdown source. */
+  onModeChange?: (mode: HamEditorMode) => void;
 
   slots?: HamEditorSlots;
   className?: string;

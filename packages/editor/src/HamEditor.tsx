@@ -45,6 +45,7 @@ import type {
   HamCollaborationProvider,
   HamCollaborationUser,
   HamEditorHandle,
+  HamEditorMode,
   HamEditorProps,
   HamEditorSavePayload,
   HamSurfaceSnapshot,
@@ -137,7 +138,26 @@ function HamEditorInner<AnnotationData = unknown>(
     onActiveBlockChange,
     onImageUpload,
     onImageUploadError,
+    onModeChange,
   } = props;
+
+  // Edit surface: the rich editor or a raw-markdown <textarea> (source mode).
+  // Source mode is unavailable under collaboration (a full re-parse would
+  // clobber the shared Y.Doc).
+  const sourceAvailable = !collab;
+  const [editorMode, setEditorMode] = useState<HamEditorMode>("rich");
+  const [sourceText, setSourceText] = useState("");
+  const modeRef = useRef<HamEditorMode>("rich");
+  modeRef.current = editorMode;
+  const sourceTextRef = useRef("");
+  // Markdown captured when source mode opened — lets us skip the re-parse (and
+  // thus preserve block ids) when the user toggles back without edits.
+  const sourceEnteredRef = useRef("");
+  const onModeChangeRef = useRef(onModeChange);
+  onModeChangeRef.current = onModeChange;
+  // setMode is invoked from the imperative handle (captured once); route through
+  // a ref so it always runs the latest closure (current editor, source text).
+  const applyModeRef = useRef<(next: HamEditorMode) => void>(() => {});
 
   // The gutter reads its data/handlers through a stable getter (never a cloned
   // ref object — Tiptap deep-clones extension options).
@@ -274,6 +294,34 @@ function HamEditorInner<AnnotationData = unknown>(
       }
     },
   });
+
+  // Switch the edit surface. To source: snapshot the current markdown into the
+  // textarea. To rich: re-parse the (possibly edited) markdown — but only when it
+  // actually changed, so a "peek at source" round-trip preserves block ids.
+  applyModeRef.current = (next: HamEditorMode) => {
+    if (next === modeRef.current) return;
+    if (next === "source") {
+      if (!sourceAvailable || !editor) return;
+      const md = editor.getMarkdown();
+      sourceEnteredRef.current = md;
+      sourceTextRef.current = md;
+      setSourceText(md);
+      setEditorMode("source");
+      modeRef.current = "source";
+      onModeChangeRef.current?.("source");
+      return;
+    }
+    // → rich
+    if (editor && sourceTextRef.current !== sourceEnteredRef.current) {
+      editor.commands.setContent(sourceTextRef.current, {
+        emitUpdate: true,
+        contentType: "markdown",
+      } as Parameters<typeof editor.commands.setContent>[1]);
+    }
+    setEditorMode("rich");
+    modeRef.current = "rich";
+    onModeChangeRef.current?.("rich");
+  };
 
   // Branch handler: capture the snapshot synchronously (spec §5.7), then emit.
   const handleBranch = useStable(
@@ -470,6 +518,8 @@ function HamEditorInner<AnnotationData = unknown>(
         }
       },
       uploadImages: (files) => uploadHamImages(editor.view, imageUploadRef.current, files),
+      getMode: () => modeRef.current,
+      setMode: (next) => applyModeRef.current(next),
       collapseBlock(blockId) {
         setFoldedSet((prev) => (prev.has(blockId) ? prev : new Set(prev).add(blockId)));
       },
@@ -519,12 +569,34 @@ function HamEditorInner<AnnotationData = unknown>(
       : undefined;
   const SuggestPopoverComp = props.slots?.SuggestPopover ?? SuggestPopover;
 
+  const inSource = editorMode === "source";
+
   return (
     <div
-      className={["ham-editor", className].filter(Boolean).join(" ")}
+      className={["ham-editor", className, inSource ? "ham-editor-source" : null]
+        .filter(Boolean)
+        .join(" ")}
       data-surface-id={surfaceId}
+      data-mode={editorMode}
     >
-      <EditorContent editor={editor} />
+      {/* Keep EditorContent mounted (the ProseMirror view must persist) but hide
+          it while the raw-markdown textarea is shown. */}
+      <div hidden={inSource}>
+        <EditorContent editor={editor} />
+      </div>
+      {inSource && (
+        <textarea
+          className="ham-source-editor"
+          aria-label="Markdown source"
+          spellCheck={false}
+          readOnly={!editable}
+          value={sourceText}
+          onChange={(e) => {
+            sourceTextRef.current = e.target.value;
+            setSourceText(e.target.value);
+          }}
+        />
+      )}
       {gutterEntries.map((entry) =>
         createPortal(
           <BlockGutterAffordances
