@@ -34,7 +34,7 @@ import {
   type HamCollabBinding,
 } from "./extensions/createHamEditorExtensions";
 import { stripStableIds } from "./markdown/stable-id";
-import { getHamSurfaceSnapshot, surfaceSnapshotFromDoc } from "./snapshot/getHamSurfaceSnapshot";
+import { surfaceSnapshotFromDoc } from "./snapshot/getHamSurfaceSnapshot";
 import type {
   HamAnnotationSuggestion,
   HamBlockId,
@@ -130,28 +130,39 @@ function HamEditorInner<AnnotationData = unknown>(
   // per editor — a new onReady closure each render must not re-fire it.
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
+  // Debounce timer for host snapshot emission (see onUpdate).
+  const snapshotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current);
+    },
+    [],
+  );
 
-  const snapshotOf = useStable(
-    (editor: Editor): HamSurfaceSnapshot =>
-      getHamSurfaceSnapshot(editor, {
+  // One snapshot projection per document, shared across consumers. Every
+  // keystroke otherwise re-walks the whole doc 3-4× (onUpdate, the gutter, and
+  // the annotation layer each project independently); memoizing by doc identity
+  // (PM docs are immutable, so same ref ⇒ same content) collapses that to a
+  // single walk per doc — and plain typing produces exactly one doc per stroke.
+  const snapshotCacheRef = useRef<{ doc: PMNode; snap: HamSurfaceSnapshot } | null>(null);
+  const computeSnapshot = useStable(
+    (doc: PMNode): HamSurfaceSnapshot => {
+      const cached = snapshotCacheRef.current;
+      if (cached && cached.doc === doc) return cached.snap;
+      const snap = surfaceSnapshotFromDoc(doc, {
         surfaceId,
         rootBlockId,
         ...(title !== undefined ? { title } : {}),
-      }),
+      });
+      snapshotCacheRef.current = { doc, snap };
+      return snap;
+    },
     [surfaceId, rootBlockId, title],
   );
 
-  // Doc-based snapshot for the gutter: during a transaction's `apply` the editor
-  // still holds the old doc, so the gutter must project from the fresh `newState`
-  // doc directly (not via `editor.state`).
-  const computeSnapshot = useStable(
-    (doc: PMNode): HamSurfaceSnapshot =>
-      surfaceSnapshotFromDoc(doc, {
-        surfaceId,
-        rootBlockId,
-        ...(title !== undefined ? { title } : {}),
-      }),
-    [surfaceId, rootBlockId, title],
+  const snapshotOf = useStable(
+    (editor: Editor): HamSurfaceSnapshot => computeSnapshot(editor.state.doc),
+    [computeSnapshot],
   );
 
   // Branch-edge count per block, so the gutter knows when to switch a block's
@@ -213,7 +224,12 @@ function HamEditorInner<AnnotationData = unknown>(
         surfaceId,
         content: { kind: "tiptap-json", json: editor.getJSON() },
       });
-      onSnapshotChange?.(snapshotOf(editor));
+      // Debounce the host snapshot emission: it drives only the canvas's column
+      // ordering (cosmetic), while branch/save capture snapshots synchronously
+      // when they actually need them. This keeps a full projection off the
+      // keystroke hot path.
+      if (snapshotTimerRef.current) clearTimeout(snapshotTimerRef.current);
+      snapshotTimerRef.current = setTimeout(() => onSnapshotChange?.(snapshotOf(editor)), 300);
     },
     onSelectionUpdate({ editor }) {
       const id = activeBlockIdAt(editor.state);
@@ -299,13 +315,14 @@ function HamEditorInner<AnnotationData = unknown>(
           context: props.annotationContext ?? {},
           surfaceId,
           rootBlockId,
+          computeSnapshot,
           onOpen: (hit, element) => setOpenAnnotation({ hit, element }),
         }
       : null;
     if (editor) {
       editor.view.dispatch(editor.state.tr.setMeta(annotationLayerKey, true));
     }
-  }, [editor, props.annotations, props.annotationContext, surfaceId, rootBlockId]);
+  }, [editor, props.annotations, props.annotationContext, surfaceId, rootBlockId, computeSnapshot]);
 
   // Set the highlighted index in both the ref (for the keyboard handler) and
   // React state (for the render) so they can't diverge.

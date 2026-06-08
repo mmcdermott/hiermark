@@ -14,6 +14,7 @@ import type {
   HamAnnotationRegistry,
   HamBlockSnapshot,
   HamSurfaceId,
+  HamSurfaceSnapshot,
 } from "../types";
 import { recognizeAnnotations } from "./recognize";
 
@@ -22,6 +23,12 @@ export interface AnnotationLayerContext<Ctx = unknown> {
   context: Ctx;
   surfaceId: HamSurfaceId;
   rootBlockId: string;
+  /**
+   * Shared, per-doc-memoized snapshot projector (from HamEditor). Lets the
+   * annotation layer reuse the same projection the gutter/onUpdate already did
+   * for this doc instead of walking it again. Falls back to a fresh projection.
+   */
+  computeSnapshot?: (doc: PMNode) => HamSurfaceSnapshot;
   /** Called when an annotation with a render component is clicked. */
   onOpen?: (hit: HamAnnotationHit, element: HTMLElement) => void;
 }
@@ -84,10 +91,9 @@ function build(doc: PMNode, ctx: AnnotationLayerContext | null): AnnotationPlugi
   if (!ctx) return { decoSet: DecorationSet.empty, hitsById: new Map() };
   const hitsById = new Map<string, HamAnnotationHit>();
 
-  const snapshot = surfaceSnapshotFromDoc(doc, {
-    surfaceId: ctx.surfaceId,
-    rootBlockId: ctx.rootBlockId,
-  });
+  const snapshot = ctx.computeSnapshot
+    ? ctx.computeSnapshot(doc)
+    : surfaceSnapshotFromDoc(doc, { surfaceId: ctx.surfaceId, rootBlockId: ctx.rootBlockId });
 
   const textByBlockId: Record<string, string> = {};
   const indexByBlockId = new Map<string, BlockTextIndex>();

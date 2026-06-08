@@ -1,5 +1,5 @@
 import { Extension } from "@tiptap/core";
-import type { Node as PMNode } from "@tiptap/pm/model";
+import type { Fragment, Node as PMNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey, type Transaction } from "@tiptap/pm/state";
 
 import { generateBlockId } from "../id";
@@ -39,6 +39,30 @@ function assignBlockIds(
     }
   });
   return modified;
+}
+
+/** Whether a fragment contains a node of an id-bearing type (recursively). */
+function fragmentHasBlock(frag: Fragment, types: Set<string>): boolean {
+  let found = false;
+  frag.forEach((node) => {
+    if (found) return;
+    if (types.has(node.type.name)) found = true;
+    else if (node.content.size) found = fragmentHasBlock(node.content, types);
+  });
+  return found;
+}
+
+/**
+ * Whether a step could introduce a missing or duplicate block id — i.e. it
+ * inserts block-level content (ReplaceStep/ReplaceAroundStep carry a `slice`;
+ * paste/drop/split/undo bake the original ids in) or directly sets a
+ * `dataBlockId` attribute. Plain text/mark edits do neither, so they skip the
+ * O(n) dedup walk.
+ */
+function stepMayAffectIds(step: unknown, types: Set<string>): boolean {
+  const s = step as { slice?: { content: Fragment }; attr?: string };
+  if (s.attr === "dataBlockId") return true;
+  return !!s.slice && fragmentHasBlock(s.slice.content, types);
 }
 
 /**
@@ -99,6 +123,13 @@ export const BlockId = Extension.create<BlockIdOptions>({
         key: new PluginKey("hamBlockId"),
         appendTransaction(transactions, _oldState, newState) {
           if (!transactions.some((t) => t.docChanged)) return null;
+          // The full-doc dedup walk is only needed when a transaction inserted
+          // block-level content — a split, paste, drop, or undo can create a
+          // missing or duplicate id. Plain text edits never do, so we skip the
+          // O(n) walk on the typing hot path (the common case).
+          if (!transactions.some((t) => t.steps.some((s) => stepMayAffectIds(s, types)))) {
+            return null;
+          }
           const tr = newState.tr;
           const modified = assignBlockIds(newState.doc, tr, types, generate);
           return modified ? tr : null;
