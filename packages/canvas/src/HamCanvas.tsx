@@ -491,14 +491,23 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   // A compact signature of the projected layout — connectors re-measure whenever
   // columns reshape, the active path moves, or edges change.
-  const reshapeKey = useMemo(
+  // Geometry key: changes only when the set/position of DOM anchors changes
+  // (columns, display modes, which surfaces connect). Drives the connector
+  // ResizeObserver re-subscription — NOT the active path, so moving the cursor
+  // doesn't re-observe every anchor.
+  const geometryKey = useMemo(
     () =>
       canvas.columns
         .map((c) => c.items.map((i) => `${i.surface.id}:${i.displayMode}`).join(","))
         .join("|") +
-      `#${canvas.activeSurfaceId}:${canvas.activeBlockId ?? ""}` +
-      `#${props.branchEdges.map((e) => `${e.id}:${e.order}`).join(",")}`,
-    [canvas.columns, canvas.activeSurfaceId, canvas.activeBlockId, props.branchEdges],
+      `#${props.branchEdges.map((e) => `${e.id}:${e.fromSurfaceId}>${e.toSurfaceId}`).join(",")}`,
+    [canvas.columns, props.branchEdges],
+  );
+  // Full reshape key: geometry + the active path (which changes which edges show
+  // and their state coloring) — drives the connector re-measure.
+  const reshapeKey = useMemo(
+    () => `${geometryKey}#${canvas.activeSurfaceId}:${canvas.activeBlockId ?? ""}`,
+    [geometryKey, canvas.activeSurfaceId, canvas.activeBlockId],
   );
 
   const sensors = useSensors(
@@ -829,6 +838,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
           layout={layout}
           hovered={hovered}
           reshapeKey={reshapeKey}
+          geometryKey={geometryKey}
           slots={props.slots}
         />
       </div>

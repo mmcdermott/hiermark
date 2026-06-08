@@ -3,7 +3,7 @@ import type { HamBlockId, HamBranchRequestEvent, HamSurfaceSnapshot } from "@ham
 
 import { resolveBehavior, resolveLayout } from "./defaults";
 import { getHamActivePath } from "./topology/getHamActivePath";
-import { projectHamColumns } from "./topology/projectHamColumns";
+import { buildProjectionContext, projectColumnsFromContext } from "./topology/projectHamColumns";
 import {
   areSameAnchorSiblings,
   buildReorderEvent,
@@ -290,28 +290,44 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     [props.rootSurfaceId, activeSurfaceId, activeBlockId, props.branchEdges],
   );
 
-  const columns = useMemo(
-    () =>
-      projectHamColumns<SurfaceMeta, EdgeMeta>({
-        rootSurfaceId: props.rootSurfaceId,
-        surfaces: props.surfaces,
-        branchEdges: props.branchEdges,
-        snapshotsBySurfaceId: snapshots,
-        activeSurfaceId,
-        activeBlockId,
-        collapsedSurfaceIds,
-        layout,
-      }),
+  // Two-stage projection so snapshot churn (a debounced snapshot per keystroke)
+  // doesn't re-run the index / active-path / display-mode work. `topologyInput`
+  // and the context memo are snapshot-free — stable across snapshot-only
+  // updates — and the columns memo re-runs only the BFS + sibling-ordering pass
+  // (which is all the snapshot actually drives) when a snapshot changes.
+  const topologyInput = useMemo(
+    () => ({
+      rootSurfaceId: props.rootSurfaceId,
+      surfaces: props.surfaces,
+      branchEdges: props.branchEdges,
+      activeSurfaceId,
+      activeBlockId,
+      collapsedSurfaceIds,
+      layout,
+    }),
     [
       props.rootSurfaceId,
       props.surfaces,
       props.branchEdges,
-      snapshots,
       activeSurfaceId,
       activeBlockId,
       collapsedSurfaceIds,
       layout,
     ],
+  );
+
+  const projectionContext = useMemo(
+    () => buildProjectionContext<SurfaceMeta, EdgeMeta>(topologyInput),
+    [topologyInput],
+  );
+
+  const columns = useMemo(
+    () =>
+      projectColumnsFromContext<SurfaceMeta, EdgeMeta>(projectionContext, {
+        ...topologyInput,
+        snapshotsBySurfaceId: snapshots,
+      }),
+    [projectionContext, topologyInput, snapshots],
   );
 
   const actions = useMemo<HamCanvasActions>(
