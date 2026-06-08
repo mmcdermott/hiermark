@@ -43,10 +43,7 @@
   "dependencies": {
     "@dnd-kit/core": "^6",
     "@dnd-kit/sortable": "^10",
-    "@dnd-kit/utilities": "^3",
-    "@floating-ui/react": "^0.27",
-    "@tanstack/react-virtual": "^3",
-    "zod": "^4"
+    "@dnd-kit/utilities": "^3"
   },
   "peerDependencies": {
     "@ham/editor": "workspace:^",

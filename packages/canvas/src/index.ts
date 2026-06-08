@@ -14,6 +14,8 @@ export { projectHamColumns } from "./topology/projectHamColumns";
 export { getHamActivePath } from "./topology/getHamActivePath";
 export { buildIndices, collectDescendants } from "./topology/buildIndices";
 export type { HamTopologyIndices } from "./topology/buildIndices";
+export { validateHamTopology } from "./topology/validateHamTopology";
+export type { HamTopologyIssue, HamTopologyIssueKind } from "./topology/validateHamTopology";
 export { computePathState, pickDisplayMode, buildPathStateContext } from "./topology/pathState";
 export type { PathStateContext } from "./topology/pathState";
 export {
