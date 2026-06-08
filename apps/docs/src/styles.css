@@ -445,3 +445,36 @@ pre.block code {
     grid-template-columns: 1fr;
   }
 }
+
+/* Curated styled-example themes (applied via the canvas className) ----------- */
+/* Warm, serif manuscript. */
+.theme-manuscript {
+  --ham-canvas-bg: #fbf7f0;
+  --ham-surface-bg: #fffdf8;
+  --ham-surface-border: #e7dccb;
+  --ham-accent: #b5651d;
+  --ham-accent-soft: #f6ead9;
+  --ham-muted: #8a7a63;
+}
+.theme-manuscript .ham-editor .ProseMirror {
+  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+/* Cool, dark topology map. */
+.theme-map {
+  --ham-canvas-bg: #0f1722;
+  --ham-surface-bg: transparent;
+  --ham-surface-border: #2a3a4d;
+  --ham-text: #d6e2f0;
+  --ham-muted: #8aa0b8;
+  --ham-accent: #37a0c4;
+  --ham-accent-soft: #16344a;
+  color: #d6e2f0;
+}
+.theme-map .ham-surface-header,
+.theme-map .ham-outline-link,
+.theme-map .ham-editor {
+  color: #d6e2f0;
+}

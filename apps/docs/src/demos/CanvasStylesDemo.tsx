@@ -12,6 +12,7 @@ import { galleryCanvas } from "../lib/examples";
 
 type Appearance = HamCanvasLayoutConfig["appearance"];
 type Connectors = HamCanvasLayoutConfig["showConnectors"];
+type Inactive = HamCanvasLayoutConfig["inactiveColumnMode"];
 type SiblingStyle = "plus" | "labeled" | "dot";
 
 // --- Three interchangeable add-sibling button components ------------------- //
@@ -104,6 +105,7 @@ export function CanvasStylesDemo() {
   const [siblingStyle, setSiblingStyle] = useState<SiblingStyle>("plus");
   const [groupHeaders, setGroupHeaders] = useState<"on" | "off">("off");
   const [columnScroll, setColumnScroll] = useState<"on" | "off">("off");
+  const [inactive, setInactive] = useState<Inactive>("expanded");
 
   const slots = useMemo<HamCanvasSlots>(() => {
     const Btn = SIBLING_BUTTONS[siblingStyle];
@@ -166,6 +168,17 @@ export function CanvasStylesDemo() {
               { value: "on", label: "On" },
             ]}
           />
+          <Segmented
+            label="Inactive columns"
+            value={inactive}
+            onChange={setInactive}
+            options={[
+              { value: "expanded", label: "Editor" },
+              { value: "card", label: "Card" },
+              { value: "outline", label: "Outline" },
+              { value: "rail", label: "Rail" },
+            ]}
+          />
         </span>
       }
     >
@@ -181,7 +194,7 @@ export function CanvasStylesDemo() {
           showConnectors: connectors,
           showGroupHeaders: groupHeaders === "on",
           columnScroll: columnScroll === "on",
-          inactiveColumnMode: "expanded",
+          inactiveColumnMode: inactive,
         }}
       />
     </DemoFrame>

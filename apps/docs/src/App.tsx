@@ -6,6 +6,7 @@ import { ApiReference } from "./pages/ApiReference";
 import { EditorDemo } from "./demos/EditorDemo";
 import { CanvasDemo } from "./demos/CanvasDemo";
 import { CanvasStylesDemo } from "./demos/CanvasStylesDemo";
+import { FocusSidebarDemo, FlatManuscriptDemo, TopologyMapDemo } from "./demos/StyledExamplesDemo";
 import { PaperDemo } from "./demos/PaperDemo";
 import { CollabDemo } from "./demos/CollabDemo";
 
@@ -72,10 +73,32 @@ const SECTIONS: Section[] = [
           different component — it&apos;s passable just like the editor&apos;s branch button; turn
           on <strong>group headers</strong> (a breadcrumb to each group&apos;s parent) and{" "}
           <strong>column scroll</strong> (each level scrolls on its own, so selecting a surface
-          reveals its children). Hover a column to reveal the <strong>+</strong> rail between
-          siblings to insert a branch at that position; drag a card to reorder.
+          reveals its children); and condense the <strong>inactive columns</strong> (Editor → Card →
+          Outline → Rail) for a focus / sidebar view. Hover a column to reveal the{" "}
+          <strong>+</strong> rail between siblings to insert a branch at that position; drag a card
+          to reorder.
         </p>
         <CanvasStylesDemo />
+      </section>
+    ),
+  },
+  {
+    id: "gallery",
+    label: "Gallery of styles",
+    group: "Live demos",
+    render: () => (
+      <section className="page">
+        <h2>Gallery of styles</h2>
+        <p className="lede">
+          The <em>same</em> tree, three intentional looks — the layout/slot/theme knobs aren&apos;t
+          just toggles, they compose into genuinely different tools. A{" "}
+          <strong>focus / sidebar</strong> view that collapses the other documents to titles while
+          you edit one; a warm, serif <strong>flat manuscript</strong> where the levels flow as one
+          document; and a dark <strong>topology map</strong> of the whole tree with bold edges.
+        </p>
+        <FocusSidebarDemo />
+        <FlatManuscriptDemo />
+        <TopologyMapDemo />
       </section>
     ),
   },
