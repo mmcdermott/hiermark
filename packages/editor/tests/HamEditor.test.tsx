@@ -186,6 +186,17 @@ describe("HamEditor", () => {
     expect(fn2).toHaveBeenCalledOnce();
   });
 
+  it("setContent replaces the editor content after mount", async () => {
+    const { getHandle } = await mountEditor();
+    expect(getHandle().getMarkdown()).toContain("# Method");
+    getHandle().setContent({ kind: "markdown", markdown: "# Replaced\n\nFresh revision." });
+    await waitFor(() => expect(getHandle().getMarkdown()).toContain("# Replaced"));
+    expect(getHandle().getMarkdown()).not.toContain("# Method");
+    // New blocks still get unique ids.
+    const ids = getHandle().getSnapshot().blockOrder;
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
   it("save() yields markdown, tiptap json, and a snapshot", async () => {
     const { getHandle } = await mountEditor();
     const payload = await getHandle().save();

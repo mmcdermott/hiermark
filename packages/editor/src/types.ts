@@ -1,3 +1,4 @@
+import type { Editor } from "@tiptap/core";
 import type { ComponentType, ReactNode } from "react";
 
 // ---------------------------------------------------------------------------
@@ -209,6 +210,26 @@ export interface HamAnnotationSuggestConfig<Ctx = unknown> {
   search: (query: string, context: Ctx) => HamAnnotationSuggestion[];
 }
 
+/** Live type-ahead state passed to a {@link HamSuggestPopoverProps} renderer. */
+export interface HamSuggestState {
+  active: boolean;
+  trigger: string | null;
+  query: string;
+  /** Document range covering the trigger + query (what an insert replaces). */
+  range: { from: number; to: number } | null;
+  items: HamAnnotationSuggestion[];
+}
+
+/** Props for a custom type-ahead popover (`HamEditorSlots.SuggestPopover`). */
+export interface HamSuggestPopoverProps {
+  state: HamSuggestState;
+  /** Highlighted candidate index (host-owned; keep keyboard + render in sync). */
+  index: number;
+  editor: Editor | null;
+  onHover: (index: number) => void;
+  onSelect: (item: HamAnnotationSuggestion) => void;
+}
+
 export interface HamAnnotationType<Ctx = unknown> {
   name: string;
   priority?: number;
@@ -270,6 +291,8 @@ export interface HamEditorSlots {
   EmptyState?: ComponentType<{ surfaceId: HamSurfaceId }>;
   LoadingState?: ComponentType<{ surfaceId: HamSurfaceId }>;
   ErrorState?: ComponentType<{ surfaceId: HamSurfaceId; error: Error }>;
+  /** Replace the default annotation type-ahead popover (e.g. richer rows). */
+  SuggestPopover?: ComponentType<HamSuggestPopoverProps>;
 }
 
 // ---------------------------------------------------------------------------
@@ -325,6 +348,12 @@ export interface HamEditorHandle {
   getMarkdown(): string;
   getJSON(): unknown;
   save(): Promise<HamEditorSavePayload>;
+  /**
+   * Replace the editor's content (the escape hatch for hosts that need to swap
+   * in a new revision after mount — see {@link HamEditorProps.value}, which is
+   * mount-time only). `emitUpdate` defaults to true (fires onChange/snapshot).
+   */
+  setContent(content: HamEditorContent, opts?: { emitUpdate?: boolean }): void;
   collapseBlock(blockId: HamBlockId): void;
   expandBlock(blockId: HamBlockId): void;
   /**

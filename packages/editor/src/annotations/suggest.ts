@@ -47,6 +47,14 @@ interface PluginState {
   dismissed: { from: number; to: number } | null;
 }
 
+/** Single-entry memo so an unchanged (trigger, query, context) skips search(). */
+interface SearchCache {
+  trigger: string | null;
+  query: string | null;
+  context: unknown;
+  items: HamAnnotationSuggestion[];
+}
+
 /** Distinct trigger chars across the registry's suggest-capable types. */
 function triggerChars(registry: HamAnnotationRegistry): string[] {
   const set = new Set<string>();
@@ -83,6 +91,7 @@ export function collectSuggestions<Ctx>(
 function compute(
   state: EditorState,
   getContext: () => AnnotationSuggestContext | null,
+  cache: SearchCache,
 ): AnnotationSuggestState {
   const ctx = getContext();
   if (!ctx) return EMPTY;
@@ -110,7 +119,18 @@ function compute(
     const $at = state.doc.resolve(match.range.from);
     const before = $at.parent.textBetween(Math.max(0, $at.parentOffset - 1), $at.parentOffset);
     if (before && /[A-Za-z0-9]/.test(before)) continue;
-    const items = collectSuggestions(ctx.registry, trigger, match.query, ctx.context, ctx.maxItems);
+    // Reuse the last result for an identical (trigger, query, context) — so a
+    // cursor move within the same token doesn't re-run the host's search().
+    let items: HamAnnotationSuggestion[];
+    if (cache.trigger === trigger && cache.query === match.query && cache.context === ctx.context) {
+      items = cache.items;
+    } else {
+      items = collectSuggestions(ctx.registry, trigger, match.query, ctx.context, ctx.maxItems);
+      cache.trigger = trigger;
+      cache.query = match.query;
+      cache.context = ctx.context;
+      cache.items = items;
+    }
     if (items.length === 0) continue; // nothing to show — let another trigger try
     return { active: true, trigger, query: match.query, range: match.range, items };
   }
@@ -134,6 +154,7 @@ export const AnnotationSuggest = Extension.create<AnnotationSuggestOptions>({
   addProseMirrorPlugins() {
     const getContext = this.options.getContext;
     let lastSig: string | null = null;
+    const cache: SearchCache = { trigger: null, query: null, context: undefined, items: [] };
     return [
       new Plugin<PluginState>({
         key: annotationSuggestKey,
@@ -144,7 +165,7 @@ export const AnnotationSuggest = Extension.create<AnnotationSuggestOptions>({
             if (tr.getMeta(annotationSuggestKey)?.dismiss) {
               return { suggest: EMPTY, dismissed: value.suggest.range };
             }
-            const next = compute(newState, getContext);
+            const next = compute(newState, getContext, cache);
             // Stay suppressed only while still typing within the SAME token (same
             // trigger position). Moving the cursor away, or a new token, clears
             // the dismissal — so the type-ahead can never get permanently stuck

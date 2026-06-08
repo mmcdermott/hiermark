@@ -114,6 +114,39 @@ describe("HamEditor + annotations", () => {
     expect(document.querySelector(".ham-suggest-popover")).toBeNull();
   });
 
+  it("renders a custom SuggestPopover slot in place of the default", async () => {
+    let handle: HamEditorHandle | null = null;
+    const { container } = render(
+      <HamEditor
+        surfaceId="s1"
+        rootBlockId="blk_root"
+        value={{ kind: "markdown", markdown: "" }}
+        annotations={createExampleAnnotationRegistry()}
+        annotationContext={{
+          references: { vaswani2017: { title: "Attention Is All You Need", year: 2017 } },
+        }}
+        slots={{
+          SuggestPopover: ({ state }) =>
+            state.active ? (
+              <div className="my-suggest">custom: {state.items.map((i) => i.label).join(",")}</div>
+            ) : null,
+        }}
+        onReady={(h) => {
+          handle = h;
+        }}
+      />,
+    );
+    await waitFor(() => expect(handle).not.toBeNull());
+    (handle!.getUnsafeTiptapEditor() as Editor).chain().focus("end").insertContent("@vas").run();
+    await waitFor(() => {
+      const el = container.querySelector(".my-suggest");
+      expect(el).not.toBeNull();
+      expect(el!.textContent).toContain("vaswani2017");
+    });
+    // The default popover is not rendered when a slot is supplied.
+    expect(document.querySelector(".ham-suggest-popover")).toBeNull();
+  });
+
   it("Escape dismisses the @-search popover", async () => {
     const { container, editor } = await mountSearch("Ref: ");
     editor.chain().focus("end").insertContent("@vas").run();

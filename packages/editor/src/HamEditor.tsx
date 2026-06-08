@@ -442,6 +442,14 @@ function HamEditorInner<AnnotationData = unknown>(
       getMarkdown: () => editor.getMarkdown(),
       getJSON: () => editor.getJSON(),
       save: async () => buildSavePayload(editor),
+      setContent(content, opts) {
+        const emitUpdate = opts?.emitUpdate ?? true;
+        if (content.kind === "markdown") {
+          editor.commands.setContent(content.markdown, { contentType: "markdown", emitUpdate });
+        } else {
+          editor.commands.setContent(content.json as object, { emitUpdate });
+        }
+      },
       collapseBlock(blockId) {
         setFoldedSet((prev) => (prev.has(blockId) ? prev : new Set(prev).add(blockId)));
       },
@@ -489,6 +497,7 @@ function HamEditorInner<AnnotationData = unknown>(
     openAnnotation && props.annotations
       ? props.annotations.types.find((t) => t.name === openAnnotation.hit.type)
       : undefined;
+  const SuggestPopoverComp = props.slots?.SuggestPopover ?? SuggestPopover;
 
   return (
     <div
@@ -516,11 +525,11 @@ function HamEditorInner<AnnotationData = unknown>(
         context={(props.annotationContext ?? {}) as AnnotationData}
         onClose={() => setOpenAnnotation(null)}
       />
-      <SuggestPopover
+      <SuggestPopoverComp
         state={suggest}
         index={suggestIndex}
         editor={editor}
-        onHover={setSuggestIndex}
+        onHover={setSuggestHighlight}
         onSelect={commitSuggestion}
       />
     </div>
