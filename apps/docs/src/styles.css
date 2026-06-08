@@ -215,7 +215,18 @@ pre.block code {
   font-weight: 600;
   color: var(--doc-muted);
 }
-.demo-reset {
+.demo-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.demo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.demo-btn {
   border: 1px solid var(--doc-border);
   background: #fff;
   border-radius: 6px;
@@ -223,9 +234,46 @@ pre.block code {
   cursor: pointer;
   font: inherit;
   font-size: 12px;
+  white-space: nowrap;
+}
+.demo-btn:hover {
+  border-color: var(--doc-accent);
+  color: var(--doc-accent);
+}
+.demo-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 400;
+  color: var(--doc-text);
+  cursor: pointer;
 }
 .demo-stage {
   overflow: auto;
+  resize: vertical;
+}
+
+/* Expand a demo to (almost) full-viewport so the canvas can use a wide screen. */
+.demo-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 16, 26, 0.45);
+  z-index: 999;
+}
+.demo-full {
+  position: fixed;
+  inset: 3vh 3vw;
+  z-index: 1000;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(16, 16, 26, 0.4);
+}
+.demo-full .demo-stage {
+  flex: 1 1 auto;
+  height: auto !important;
+  resize: none;
 }
 .demo-editor-wrap {
   padding: 16px 20px;

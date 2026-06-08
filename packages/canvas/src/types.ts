@@ -107,7 +107,12 @@ export interface HamCanvasLayoutConfig {
   surfaceGap: number;
   padding: number;
   activeColumnMode: "expanded" | "normal";
-  inactiveColumnMode: "card" | "outline" | "rail" | "hidden";
+  /**
+   * How surfaces that aren't the active one are shown. `"expanded"` keeps every
+   * surface as a full editor (nothing collapses when you branch) — good on a
+   * wide screen; the others compact inactive surfaces.
+   */
+  inactiveColumnMode: "card" | "outline" | "rail" | "hidden" | "expanded";
   autoScroll: boolean;
   virtualizeColumns: boolean;
   virtualizeSurfaces: boolean;

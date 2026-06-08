@@ -148,6 +148,12 @@ describe("pickDisplayMode (collapse preserves active path)", () => {
   it("compacts collapsed unrelated surfaces to a rail/hidden", () => {
     expect(["rail", "hidden"]).toContain(pickDisplayMode("unrelated", true, layout));
   });
+  it('keeps every surface expanded when inactiveColumnMode is "expanded"', () => {
+    const all = resolveLayout({ inactiveColumnMode: "expanded" });
+    expect(pickDisplayMode("ancestor", false, all)).toBe("expanded");
+    expect(pickDisplayMode("sibling", false, all)).toBe("expanded");
+    expect(pickDisplayMode("unrelated", false, all)).toBe("expanded");
+  });
 });
 
 describe("getHamActivePath", () => {

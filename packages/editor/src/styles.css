@@ -94,35 +94,38 @@
 }
 
 /* Task lists — checkbox INLINE with its text ------------------------------- */
+/* Tiptap puts data-type="taskList" on the <ul> and data-checked on each <li>
+   (the <li> has NO data-type), so target the list items via the list. Each item
+   is <li><label><input></label><div>…content…</div></li>. */
 .ham-editor .ProseMirror ul[data-type="taskList"] {
   list-style: none;
   padding-left: 0.1em;
   margin-left: 0;
 }
-.ham-editor .ProseMirror li[data-type="taskItem"] {
+.ham-editor .ProseMirror ul[data-type="taskList"] > li {
   display: flex;
   align-items: flex-start;
   gap: 0.5em;
   margin: 0.25em 0;
 }
-.ham-editor .ProseMirror li[data-type="taskItem"] > label {
+.ham-editor .ProseMirror ul[data-type="taskList"] > li > label {
   flex: 0 0 auto;
   margin-top: 0.18em;
   user-select: none;
 }
-.ham-editor .ProseMirror li[data-type="taskItem"] > div {
+.ham-editor .ProseMirror ul[data-type="taskList"] > li > div {
   flex: 1 1 auto;
   min-width: 0;
 }
-.ham-editor .ProseMirror li[data-type="taskItem"] > div > p {
+.ham-editor .ProseMirror ul[data-type="taskList"] > li > div > p {
   margin: 0;
 }
-.ham-editor .ProseMirror li[data-type="taskItem"][data-checked="true"] > div {
+.ham-editor .ProseMirror ul[data-type="taskList"] > li[data-checked="true"] > div {
   color: var(--ham-muted);
   text-decoration: line-through;
 }
 /* Nested task lists get their own indent. */
-.ham-editor .ProseMirror li[data-type="taskItem"] ul[data-type="taskList"] {
+.ham-editor .ProseMirror ul[data-type="taskList"] ul[data-type="taskList"] {
   padding-left: 1.2em;
 }
 
