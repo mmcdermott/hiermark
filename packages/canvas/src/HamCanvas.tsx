@@ -187,7 +187,20 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
         )}
       </header>
 
-      <div className="ham-surface-body">
+      <div
+        className="ham-surface-body"
+        // Activate a surface when the user interacts with its body. In expanded
+        // mode several editors are mounted at once, and clicking back into one
+        // at its existing cursor position won't fire onActiveBlockChange (the
+        // block id is unchanged), so focus-based activation is what keeps the
+        // active surface correct. No-op when this surface is already active.
+        onMouseDownCapture={() => {
+          if (item.pathState !== "active") canvas.actions.activate(surface.id, null);
+        }}
+        onFocusCapture={() => {
+          if (item.pathState !== "active") canvas.actions.activate(surface.id, null);
+        }}
+      >
         {item.displayMode === "expanded" ? (
           <HamEditor
             surfaceId={surface.id}

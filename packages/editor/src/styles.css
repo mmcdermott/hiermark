@@ -120,7 +120,9 @@
 .ham-editor .ProseMirror ul[data-type="taskList"] > li > div > p {
   margin: 0;
 }
-.ham-editor .ProseMirror ul[data-type="taskList"] > li[data-checked="true"] > div {
+/* Strike through only the item's OWN paragraph — not a nested sub-list, whose
+   children keep their own checked state. */
+.ham-editor .ProseMirror ul[data-type="taskList"] > li[data-checked="true"] > div > p {
   color: var(--ham-muted);
   text-decoration: line-through;
 }

@@ -46,4 +46,32 @@ describe("task list CSS", () => {
     expect(label).not.toBeNull();
     expect(contentDiv).not.toBeNull();
   });
+
+  it("strikes through a checked item's own text but not its nested children", async () => {
+    let ready = false;
+    const { container } = render(
+      <HamEditor
+        surfaceId="s"
+        rootBlockId="r"
+        value={{ kind: "markdown", markdown: "- [x] parent\n  - [ ] child" }}
+        onReady={() => {
+          ready = true;
+        }}
+      />,
+    );
+    await waitFor(() => expect(ready).toBe(true));
+
+    const parentLi = container.querySelector<HTMLElement>(
+      'ul[data-type="taskList"] > li[data-checked="true"]',
+    );
+    expect(parentLi).not.toBeNull();
+    const parentP = parentLi!.querySelector<HTMLElement>(":scope > div > p");
+    const childP = parentLi!.querySelector<HTMLElement>(
+      ':scope > div ul[data-type="taskList"] > li > div > p',
+    );
+    expect(parentP).not.toBeNull();
+    expect(childP).not.toBeNull();
+    expect(getComputedStyle(parentP!).textDecoration).toContain("line-through");
+    expect(getComputedStyle(childP!).textDecoration).not.toContain("line-through");
+  });
 });

@@ -259,6 +259,32 @@ describe("HamCanvas", () => {
     expect(onActiveChange).not.toHaveBeenCalled();
   });
 
+  it("activates an inactive expanded surface when you click into its body", async () => {
+    const onActiveChange = vi.fn();
+    const surfaces = {
+      s_root: surface("s_root", "# Root\n\n## A", "Root"),
+      s_a: surface("s_a", "# A branch", "A"),
+    };
+    const edges: HamBranchEdge[] = [
+      { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
+    ];
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={surfaces}
+        branchEdges={edges}
+        handlers={makeHandlers()}
+        onActiveChange={onActiveChange}
+        layout={{ inactiveColumnMode: "expanded" }}
+      />,
+    );
+    // In expanded mode, both surfaces mount full editors.
+    await waitFor(() => expect(container.querySelectorAll(".ham-editor").length).toBe(2));
+    const body = container.querySelector<HTMLElement>('[data-surface-id="s_a"] .ham-surface-body')!;
+    fireEvent.mouseDown(body);
+    expect(onActiveChange).toHaveBeenLastCalledWith({ surfaceId: "s_a", blockId: null });
+  });
+
   it("activates a surface when its preview is opened", async () => {
     const onActiveChange = vi.fn();
     const surfaces = {
