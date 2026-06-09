@@ -630,3 +630,27 @@
   text-overflow: ellipsis;
   max-width: 100%;
 }
+
+/* Collaboration error/loading fallbacks ------------------------------------- */
+.ham-editor-error,
+.ham-editor-loading {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--ham-muted);
+}
+.ham-editor-error {
+  color: #c0392b;
+}
+.ham-collab-retry {
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+.ham-collab-retry:hover {
+  background: rgba(192, 57, 43, 0.08);
+}

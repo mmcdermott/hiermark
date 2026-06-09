@@ -45,6 +45,7 @@ import type {
   HamBranchMode,
   HamBranchRequestEvent,
   HamCollaborationProvider,
+  HamCollaborationStatus,
   HamCollaborationUser,
   HamEditorHandle,
   HamEditorMode,
@@ -726,25 +727,44 @@ function CollabHamEditor<AnnotationData = unknown>(props: HamEditorProps<Annotat
   const [synced, setSynced] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Bump to force a manual reconnect (the Retry affordance).
+  const [retryToken, setRetryToken] = useState(0);
+  // Latest config callbacks via a ref so the connect effect doesn't churn on them.
+  const cbRef = useRef(config);
+  cbRef.current = config;
 
   useEffect(() => {
     let cancelled = false;
     let created: HamCollaborationProvider | null = null;
     let onSynced: (() => void) | null = null;
+    let onUnsynced: ((e: { number: number }) => void) | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    void (async () => {
+    const setStatus = (s: HamCollaborationStatus) => cbRef.current.onStatusChange?.(s);
+    const BACKOFF = [1000, 2000, 4000];
+    const maxRetries = config.maxRetries ?? 3;
+
+    const attempt = async (n: number): Promise<void> => {
+      if (cancelled) return;
+      setStatus("connecting");
       try {
         const p = await runtime.connect();
         if (cancelled) return void p.destroy();
         created = p;
         setProvider(p);
-        if (p.synced) setSynced(true);
+        setStatus("connected");
+        onUnsynced = ({ number }) => {
+          if (!cancelled) cbRef.current.onUnsyncedChangesChange?.(number);
+        };
+        p.on("unsyncedChanges", onUnsynced);
+        const markSynced = () => {
+          setSynced(true);
+          setStatus("synced");
+          if (timer) clearTimeout(timer);
+        };
+        if (p.synced) markSynced();
         else {
           onSynced = () => {
-            if (cancelled) return;
-            setSynced(true);
-            // A real sync supersedes the timeout fallback.
-            if (timer) clearTimeout(timer);
+            if (!cancelled) markSynced();
           };
           p.on("synced", onSynced);
         }
@@ -752,24 +772,42 @@ function CollabHamEditor<AnnotationData = unknown>(props: HamEditorProps<Annotat
         // gated on a real sync so late server state can't be duplicated.
         if (config.initialSyncTimeoutMs) {
           timer = setTimeout(() => {
-            if (!cancelled) setTimedOut(true);
+            if (cancelled) return;
+            setTimedOut(true);
+            setStatus("timedout");
           }, config.initialSyncTimeoutMs);
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "collaboration failed");
+        if (cancelled) return;
+        const e = err instanceof Error ? err : new Error("collaboration failed");
+        if (n < maxRetries) {
+          cbRef.current.onRetry?.(n + 1);
+          timer = setTimeout(() => void attempt(n + 1), BACKOFF[Math.min(n, BACKOFF.length - 1)]);
+        } else {
+          setError(e.message);
+          setStatus("error");
+          cbRef.current.onError?.(e);
+        }
       }
-    })();
+    };
+    void attempt(0);
+
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
-      // Remove the sync listener (it would otherwise leak on a reused runtime).
       if (created && onSynced) created.off("synced", onSynced);
+      if (created && onUnsynced) created.off("unsyncedChanges", onUnsynced);
       setProvider(null);
       setSynced(false);
       setTimedOut(false);
-      if (created) flushAndDestroy(created);
+      const cleaning = created;
+      if (cleaning) {
+        void flushAndDestroy(cleaning).then((result) => cbRef.current.onBeforeUnmount?.(result));
+      }
     };
-  }, [runtime, config.initialSyncTimeoutMs]);
+    // retryToken re-runs the whole connect cycle for a manual reconnect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runtime, config.initialSyncTimeoutMs, retryToken]);
 
   // Always give the caret a name + color so remote cursors are visible by
   // default (CollaborationCaret needs a user to render a labeled caret) — the
@@ -788,12 +826,21 @@ function CollabHamEditor<AnnotationData = unknown>(props: HamEditorProps<Annotat
   );
 
   if (error) {
+    const retry = () => {
+      setError(null);
+      setSynced(false);
+      setTimedOut(false);
+      setRetryToken((t) => t + 1);
+    };
     const ErrorState = props.slots?.ErrorState;
     return ErrorState ? (
-      <ErrorState surfaceId={props.surfaceId} error={new Error(error)} />
+      <ErrorState surfaceId={props.surfaceId} error={new Error(error)} retry={retry} />
     ) : (
       <div className="ham-editor ham-editor-error" data-surface-id={props.surfaceId}>
-        Collaboration error: {error}
+        <span>Collaboration error: {error}</span>{" "}
+        <button type="button" className="ham-collab-retry" onClick={retry}>
+          Retry
+        </button>
       </div>
     );
   }

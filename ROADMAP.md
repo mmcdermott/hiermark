@@ -86,17 +86,15 @@ features, in either track.
 
 ### A1 · Collaboration robustness
 
-- **Sync-failure recovery: bounded retry + connecting state + status callbacks**
-  `[P1 · M]` — `CollabHamEditor` (`HamEditor.tsx:661`) calls `runtime.connect()` once and
-  on failure only `setError(...)`; a transient network blip strands the user with
-  refresh-only recovery, and hosts can't observe the lifecycle. Add exponential-backoff
-  retry (1s/2s/4s, max 3), a distinct "connecting" state, a Retry affordance, and additive
-  `onStatusChange`/`onError(Error)`/`onRetry` callbacks. _(Rank 7.)_
-- **Expose unsynced-changes + flush result** `[P2 · S]` — `provider.hasUnsyncedChanges`
-  is only read on unmount; add `onUnsyncedChangesChange(count)` (wired in the connect
-  effect) and change `flushAndDestroy` (`collab/hocuspocus.ts`) to return
-  `Promise<{ flushed; pendingChanges? }>` with an `onBeforeUnmount(result)` hook so hosts
-  can warn about potentially lost edits. _(Rank 13.)_
+- ~~**Sync-failure recovery: bounded retry + connecting state + status callbacks**~~
+  `[P1 · M]` — **✅ DONE.** `CollabHamEditor` now retries a failed `connect()` with
+  exponential backoff (1s/2s/4s, `maxRetries` default 3), exposes `onStatusChange`
+  (connecting → connected → synced / timedout / error), `onError(Error)`, and `onRetry(n)`,
+  and renders a **Retry** affordance (plus a `retry` arg to the `ErrorState` slot). _(Rank 7.)_
+- ~~**Expose unsynced-changes + flush result**~~ `[P2 · S]` — **✅ DONE.**
+  `onUnsyncedChangesChange(count)` is wired to the provider's `unsyncedChanges` event, and
+  `flushAndDestroy` now returns `Promise<{ flushed; pendingChanges? }>` surfaced via the new
+  `onBeforeUnmount(result)` config hook. _(Rank 13.)_
 
 ### A2 · Editor content features
 
