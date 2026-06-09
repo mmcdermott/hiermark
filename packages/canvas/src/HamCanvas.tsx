@@ -561,9 +561,12 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   const scrollSurfaceIntoView = useCallback(
     (surfaceId: HamSurfaceId) => {
+      // Bring the activated surface to the START (left) of the canvas, so its
+      // subtree to the right comes into view — clicking an editor pulls it to the
+      // window start rather than leaving it mid-scroll.
       surfaceEl(surfaceId)?.scrollIntoView({
         behavior: "smooth",
-        inline: "center",
+        inline: "start",
         block: "nearest",
       });
     },
@@ -589,13 +592,54 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     [props.branchEdges, surfaceEl, columnScroll],
   );
 
-  // Auto-scroll the active surface into view, then reveal its children so moving
-  // into a surface guides you toward what it branches into.
+  // Live snapshots read via a ref so the block-reveal can walk the block tree
+  // without re-firing the scroll on every (debounced) snapshot update.
+  const snapshotsRef = useRef(canvas.snapshotsBySurfaceId);
+  snapshotsRef.current = canvas.snapshotsBySurfaceId;
+
+  // Reveal the branch anchored at the *selected block* — or, if that block has no
+  // branch of its own, the nearest ancestor block in its document that does (so
+  // selecting a paragraph under a branched heading scrolls that heading's child
+  // surface into view). Falls back to the surface's first child.
+  const revealBranchFromBlock = useCallback(
+    (surfaceId: HamSurfaceId, blockId: HamSurfaceId | null) => {
+      const fromEdges = props.branchEdges.filter((e) => e.fromSurfaceId === surfaceId);
+      if (!fromEdges.length) return;
+      const snap = snapshotsRef.current[surfaceId];
+      let bid: string | null = blockId;
+      let target: (typeof fromEdges)[number] | undefined;
+      const seen = new Set<string>();
+      while (bid && !seen.has(bid)) {
+        seen.add(bid);
+        target = fromEdges.find((e) => e.fromBlockId === bid);
+        if (target) break;
+        bid = snap?.blocks[bid]?.parentId ?? null;
+      }
+      const chosen = target ?? [...fromEdges].sort((a, b) => a.order - b.order)[0];
+      if (!chosen) return;
+      surfaceEl(chosen.toSurfaceId)?.scrollIntoView({
+        behavior: "smooth",
+        block: columnScroll ? "start" : "nearest",
+        inline: "nearest",
+      });
+    },
+    [props.branchEdges, surfaceEl, columnScroll],
+  );
+
+  // Auto-scroll the active surface to the start, then reveal the selected block's
+  // branch (or an ancestor block's) so moving the cursor guides you toward what
+  // that block branches into. Fires on block changes too, not just surface ones.
   useEffect(() => {
     if (!layout.autoScroll) return;
     scrollSurfaceIntoView(canvas.activeSurfaceId);
-    revealChildren(canvas.activeSurfaceId);
-  }, [canvas.activeSurfaceId, layout.autoScroll, scrollSurfaceIntoView, revealChildren]);
+    revealBranchFromBlock(canvas.activeSurfaceId, canvas.activeBlockId);
+  }, [
+    canvas.activeSurfaceId,
+    canvas.activeBlockId,
+    layout.autoScroll,
+    scrollSurfaceIntoView,
+    revealBranchFromBlock,
+  ]);
 
   // Publish the imperative canvas handle once (live data via a ref).
   const liveRef = useRef({ canvas, scrollSurfaceIntoView, revealChildren });
