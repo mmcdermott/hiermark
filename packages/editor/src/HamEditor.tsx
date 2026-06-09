@@ -662,6 +662,32 @@ function HamEditorInner<AnnotationData = unknown>(
     editor?.setEditable(editable);
   }, [editor, editable]);
 
+  // Declarative revision swap: when `revision` changes after mount, re-apply
+  // `value` (history restore / server push) — preserving block ids for matching
+  // blocks. Not under collab (the Y.Doc owns content).
+  const lastRevisionRef = useRef(props.revision);
+  useEffect(() => {
+    if (!editor || collab) return;
+    if (props.revision === lastRevisionRef.current) return;
+    lastRevisionRef.current = props.revision;
+    const oldIdentities = collectBlockIdentities(editor.state.doc);
+    if (value.kind === "markdown") {
+      editor.commands.setContent(value.markdown, {
+        emitUpdate: true,
+        contentType: "markdown",
+      } as Parameters<typeof editor.commands.setContent>[1]);
+    } else {
+      editor.commands.setContent(value.json as object, { emitUpdate: true });
+    }
+    const plan = planBlockIdRestore(oldIdentities, editor.state.doc);
+    if (plan.length) {
+      const tr = editor.state.tr;
+      for (const { pos, id } of plan) tr.setNodeAttribute(pos, "dataBlockId", id);
+      tr.setMeta("addToHistory", false);
+      editor.view.dispatch(tr);
+    }
+  }, [editor, collab, props.revision, value]);
+
   const openType =
     openAnnotation && props.annotations
       ? props.annotations.types.find((t) => t.name === openAnnotation.hit.type)

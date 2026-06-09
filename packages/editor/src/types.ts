@@ -467,6 +467,13 @@ export interface HamEditorProps<AnnotationData = unknown> {
    * surface. A controlled `value` / `defaultValue` split may arrive later.
    */
   value: HamEditorContent;
+  /**
+   * Change this token to re-apply `value` after mount — a declarative revision
+   * swap (history restore, server-pushed content) without remounting by `key`.
+   * Block ids are preserved for unchanged / edited-in-place blocks (like source
+   * mode). Ignored under collaboration (the shared Y.Doc owns content).
+   */
+  revision?: string | number;
   title?: string;
   editable?: boolean;
   autofocus?: boolean | "start" | "end" | HamBlockId;

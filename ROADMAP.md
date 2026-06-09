@@ -185,7 +185,9 @@ features, in either track.
 
 ### A4 · Performance at scale
 
-- **Sub-quadratic connector measurement** `[P1 · S]` — `measure()` calls `findByAttr` twice per
+- ~~**Sub-quadratic connector measurement**~~ `[P1 · S]` — **✅ DONE.** `measure()` indexes the
+  surface / block / chip anchors into Maps ONCE per pass (block ids keyed `surfaceId\0blockId`,
+  since they're surface-scoped) instead of a per-edge querySelectorAll scan. Original: — `measure()` calls `findByAttr` twice per
   edge, each a full `querySelectorAll` + linear scan → O(E·N) per pass on every scroll/resize/RO
   tick. Build one `Map<surfaceId|blockId, Element>` per pass. _(Cheap, high-value hot-path fix.)_
 - **Virtualize columns & surfaces** `[P1 · XL]` — every inactive surface mounts a `SurfaceItem`
@@ -201,7 +203,9 @@ features, in either track.
 
 ### A5 · Package extension points (surfaced by consumer needs)
 
-- **Controlled `value` / revision swap** `[P2 · M]` — `value` is mount-time only; history/restore
+- ~~**Controlled `value` / revision swap**~~ `[P2 · M]` — **✅ DONE.** A `revision` prop re-applies
+  `value` after mount (history restore / server push), preserving matching block ids; ignored
+  under collab. Original: — `value` is mount-time only; history/restore
   and server-driven revision swaps currently need remount-by-key or the imperative `setContent`.
   Add a first-class controlled-value (or `defaultValue`) prop. _(The type doc already anticipates
   this.)_

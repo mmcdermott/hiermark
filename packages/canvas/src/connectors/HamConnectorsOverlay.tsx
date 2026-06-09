@@ -18,7 +18,6 @@ import type {
 } from "../types";
 import {
   connectorState,
-  findByAttr,
   geometryFor,
   visibleEdges,
   type EdgeGeometry,
@@ -88,17 +87,40 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
     if (!root) return;
     const rootRect = root.getBoundingClientRect();
     const scroll = { left: root.scrollLeft, top: root.scrollTop };
+
+    // Index the anchor elements ONCE per pass (was findByAttr per edge — an
+    // O(edges · N) querySelectorAll+scan; this makes a measure pass linear).
+    const surfaceEls = new Map<string, HTMLElement>();
+    // Blocks are keyed by `surfaceId\0blockId` — block ids are surface-scoped
+    // (e.g. every surface has a `blk_root`), so a global key would collide.
+    const blockEls = new Map<string, HTMLElement>();
+    const chipEls = new Map<string, HTMLElement>(); // child surfaceId → chip
+    root.querySelectorAll<HTMLElement>("[data-surface-id]").forEach((el) => {
+      const id = el.getAttribute("data-surface-id");
+      if (id && !surfaceEls.has(id)) surfaceEls.set(id, el);
+    });
+    root.querySelectorAll<HTMLElement>("[data-block-id]").forEach((el) => {
+      const blockId = el.getAttribute("data-block-id");
+      const sid = el.closest("[data-surface-id]")?.getAttribute("data-surface-id");
+      if (!blockId || !sid) return;
+      const key = `${sid}\0${blockId}`;
+      if (!blockEls.has(key)) blockEls.set(key, el);
+    });
+    root.querySelectorAll<HTMLElement>("[data-ham-branch-child]").forEach((el) => {
+      const id = el.getAttribute("data-ham-branch-child");
+      if (id && !chipEls.has(id)) chipEls.set(id, el);
+    });
+
     const out: EdgeGeometry<EdgeMeta>[] = [];
     for (const edge of shown) {
-      const card = findByAttr(root, "data-surface-id", edge.fromSurfaceId);
       // Prefer the branch-child chip (the "bubble" naming the child) as the
       // anchor, then the source block, then the card — so the line springs from
       // the chip's edge rather than the block's far right edge.
       const fromEl =
-        (card && findByAttr(card, "data-ham-branch-child", edge.toSurfaceId)) ??
-        (card && findByAttr(card, "data-block-id", edge.fromBlockId)) ??
-        card;
-      const toEl = findByAttr(root, "data-surface-id", edge.toSurfaceId);
+        chipEls.get(edge.toSurfaceId) ??
+        blockEls.get(`${edge.fromSurfaceId}\0${edge.fromBlockId}`) ??
+        surfaceEls.get(edge.fromSurfaceId);
+      const toEl = surfaceEls.get(edge.toSurfaceId);
       if (!fromEl || !toEl) continue;
       const g = geometryFor(
         fromEl.getBoundingClientRect(),
