@@ -58,15 +58,25 @@ A malformed expression like $\\frac{1}{$ renders as an error token rather than
 crashing the editor.
 `;
 
-const MATH_SRC = `// Inline \`$…$\` and display \`$$…$$\` both render with KaTeX and
-// round-trip through markdown (throwOnError:false keeps bad LaTeX safe).
-<HamEditor
-  surfaceId="math"
-  value={{
-    kind: "markdown",
-    markdown: "Inline $E = mc^2$ and a block:\\n\\n$$\\\\int_0^1 x^2\\\\,dx$$",
-  }}
-/>;`;
+const MATH_MARKDOWN_LITERAL = [
+  "Inline math: $E = mc^2$.",
+  "",
+  "Display math on its own line:",
+  "",
+  "$$\\int_0^1 x^2 \\, dx = \\tfrac{1}{3}$$",
+].join("\n");
+
+const MATH_SRC = `import { HamEditor } from "@ham/editor";
+import "@ham/editor/styles.css";
+
+// Inline $…$ and display $$…$$ both render with KaTeX and round-trip through
+// markdown. Type them live too — typing the closing $ converts as you go.
+// (throwOnError:false renders malformed LaTeX as an error token, not a crash.)
+const markdown = \`
+${MATH_MARKDOWN_LITERAL}
+\`;
+
+<HamEditor surfaceId="math" value={{ kind: "markdown", markdown }} />;`;
 
 // ---------------------------------------------------------------------------
 // Tables — edit as a table or as raw markdown (source mode)
