@@ -144,6 +144,80 @@ describe("HamCanvas", () => {
     });
   });
 
+  it("scrolls the selected block's branch child into view and the active surface to start", async () => {
+    const recorded: { id: string | null; inline?: string }[] = [];
+    const orig = Element.prototype.scrollIntoView;
+    (
+      Element.prototype as unknown as { scrollIntoView: (o?: ScrollIntoViewOptions) => void }
+    ).scrollIntoView = function (this: Element, opts?: ScrollIntoViewOptions) {
+      recorded.push({ id: this.getAttribute("data-surface-id"), inline: opts?.inline });
+    };
+    try {
+      let handle: HamCanvasHandle | null = null;
+      const rootJson = {
+        type: "doc",
+        content: [
+          {
+            type: "heading",
+            attrs: { level: 2, dataBlockId: "blk_A" },
+            content: [{ type: "text", text: "A" }],
+          },
+          {
+            type: "heading",
+            attrs: { level: 2, dataBlockId: "blk_B" },
+            content: [{ type: "text", text: "B" }],
+          },
+        ],
+      };
+      render(
+        <HamCanvas
+          rootSurfaceId="s_root"
+          surfaces={{
+            s_root: {
+              id: "s_root",
+              rootBlockId: "blk_root",
+              title: "Root",
+              content: { kind: "tiptap-json", json: rootJson },
+            },
+            s_a: surface("s_a", "# A branch", "A"),
+            s_b: surface("s_b", "# B branch", "B"),
+          }}
+          branchEdges={[
+            {
+              id: "e_a",
+              fromSurfaceId: "s_root",
+              fromBlockId: "blk_A",
+              toSurfaceId: "s_a",
+              order: 0,
+            },
+            {
+              id: "e_b",
+              fromSurfaceId: "s_root",
+              fromBlockId: "blk_B",
+              toSurfaceId: "s_b",
+              order: 0,
+            },
+          ]}
+          activeSurfaceId="s_root"
+          handlers={makeHandlers()}
+          onReady={(h) => {
+            handle = h;
+          }}
+        />,
+      );
+      await waitFor(() => expect(handle).not.toBeNull());
+      recorded.length = 0;
+      // Select block B → its branch child s_b is revealed; the active surface
+      // scrolls to the start.
+      handle!.focusBlock("s_root", "blk_B");
+      await waitFor(() => expect(recorded.some((r) => r.id === "s_b")).toBe(true));
+      expect(recorded.some((r) => r.id === "s_a")).toBe(false);
+      expect(recorded.some((r) => r.id === "s_root" && r.inline === "start")).toBe(true);
+    } finally {
+      Element.prototype.scrollIntoView = orig;
+    }
+  });
+
   it("re-activates the parent when an ancestor of the active surface is deleted", async () => {
     // Stateful host: root -> A -> B. Deleting A (an ancestor of the active
     // surface) must not leave B as an unreachable orphan.
