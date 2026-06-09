@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
-import { render, waitFor, cleanup } from "@testing-library/react";
+import { render, waitFor, cleanup, fireEvent } from "@testing-library/react";
 import { HamCanvas } from "../src/HamCanvas";
 import type { HamBranchEdge, HamCanvasHandlers, HamSurface } from "../src/types";
 
@@ -128,5 +128,66 @@ describe("canvas A3 — slots + a11y", () => {
     await waitFor(() => {
       expect(container.querySelector('[aria-live="polite"][role="status"]')).not.toBeNull();
     });
+  });
+});
+
+describe("canvas A3 — keyboard navigation", () => {
+  const navSurfaces = {
+    s_root: surface("s_root", "# Root\n\n## A\n\n## B", "Root"),
+    s_a: surface("s_a", "# A", "A"),
+    s_b: surface("s_b", "# B", "B"),
+  };
+  const navEdges: HamBranchEdge[] = [
+    { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
+    { id: "e_b", fromSurfaceId: "s_root", fromBlockId: "blk_B", toSurfaceId: "s_b", order: 1 },
+  ];
+  const canvasEl = (c: HTMLElement) => c.querySelector<HTMLElement>(".ham-canvas")!;
+
+  it("Alt+Right descends to the first child of the active surface", async () => {
+    const onActiveChange = vi.fn();
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={navSurfaces}
+        branchEdges={navEdges}
+        handlers={handlers}
+        onActiveChange={onActiveChange}
+      />,
+    );
+    await waitFor(() => expect(container.querySelector('[data-surface-id="s_a"]')).not.toBeNull());
+    fireEvent.keyDown(canvasEl(container), { key: "ArrowRight", altKey: true });
+    expect(onActiveChange).toHaveBeenCalledWith({ surfaceId: "s_a", blockId: null });
+  });
+
+  it("Alt+Right follows the active block's edge, not the first sibling group", async () => {
+    const onActiveChange = vi.fn();
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={navSurfaces}
+        branchEdges={navEdges}
+        activeBlockId="blk_B"
+        handlers={handlers}
+        onActiveChange={onActiveChange}
+      />,
+    );
+    await waitFor(() => expect(container.querySelector('[data-surface-id="s_b"]')).not.toBeNull());
+    fireEvent.keyDown(canvasEl(container), { key: "ArrowRight", altKey: true });
+    expect(onActiveChange).toHaveBeenCalledWith({ surfaceId: "s_b", blockId: null });
+  });
+
+  it("Alt+C toggles collapse of the active surface", async () => {
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={navSurfaces}
+        branchEdges={navEdges}
+        handlers={handlers}
+      />,
+    );
+    const rootEl = () => container.querySelector('[data-surface-id="s_root"]');
+    await waitFor(() => expect(rootEl()?.getAttribute("aria-expanded")).toBe("true"));
+    fireEvent.keyDown(canvasEl(container), { code: "KeyC", altKey: true });
+    await waitFor(() => expect(rootEl()?.getAttribute("aria-expanded")).toBe("false"));
   });
 });

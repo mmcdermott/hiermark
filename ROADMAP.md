@@ -154,14 +154,13 @@ features, in either track.
   host wanting a richer inactive card (thumbnail, metadata, charts) must reimplement
   `SurfaceFrame` and its activation wiring. Add an optional `SurfaceBody` slot mirroring the
   existing slot pattern. _(Rank 15 remainder.)_
-- **Complete keyboard nav & a11y** `[P1 · M]` — _partly done:_ sibling treeitems now carry
-  `aria-setsize`/`aria-posinset` and an `aria-live` status region exists. Still open: key bindings
-  for collapse/delete/branch/add-sibling, and Alt+Right following the active block's first edge.
-  Original note: `navigate()` handles only Alt+Arrow; there are
-  no key bindings for collapse/delete/branch/add-sibling, and Alt+Right descends by first child
-  rather than the active block's first outgoing edge (can jump to the wrong group). Fix descent
-  ordering, add the missing bindings, add an `aria-live` region for async op status, and add
-  `aria-setsize`/`aria-posinset` to sibling treeitems.
+- **Complete keyboard nav & a11y** `[P1 · M]` — **✅ DONE** (core). Sibling treeitems carry
+  `aria-setsize`/`aria-posinset`; an `aria-live` status region announces async ops; **Alt+Right
+  now follows the active block's first outgoing edge** (`anchorBlockId` match in sortOutgoing
+  order, falling back to the surface's first child) so it no longer jumps to an unrelated sibling
+  group; and **Alt+C** toggles collapse of the active surface (non-destructive). _Destructive
+  single-keystroke bindings (delete/branch/add-sibling) intentionally deferred — they want a
+  confirm affordance rather than a bare Alt+key, tracked separately._
 - **Loading / error / empty states** `[P1 · M]` — _partly done:_ an empty canvas now renders a
   placeholder (+ an `EmptyCanvas` slot), and a polite `aria-live` status region announces pending
   ops. Still open: a per-surface error badge driven by `onOperationError`, and a skeleton visual.

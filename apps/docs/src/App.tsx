@@ -74,8 +74,9 @@ const SECTIONS: Section[] = [
           Branch a block (hover it for the <strong>+</strong> button on its right) and it becomes a
           surface in the next column. Branch from a second block and it joins the same column;
           branch the same block twice for ordered siblings you can drag to reorder. Click a card to
-          focus it, or navigate with Alt+Arrows. Tick <em>Keep columns expanded</em> so nothing
-          collapses as you branch, and <strong>⛶ Expand</strong> to use the full screen.
+          focus it, or navigate with Alt+Arrows (Alt+Right follows the focused block&apos;s own
+          branch; Alt+C collapses the active surface). Tick <em>Keep columns expanded</em> so
+          nothing collapses as you branch, and <strong>⛶ Expand</strong> to use the full screen.
         </p>
         <CanvasDemo />
       </section>
