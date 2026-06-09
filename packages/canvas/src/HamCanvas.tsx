@@ -760,7 +760,16 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       const parent = canvas.activePath.surfaceIds.at(-2);
       if (parent) canvas.actions.activate(parent, null);
     } else if (dir === "right") {
-      const child = cols[colIdx + 1]?.items.find((it) => it.parentSurfaceId === active);
+      // Descend along the *active block's* first outgoing edge when a block is
+      // focused (items in the next column are already in sortOutgoing order, so
+      // the first match is that edge's child); otherwise fall back to the first
+      // child of the active surface. Avoids jumping to an unrelated sibling group.
+      const next = cols[colIdx + 1]?.items ?? [];
+      const activeBlock = canvas.activeBlockId;
+      const child =
+        (activeBlock
+          ? next.find((it) => it.parentSurfaceId === active && it.anchorBlockId === activeBlock)
+          : undefined) ?? next.find((it) => it.parentSurfaceId === active);
       if (child) canvas.actions.activate(child.surface.id, null);
     } else if (dir === "down") {
       const next = cols[colIdx]?.items[itemIdx + 1];
@@ -792,6 +801,12 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     if (dir) {
       event.preventDefault();
       navigate(dir);
+      return;
+    }
+    // Alt+C collapses/expands the active surface (non-destructive, reversible).
+    if (event.code === "KeyC" && canvas.activeSurfaceId) {
+      event.preventDefault();
+      canvas.actions.toggleCollapsed(canvas.activeSurfaceId);
     }
   };
 
