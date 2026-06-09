@@ -19,6 +19,8 @@ export type { BlockIdOptions } from "./extensions/block-id";
 export { HamCodeBlock, hamLowlight } from "./extensions/code-block";
 export { HamInlineMath, HamBlockMath } from "./extensions/math";
 export type { HamMathClick, HamMathOptions } from "./extensions/math";
+export { Sanitize, isSafeUri, isSafeImageSrc } from "./extensions/sanitize";
+export type { SanitizeOptions } from "./extensions/sanitize";
 export { ImageUpload, uploadHamImages, imageUploadKey } from "./extensions/image-upload";
 export type { ImageUploadContext, ImageUploadOptions } from "./extensions/image-upload";
 export { BlockGutter, blockGutterKey } from "./extensions/block-gutter";

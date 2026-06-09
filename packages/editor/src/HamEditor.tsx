@@ -145,6 +145,7 @@ function HamEditorInner<AnnotationData = unknown>(
     onImageUpload,
     onImageUploadError,
     onModeChange,
+    isAllowedImageSrc,
   } = props;
 
   // Edit surface: the rich editor or a raw-markdown <textarea> (source mode).
@@ -246,6 +247,7 @@ function HamEditorInner<AnnotationData = unknown>(
       ...createHamEditorExtensions({
         ...(collab ? { collab } : {}),
         imageUpload: { getContext: () => imageUploadRef.current },
+        ...(isAllowedImageSrc ? { isAllowedImageSrc } : {}),
         onMathClick: (info) => {
           const ed = editorRef.current;
           if (!ed || !ed.isEditable) return;
@@ -282,7 +284,9 @@ function HamEditorInner<AnnotationData = unknown>(
     extensions,
     editable,
     autofocus: typeof props.autofocus === "boolean" ? props.autofocus : false,
-    immediatelyRender: true,
+    // Render synchronously in the browser, but NOT during SSR — Tiptap throws /
+    // hydration-mismatches if it renders on the server (Next.js App Router, Remix).
+    immediatelyRender: typeof window !== "undefined",
     ...initialContent,
     onUpdate({ editor }) {
       // The open popover anchors to a now-possibly-stale annotation element;

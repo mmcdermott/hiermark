@@ -56,14 +56,11 @@ boundary shapes the two tracks below.
 These are latent correctness bugs and adopter-blockers that should land before new
 features, in either track.
 
-- **Serialize the per-surface debounced save** `[P0 · M]` — `SurfaceItem.runSave`
-  (`packages/canvas/src/HamCanvas.tsx:168`) fires `handle.save().then(save)` with no
-  in-flight guard or sequencing. The unmount flush (line ~187) calls `runSave()`
-  synchronously while a debounced save may still be awaiting, so two async chains can
-  persist **out of order** — the older snapshot can win, silently reverting the user's
-  latest edits on the common navigate-away path. Add an `inFlight`/epoch ref, chain
-  re-entrant saves, and await the in-flight promise on unmount; consider promoting save
-  coordination into `useHamCanvas` alongside `pendingSurfaceIds`. _(Deep-review rank 8.)_
+- ~~**Serialize the per-surface debounced save**~~ `[P0 · M]` — **✅ DONE.** `SurfaceItem`
+  now serializes saves (`savingRef`/`pendingRef`): only one host `saveSurface` is in flight at
+  a time, and saves requested mid-flight coalesce into exactly one follow-up with the latest
+  content (newest snapshot wins). The unmount flush no longer chains a save through the
+  tearing-down editor. _(Deep-review rank 8.)_
 - ~~**Make source-mode round-trips id-preserving**~~ `[P0 · L]` — **✅ DONE.** Switching to
   rich now captures the pre-edit block identities and, after the markdown re-parse, restores
   ids onto matching blocks via content+position alignment (`snapshot/blockIdentity.ts`:
@@ -72,15 +69,16 @@ features, in either track.
   edited-in-place blocks — so branch edges / annotations survive. (Chose content alignment over
   embedding `<!-- ham:block= -->` comments to keep the source textarea clean; the comment
   grammar still serves the separate git-export item in A2.)
-- **Gate `immediatelyRender` for SSR** `[P0 · S]` — `HamEditor.tsx:272` passes
-  `immediatelyRender: true` unconditionally, which hard-crashes / hydration-mismatches
-  under Next.js App Router and Remix. Default it to `typeof window !== "undefined"` (or a
-  prop) and add a one-paragraph SSR note.
-- **Harden image/link `src` validation (stored-XSS surface)** `[P0 · M]` — `Image` is
-  configured `allowBase64:true` with no `src` allowlist, and the bundled Link mark has no
-  explicit `protocols`/`isAllowedUri`. `![x](javascript:…)` / `data:` images / arbitrary
-  paste-or-import `src` flow straight into the doc. Add a Link protocol allowlist + an
-  optional `isAllowedImageSrc` hook, and write a "Security: pasted/imported content" doc.
+- ~~**Gate `immediatelyRender` for SSR**~~ `[P0 · S]` — **✅ DONE.** `useEditor` now sets
+  `immediatelyRender: typeof window !== "undefined"`, so it renders synchronously in the
+  browser but defers on the server (no Next.js/Remix hydration crash).
+- ~~**Harden image/link `src` validation (stored-XSS)**~~ `[P0 · M]` — **✅ DONE.** StarterKit's
+  Link is configured with a protocol allowlist (`http`/`https`/`mailto`) + `isAllowedUri` +
+  `rel="noopener noreferrer nofollow"`, and a new **`Sanitize`** extension
+  (`extensions/sanitize.ts`) strips dangerous link `href`s / image `src`s
+  (`javascript:`/`vbscript:`/`file:`/`data:text/html`) from **every** path — initial seed
+  (`onCreate`), typing, paste, markdown parse, `setContent`, collab — with an optional
+  `isAllowedImageSrc` host policy.
 
 ---
 

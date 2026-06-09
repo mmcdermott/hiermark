@@ -165,17 +165,35 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
   saveSurfaceRef.current = props.handlers.saveSurface;
   const onOperationErrorRef = useRef(props.onOperationError);
   onOperationErrorRef.current = props.onOperationError;
+  // Serialize saves so the host never receives overlapping/out-of-order writes:
+  // only one save is in flight at a time, and any save requested while one is
+  // running coalesces into exactly one follow-up with the latest content (so the
+  // newest snapshot always wins, fixing the unmount/remount + double-timer race).
+  const savingRef = useRef(false);
+  const pendingRef = useRef(false);
+  const unmountedRef = useRef(false);
   const runSave = () => {
     const handle = handleRef.current;
     const save = saveSurfaceRef.current;
     if (!handle || !save) return;
-    // Report a rejected save rather than dropping it on the floor.
+    if (savingRef.current) {
+      pendingRef.current = true; // coalesce: re-save once the in-flight one settles
+      return;
+    }
+    savingRef.current = true;
+    pendingRef.current = false;
     void handle
       .save()
       .then((payload) => save(payload))
       .catch((error: unknown) =>
         onOperationErrorRef.current?.({ type: "save-surface", surfaceId: surface.id, error }),
-      );
+      )
+      .finally(() => {
+        savingRef.current = false;
+        // Re-save the latest content if more edits arrived mid-save — but not
+        // after unmount (the editor handle is being torn down).
+        if (pendingRef.current && !unmountedRef.current) runSave();
+      });
   };
   const scheduleSave = () => {
     if (!saveSurfaceRef.current) return;
@@ -184,11 +202,13 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
   };
   // Flush any pending edit on unmount so edits aren't lost when the surface
   // leaves the projection (navigation/reshape), not only when the timer fires.
+  // If a save is already in flight it has captured ~current content, so we let it
+  // finish rather than chain another through the unmounting editor.
   useEffect(
     () => () => {
-      if (!saveTimer.current) return;
-      clearTimeout(saveTimer.current);
-      runSave();
+      unmountedRef.current = true;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      if (!savingRef.current) runSave();
     },
     // runSave reads everything via refs; safe to run once.
     // eslint-disable-next-line react-hooks/exhaustive-deps

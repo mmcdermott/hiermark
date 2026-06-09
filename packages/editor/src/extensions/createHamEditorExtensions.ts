@@ -13,6 +13,7 @@ import { BlockId } from "./block-id";
 import { HamCodeBlock } from "./code-block";
 import { HamBlockMath, HamInlineMath, type HamMathClick } from "./math";
 import { ImageUpload, type ImageUploadContext } from "./image-upload";
+import { Sanitize, isSafeUri } from "./sanitize";
 import { TaskInputRules } from "./task-input-rules";
 import type { HamCollaborationProvider, HamCollaborationUser } from "../types";
 
@@ -44,6 +45,11 @@ export interface HamEditorExtensionOptions {
    * the image node still renders/round-trips but no upload path is installed.
    */
   imageUpload?: { getContext: () => ImageUploadContext | null };
+  /**
+   * Image-`src` policy for the sanitizer (defaults to blocking
+   * javascript:/vbscript:/file:/data:text/html; `data:image/*` stays allowed).
+   */
+  isAllowedImageSrc?: (src: string) => boolean;
 }
 
 /**
@@ -59,6 +65,7 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
     collab,
     imageUpload,
     onMathClick,
+    isAllowedImageSrc,
   } = opts;
   const collaboration = opts.collaboration || !!collab;
 
@@ -66,6 +73,14 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
     StarterKit.configure({
       // Replaced by HamCodeBlock (lowlight highlighting + copy button).
       codeBlock: false,
+      // Restrict link schemes (stored-XSS): no javascript:/data: etc., and open
+      // external links safely. The Sanitize extension below is the catch-all.
+      link: {
+        protocols: ["http", "https", "mailto"],
+        defaultProtocol: "https",
+        isAllowedUri: (url, ctx) => ctx.defaultValidate(url) && isSafeUri(url),
+        HTMLAttributes: { rel: "noopener noreferrer nofollow" },
+      },
       // Yjs provides collaborative history; StarterKit's would conflict.
       ...(collaboration ? { undoRedo: false } : {}),
     }),
@@ -79,6 +94,9 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
     // round-trips inside a paragraph) and accepts data URIs for object-URL/base64
     // hosts. Uploads are wired separately via ImageUpload.
     Image.configure({ inline: true, allowBase64: true }),
+    // Defense-in-depth: strip dangerous link hrefs / image srcs from any source
+    // (paste, markdown parse, setContent, collab seed).
+    Sanitize.configure(isAllowedImageSrc ? { isAllowedImageSrc } : {}),
     Placeholder.configure({ placeholder }),
     Markdown,
     BlockId.configure(blockIdTypes ? { types: blockIdTypes } : {}),
