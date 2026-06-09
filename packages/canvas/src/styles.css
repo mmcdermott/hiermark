@@ -360,3 +360,31 @@
 .ham-appearance-plain .ham-surface-active {
   box-shadow: inset 3px 0 0 0 var(--ham-accent);
 }
+
+/* Accessibility helpers ----------------------------------------------------- */
+.ham-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.ham-canvas-empty {
+  margin: auto;
+  padding: 24px;
+  color: var(--ham-muted, #6f6f7a);
+  font-size: 14px;
+}
+
+/* Respect a user's reduced-motion preference (auto-scroll uses "auto" in JS). */
+@media (prefers-reduced-motion: reduce) {
+  .ham-surface,
+  .ham-add-sibling,
+  .ham-connectors path {
+    transition: none !important;
+  }
+}

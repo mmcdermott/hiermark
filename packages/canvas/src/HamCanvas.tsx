@@ -78,6 +78,14 @@ function DefaultAddSiblingButton({ isAppend, onAddSibling }: HamAddSiblingButton
  * its identity is stable across renders. */
 const NO_BRANCH = "off" as const;
 
+/** Smooth scroll, unless the user prefers reduced motion (then jump). */
+function scrollBehavior(): ScrollBehavior {
+  return typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ? "auto"
+    : "smooth";
+}
+
 /** How much width each display mode wants, low → high. A column sizes to its
  * widest surface's mode (via the `data-col-mode` attribute + CSS). */
 const DISPLAY_MODE_RANK: Record<HamCanvasItem["displayMode"], number> = {
@@ -136,9 +144,13 @@ interface ItemProps {
   props: HamCanvasProps;
   sortable: boolean;
   depth: number;
+  /** 1-based position among this column's surfaces (ARIA tree). */
+  posinset: number;
+  /** Total surfaces in this column (ARIA tree). */
+  setsize: number;
 }
 
-function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
+function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }: ItemProps) {
   const surface = item.surface;
   const hasChildren = props.branchEdges.some((e) => e.fromSurfaceId === surface.id);
   const collapsed = canvas.collapsedSurfaceIds.has(surface.id);
@@ -340,15 +352,36 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
         onActiveBlockChange={(blockId) => canvas.actions.activate(surface.id, blockId)}
         onOpenBranchChild={(e) => canvas.actions.activate(e.childSurfaceId, null)}
       />
-    ) : item.displayMode === "outline" ? (
-      <OutlineBody
-        surfaceId={surface.id}
-        snapshot={canvas.snapshotsBySurfaceId[surface.id]}
-        fallbackPreview={previewNode}
-        onActivate={onActivate}
-      />
-    ) : item.displayMode === "rail" ? null : (
-      previewNode
+    ) : (
+      // Inactive cards (outline / card / rail). A SurfaceBody slot can replace
+      // this without touching the editor mount above.
+      (() => {
+        const defaultBody: ReactNode =
+          item.displayMode === "outline" ? (
+            <OutlineBody
+              surfaceId={surface.id}
+              snapshot={canvas.snapshotsBySurfaceId[surface.id]}
+              fallbackPreview={previewNode}
+              onActivate={onActivate}
+            />
+          ) : item.displayMode === "rail" ? null : (
+            previewNode
+          );
+        const BodySlot = props.slots?.SurfaceBody;
+        return BodySlot ? (
+          <BodySlot
+            item={item}
+            mode={item.displayMode}
+            {...(canvas.snapshotsBySurfaceId[surface.id]
+              ? { snapshot: canvas.snapshotsBySurfaceId[surface.id] }
+              : {})}
+            onActivate={onActivate}
+            defaultBody={defaultBody}
+          />
+        ) : (
+          defaultBody
+        );
+      })()
     );
 
   // Rail surfaces collapse to just their header — no body wrapper at all, so the
@@ -389,6 +422,8 @@ function SurfaceItem({ item, canvas, props, sortable, depth }: ItemProps) {
       data-path-state={item.pathState}
       role="treeitem"
       aria-level={depth + 1}
+      aria-setsize={setsize}
+      aria-posinset={posinset}
       aria-label={surface.title ?? "Untitled surface"}
       aria-current={item.pathState === "active" ? "true" : undefined}
       aria-expanded={hasChildren ? (collapsed ? "false" : "true") : undefined}
@@ -585,7 +620,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       // subtree to the right comes into view — clicking an editor pulls it to the
       // window start rather than leaving it mid-scroll.
       surfaceEl(surfaceId)?.scrollIntoView({
-        behavior: "smooth",
+        behavior: scrollBehavior(),
         inline: "start",
         block: "nearest",
       });
@@ -604,7 +639,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         .sort((a, b) => a.order - b.order)[0];
       if (!first) return;
       surfaceEl(first.toSurfaceId)?.scrollIntoView({
-        behavior: "smooth",
+        behavior: scrollBehavior(),
         block: columnScroll ? "start" : "nearest",
         inline: "nearest",
       });
@@ -638,7 +673,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       const chosen = target ?? [...fromEdges].sort((a, b) => a.order - b.order)[0];
       if (!chosen) return;
       surfaceEl(chosen.toSurfaceId)?.scrollIntoView({
-        behavior: "smooth",
+        behavior: scrollBehavior(),
         block: columnScroll ? "start" : "nearest",
         inline: "nearest",
       });
@@ -691,6 +726,9 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   const AddSib = props.slots?.AddSiblingButton ?? DefaultAddSiblingButton;
   const ColumnHeader = props.slots?.ColumnHeader;
   const EmptyColumn = props.slots?.EmptyColumn;
+  const EmptyCanvas = props.slots?.EmptyCanvas;
+  const hasSurfaces = canvas.columns.some((c) => c.items.length > 0);
+  const pendingCount = canvas.pendingSurfaceIds.size;
   const GroupHeader = layout.showGroupHeaders
     ? (props.slots?.GroupHeader ?? DefaultGroupHeader)
     : undefined;
@@ -795,6 +833,20 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         onMouseOver={onPointerOver}
         onMouseLeave={() => hovered && setHovered(null)}
       >
+        {/* Announce async create/delete/save activity to assistive tech. */}
+        <div className="ham-sr-only" aria-live="polite" role="status">
+          {pendingCount > 0
+            ? `${pendingCount} operation${pendingCount > 1 ? "s" : ""} in progress`
+            : ""}
+        </div>
+        {!hasSurfaces &&
+          (EmptyCanvas ? (
+            <EmptyCanvas rootSurfaceId={props.rootSurfaceId} />
+          ) : (
+            <div className="ham-canvas-empty" role="note">
+              No surfaces to show.
+            </div>
+          ))}
         {canvas.columns.map((column) => {
           // The active column widens to expandedColumnWidth when activeColumnMode
           // is "expanded" (so the focused level gets more room).
@@ -885,6 +937,10 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
                             props={props as HamCanvasProps}
                             sortable={sortable}
                             depth={column.depth}
+                            posinset={
+                              column.items.findIndex((it) => it.surface.id === item.surface.id) + 1
+                            }
+                            setsize={column.items.length}
                           />
                           {showInserters &&
                             inserter(

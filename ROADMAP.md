@@ -147,19 +147,23 @@ features, in either track.
 
 ### A3 · Canvas features & interaction
 
-- **`SurfaceBody` renderer slot** `[P2 · M]` — the inactive-surface body is hardcoded
+- ~~**`SurfaceBody` renderer slot**~~ `[P2 · M]` — **✅ DONE** (replaces an inactive card's body;
+  the active surface keeps its editor). Original note: the inactive-surface body was hardcoded
   (`HamCanvas.tsx:291` expanded→editor / outline→OutlineBody / else→preview) with no slot, so a
   host wanting a richer inactive card (thumbnail, metadata, charts) must reimplement
   `SurfaceFrame` and its activation wiring. Add an optional `SurfaceBody` slot mirroring the
   existing slot pattern. _(Rank 15 remainder.)_
-- **Complete keyboard nav & a11y** `[P1 · M]` — `navigate()` handles only Alt+Arrow; there are
+- **Complete keyboard nav & a11y** `[P1 · M]` — _partly done:_ sibling treeitems now carry
+  `aria-setsize`/`aria-posinset` and an `aria-live` status region exists. Still open: key bindings
+  for collapse/delete/branch/add-sibling, and Alt+Right following the active block's first edge.
+  Original note: `navigate()` handles only Alt+Arrow; there are
   no key bindings for collapse/delete/branch/add-sibling, and Alt+Right descends by first child
   rather than the active block's first outgoing edge (can jump to the wrong group). Fix descent
   ordering, add the missing bindings, add an `aria-live` region for async op status, and add
   `aria-setsize`/`aria-posinset` to sibling treeitems.
-- **Loading / error / empty states** `[P1 · M]` — a missing root surface renders a blank canvas
-  with no message, and `onOperationError` has no built-in inline UI. Add an empty-canvas
-  placeholder slot, a per-surface error badge, and a real pending/skeleton visual.
+- **Loading / error / empty states** `[P1 · M]` — _partly done:_ an empty canvas now renders a
+  placeholder (+ an `EmptyCanvas` slot), and a polite `aria-live` status region announces pending
+  ops. Still open: a per-surface error badge driven by `onOperationError`, and a skeleton visual.
 - **Render orphan / duplicate-incoming surfaces** `[P2 · M]` — surfaces with a second incoming
   edge, or with no path to root, silently never appear (`validateHamTopology` can detect both but
   is never called). Project unreachable surfaces into a "detached" region and surface
@@ -168,8 +172,9 @@ features, in either track.
   cross-anchor drops are a silent no-op, and connectors only fade (don't track) during a drag.
   Add clear rejection feedback, better in-drag connector behavior, and reorder tests (incl. the
   keyboard sensor).
-- **`prefers-reduced-motion`** `[P2 · S]` — smooth auto-scroll-on-activate and CSS transitions
-  are unconditional; gate them on the media query.
+- ~~**`prefers-reduced-motion`**~~ `[P2 · S]` — **✅ DONE.** Auto-scroll uses `behavior:"auto"`
+  under reduced-motion, and a `@media (prefers-reduced-motion: reduce)` block disables card /
+  connector / add-sibling transitions.
 - **Connector routing: overlap avoidance + labels** `[P2 · L]` — many edges from one block
   overlap into a smear and edges can pass through intermediate cards. Add per-edge fan-out at the
   source, optional orthogonal routing for multi-column spans, and a label anchor on

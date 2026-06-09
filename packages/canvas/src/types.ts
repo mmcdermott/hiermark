@@ -252,6 +252,21 @@ export interface HamSurfacePreviewProps<SurfaceMeta = unknown, EdgeMeta = unknow
   onActivate: () => void;
 }
 
+/**
+ * Replaces the body of an *inactive* surface card (outline / card / rail) — e.g.
+ * a richer summary, charts, or status badges — without re-implementing the
+ * editor mount or activation wiring. The expanded (active) surface always keeps
+ * its editor. `defaultBody` is what the canvas would otherwise render, so a slot
+ * can wrap or fall back to it.
+ */
+export interface HamSurfaceBodyProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  item: HamCanvasItem<SurfaceMeta, EdgeMeta>;
+  mode: HamSurfaceDisplayMode;
+  snapshot?: HamSurfaceSnapshot;
+  onActivate: () => void;
+  defaultBody: ReactNode;
+}
+
 export interface HamColumnHeaderProps {
   depth: number;
   count: number;
@@ -307,8 +322,12 @@ export interface HamCanvasSlots<SurfaceMeta = unknown, EdgeMeta = unknown> {
   SurfaceFrame?: ComponentType<HamSurfaceFrameProps<SurfaceMeta, EdgeMeta>>;
   SurfaceHeader?: ComponentType<HamSurfaceHeaderProps<SurfaceMeta, EdgeMeta>>;
   SurfacePreview?: ComponentType<HamSurfacePreviewProps<SurfaceMeta, EdgeMeta>>;
+  /** Replace the body of an inactive surface card (see {@link HamSurfaceBodyProps}). */
+  SurfaceBody?: ComponentType<HamSurfaceBodyProps<SurfaceMeta, EdgeMeta>>;
   ColumnHeader?: ComponentType<HamColumnHeaderProps>;
   EmptyColumn?: ComponentType<{ depth: number }>;
+  /** Rendered when the canvas has no surfaces to show (e.g. a missing root). */
+  EmptyCanvas?: ComponentType<{ rootSurfaceId: HamSurfaceId }>;
   /** Provenance header above each sibling group (when `layout.showGroupHeaders`). */
   GroupHeader?: ComponentType<HamGroupHeaderProps<SurfaceMeta>>;
   /** Override per-edge connector rendering (must return an SVG element). */
