@@ -53,6 +53,8 @@ export {
   DEFAULT_HAM_BLOCK_TYPES,
   isBranchable,
   resolveBranchMode,
+  computeBranchPointSet,
+  branchModeFromSet,
   SMART_RULES,
   isHamBlockNode,
   isEmptyBlockNode,

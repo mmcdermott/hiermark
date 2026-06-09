@@ -107,7 +107,9 @@ describe("HamCanvas", () => {
     });
     const call = (handlers.createSurfaceFromBlock as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(call.sourceSurfaceId).toBe("s_root");
-    expect(call.sourceBlockId).toMatch(/^blk_/);
+    // Under the bubble-up default this linear doc collapses to a single branch
+    // point on the whole document, so the source is the surface's root block.
+    expect(call.sourceBlockId).toBe("s_root_root");
     expect(call.sourceSurfaceSnapshot.blocks[call.sourceBlockId]).toBeDefined();
   });
 

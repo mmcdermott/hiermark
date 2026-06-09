@@ -65,12 +65,22 @@ export interface HamBranchabilityRules {
 }
 
 /**
- * Which blocks may be branched from. Default `"smart"`: branch leaves and real
- * forks, suppressing redundant single-child pass-through intermediates (see
- * {@link HamBranchabilityRules}). The string policies stay available for hosts
- * that want the simpler behavior.
+ * Which blocks may be branched from. Default `"bubble-up"`: show a branch
+ * affordance only where there is a *meaningful* alternative branch point — a
+ * block with a single nested branch point absorbs it (bubbles it up), so a
+ * linear header → header → paragraph chain shows just one affordance at the top;
+ * a real fork (≥2 nested branch points) shows the fork *and* each branch.
+ *
+ * Other policies:
+ * - `"off"` — no branch affordances at all (e.g. a standalone editor with no
+ *   canvas to branch into).
+ * - `"smart"` — the previous default: branch leaves + forks, hoisting single
+ *   child chains, headings always (per-block, no whole-subtree bubble-up).
+ * - `"any-nonempty-block"` / `"headings-only"` / `"root-only"` — simple rules.
  */
 export type HamBranchPolicy =
+  | "bubble-up"
+  | "off"
   | "smart"
   | "any-nonempty-block"
   | "headings-only"

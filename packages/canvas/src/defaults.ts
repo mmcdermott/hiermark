@@ -25,7 +25,7 @@ export const defaultBehavior: HamCanvasBehaviorConfig = {
   enableSiblingBranchCreation: true,
   enableSurfaceDeletion: true,
   enableKeyboardNavigation: true,
-  branchPolicy: "smart",
+  branchPolicy: "bubble-up",
   deleteSurfacePolicy: "prevent-if-has-children",
   pendingOperationMode: "pessimistic",
 };

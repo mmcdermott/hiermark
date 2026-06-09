@@ -410,6 +410,25 @@
   inset: 0;
   pointer-events: none;
 }
+
+/* Document-level affordance: bubble-up can land the only branch point on the
+   whole document (the synthetic root), shown at the editor's top-right. */
+.ham-editor .ham-root-gutter {
+  inset: auto;
+  top: 2px;
+  right: 2px;
+  width: auto;
+  height: auto;
+}
+.ham-editor .ham-root-gutter .ham-block-gutter-affordances {
+  position: static;
+  right: auto;
+  height: auto;
+}
+.ham-editor:hover .ham-root-gutter .ham-branch-button,
+.ham-root-gutter .ham-branch-button:focus-visible {
+  opacity: 1;
+}
 .ham-block-gutter-affordances {
   position: absolute;
   right: calc(-1 * var(--ham-gutter-right));

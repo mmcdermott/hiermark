@@ -1,6 +1,7 @@
 import type { Node as PMNode } from "@tiptap/pm/model";
 
 import type {
+  HamBlockId,
   HamBlockSnapshot,
   HamBranchabilityRules,
   HamBranchMode,
@@ -117,7 +118,17 @@ export function resolveBranchMode(
   policy: HamBranchPolicy = "smart",
   ctx: BranchabilityContext = { existingChildCount: 0 },
 ): HamBranchMode {
-  // Root is structural; empties never branch (unchanged invariants).
+  if (policy === "off") return "none"; // no branch affordances at all
+
+  // The bubble-up policy is a *whole-subtree* decision (and the root participates
+  // — it can carry the whole document), so resolve via the precomputed set.
+  if (policy === "bubble-up") {
+    if (ctx.existingChildCount > 0) return "add-sibling";
+    return computeBranchPointSet(snapshot, "bubble-up").has(block.id) ? "branch" : "none";
+  }
+
+  // Legacy per-block policies: root is structural and empties never branch —
+  // checked BEFORE existingChildCount so they stay "none" regardless of children.
   if (block.id === snapshot.rootBlockId || block.isEmpty) return "none";
 
   // Already a cross-surface parent → the next click adds a sibling, not a 2nd "+".
@@ -131,6 +142,83 @@ export function resolveBranchMode(
 
   const rules = policy === "smart" ? SMART_RULES : policy;
   return branchableByRules(block, snapshot, rules) ? "branch" : "none";
+}
+
+/**
+ * The set of blocks that should show a branch affordance for a policy, computed
+ * once over the whole snapshot. For `"bubble-up"` this runs the recursive
+ * absorption; for every other policy it's just the blocks {@link resolveBranchMode}
+ * would mark `"branch"`. Hosts/gutters resolve `add-sibling` separately (it
+ * depends on the live branch-child count, not the tree shape).
+ */
+export function computeBranchPointSet(
+  snapshot: HamSurfaceSnapshot,
+  policy: HamBranchPolicy = "smart",
+): Set<HamBlockId> {
+  if (policy === "off") return new Set();
+  if (policy === "bubble-up") return bubbleUpBranchPoints(snapshot);
+  const set = new Set<HamBlockId>();
+  for (const id of snapshot.blockOrder) {
+    const b = snapshot.blocks[id];
+    if (b && resolveBranchMode(b, snapshot, policy, { existingChildCount: 0 }) === "branch") {
+      set.add(id);
+    }
+  }
+  return set;
+}
+
+/**
+ * Resolve a block's mode from a precomputed branch-point set (the gutter hot
+ * path). `add-sibling` depends only on the live branch-child count, so it's
+ * resolved here rather than baked into the set. Callers using `"off"` should
+ * skip this entirely (no affordances at all).
+ */
+export function branchModeFromSet(
+  block: HamBlockSnapshot,
+  pointSet: Set<HamBlockId>,
+  ctx: BranchabilityContext = { existingChildCount: 0 },
+): HamBranchMode {
+  if (ctx.existingChildCount > 0) return "add-sibling";
+  return pointSet.has(block.id) ? "branch" : "none";
+}
+
+/**
+ * Bubble-up branch points (spec'd by example): a block with a *single* nested
+ * branch point absorbs it (so a linear header → header → paragraph chain shows
+ * one affordance at the top, on the whole document); a fork with ≥2 nested
+ * branch points shows the fork *and* each nested point. The document root
+ * participates (it can carry the whole doc); other empty blocks cannot.
+ */
+function bubbleUpBranchPoints(snapshot: HamSurfaceSnapshot): Set<HamBlockId> {
+  const memo = new Map<HamBlockId, Set<HamBlockId>>();
+  const eligible = (b: HamBlockSnapshot) => b.id === snapshot.rootBlockId || !b.isEmpty;
+
+  const visit = (id: HamBlockId): Set<HamBlockId> => {
+    const cached = memo.get(id);
+    if (cached) return cached;
+    const placeholder = new Set<HamBlockId>();
+    memo.set(id, placeholder); // cycle guard (snapshots are trees, but be safe)
+    const b = snapshot.blocks[id];
+    if (!b) return placeholder;
+
+    const childPoints = new Set<HamBlockId>();
+    for (const cid of b.childIds) for (const p of visit(cid)) childPoints.add(p);
+
+    let result: Set<HamBlockId>;
+    if (childPoints.size === 0) {
+      result = eligible(b) ? new Set([id]) : new Set();
+    } else if (childPoints.size === 1) {
+      // Single nested point bubbles up into this block (if it can carry it).
+      result = eligible(b) ? new Set([id]) : childPoints;
+    } else {
+      // A real fork: this block and every distinct nested point.
+      result = eligible(b) ? new Set<HamBlockId>([id, ...childPoints]) : childPoints;
+    }
+    memo.set(id, result);
+    return result;
+  };
+
+  return visit(snapshot.rootBlockId);
 }
 
 /** Heart of the smart policy: branchability from arity / depth / type. */

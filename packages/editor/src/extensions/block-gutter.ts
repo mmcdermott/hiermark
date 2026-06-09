@@ -3,7 +3,11 @@ import type { Node as PMNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
-import { isHamBlockNode, resolveBranchMode } from "../snapshot/blockTreePolicy";
+import {
+  branchModeFromSet,
+  computeBranchPointSet,
+  isHamBlockNode,
+} from "../snapshot/blockTreePolicy";
 import type { HamBlockId, HamBranchMode, HamBranchPolicy, HamSurfaceSnapshot } from "../types";
 
 /** One block's gutter overlay; React renders the branch button + child chips into `container`. */
@@ -56,6 +60,12 @@ function build(
   // Resolve branchability from the snapshot (it has arity/depth the live PM node
   // lacks). Built once per rebuild; rebuilds only run on doc change / meta.
   const snapshot = ctx && ctx.editable ? ctx.computeSnapshot(doc) : null;
+  // Branch-point set computed once for the whole tree (bubble-up needs it).
+  const branchesOff = ctx?.branchPolicy === "off";
+  const branchPoints =
+    snapshot && ctx && !branchesOff
+      ? computeBranchPointSet(snapshot, ctx.branchPolicy)
+      : new Set<HamBlockId>();
 
   doc.descendants((node, pos, parent) => {
     if (!isHamBlockNode(node, parent)) return;
@@ -82,8 +92,8 @@ function build(
 
     const block = snapshot?.blocks[blockId];
     const mode: HamBranchMode =
-      ctx && snapshot && block
-        ? resolveBranchMode(block, snapshot, ctx.branchPolicy, {
+      ctx && snapshot && block && !branchesOff
+        ? branchModeFromSet(block, branchPoints, {
             existingChildCount: ctx.branchChildCounts[blockId] ?? 0,
           })
         : "none";
@@ -96,6 +106,34 @@ function build(
       }),
     );
   });
+
+  // Document-level affordance: the bubble-up policy can land the only branch
+  // point on the whole document (the synthetic root), which has no block node —
+  // so render it as a widget at the very top of the doc.
+  if (snapshot && ctx && !branchesOff && ctx.editable) {
+    const rootId = snapshot.rootBlockId;
+    const rootBlock = snapshot.blocks[rootId];
+    const rootMode = rootBlock
+      ? branchModeFromSet(rootBlock, branchPoints, {
+          existingChildCount: ctx.branchChildCounts[rootId] ?? 0,
+        })
+      : "none";
+    if (rootMode !== "none") {
+      let el = containers.get(rootId);
+      if (!el) {
+        el = document.createElement("div");
+        el.className = "ham-block-gutter ham-root-gutter";
+        el.contentEditable = "false";
+        el.setAttribute("data-ham-gutter-for", rootId);
+        containers.set(rootId, el);
+      }
+      live.add(rootId);
+      entries.push({ blockId: rootId, blockType: "root", mode: rootMode, container: el });
+      decos.push(
+        Decoration.widget(0, el, { side: -1, key: `gutter-${rootId}`, ignoreSelection: true }),
+      );
+    }
+  }
 
   for (const key of [...containers.keys()]) {
     if (!live.has(key)) containers.delete(key);

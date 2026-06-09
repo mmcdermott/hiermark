@@ -133,7 +133,7 @@ function HamEditorInner<AnnotationData = unknown>(
     title,
     editable = true,
     rootBlockId = "blk_root",
-    branchPolicy = "smart",
+    branchPolicy = "bubble-up",
     className,
     onReady,
     onChange,

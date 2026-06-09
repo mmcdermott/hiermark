@@ -76,7 +76,7 @@ function DefaultAddSiblingButton({ isAppend, onAddSibling }: HamAddSiblingButton
 /** Branch policy used when `behavior.enableBranchCreation` is false — nothing
  * is branchable, so the editor renders no gutter affordances. Module-level so
  * its identity is stable across renders. */
-const NO_BRANCH = () => false;
+const NO_BRANCH = "off" as const;
 
 /** How much width each display mode wants, low → high. A column sizes to its
  * widest surface's mode (via the `data-col-mode` attribute + CSS). */
