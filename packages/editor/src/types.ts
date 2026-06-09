@@ -300,7 +300,7 @@ export interface HamEditorSlots {
   BlockGutter?: ComponentType<HamBlockGutterProps>;
   EmptyState?: ComponentType<{ surfaceId: HamSurfaceId }>;
   LoadingState?: ComponentType<{ surfaceId: HamSurfaceId }>;
-  ErrorState?: ComponentType<{ surfaceId: HamSurfaceId; error: Error }>;
+  ErrorState?: ComponentType<{ surfaceId: HamSurfaceId; error: Error; retry?: () => void }>;
   /** Replace the default annotation type-ahead popover (e.g. richer rows). */
   SuggestPopover?: ComponentType<HamSuggestPopoverProps>;
 }
@@ -332,6 +332,17 @@ export interface HamCollaborationRuntime {
   connect(): Promise<HamCollaborationProvider>;
 }
 
+/** Lifecycle of the collaboration connection (drives host spinners / analytics). */
+export type HamCollaborationStatus = "connecting" | "connected" | "synced" | "timedout" | "error";
+
+/** What teardown managed to do with any unsynced changes. */
+export interface HamCollaborationFlushResult {
+  /** True if all pending changes drained to the server before destroy. */
+  flushed: boolean;
+  /** Best-effort count of changes that were still pending (on timeout). */
+  pendingChanges?: number;
+}
+
 export interface HamCollaborationConfig {
   enabled: boolean;
   documentName: string;
@@ -344,6 +355,18 @@ export interface HamCollaborationConfig {
   ydoc?: unknown;
   /** Inject a custom runtime (custom transport or a test double). */
   runtime?: HamCollaborationRuntime;
+  /** Bounded reconnect attempts on a failed `connect()` (default 3, backoff 1/2/4s). */
+  maxRetries?: number;
+  /** Observe the connection lifecycle (connecting → connected → synced / error). */
+  onStatusChange?: (status: HamCollaborationStatus) => void;
+  /** A connect failure that has exhausted all retries. */
+  onError?: (error: Error) => void;
+  /** A reconnect attempt is about to run (1-based). */
+  onRetry?: (attempt: number) => void;
+  /** The number of locally-pending (not-yet-synced) changes changed. */
+  onUnsyncedChangesChange?: (count: number) => void;
+  /** Reports the teardown flush outcome (so a host can warn about lost edits). */
+  onBeforeUnmount?: (result: HamCollaborationFlushResult) => void;
 }
 
 // ---------------------------------------------------------------------------
