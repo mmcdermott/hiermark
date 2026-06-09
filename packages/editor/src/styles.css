@@ -306,6 +306,70 @@
 .ham-editor .ProseMirror .katex-error {
   color: #c0392b;
 }
+/* Editable math invites a click (opens the LaTeX editor). */
+.ham-editor .ProseMirror .tiptap-mathematics-render--editable {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 1px;
+}
+.ham-editor .ProseMirror .tiptap-mathematics-render--editable:hover {
+  background: var(--ham-accent-soft, rgba(111, 92, 255, 0.12));
+}
+
+/* LaTeX edit popover (click a math node) ------------------------------------ */
+.ham-math-popover {
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(360px, 80vw);
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--ham-surface-border, #e3e1ee);
+  border-radius: 9px;
+  box-shadow: 0 8px 28px rgba(20, 18, 40, 0.18);
+}
+.ham-math-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid var(--ham-surface-border, #e3e1ee);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ham-math-input:focus {
+  outline: none;
+  border-color: var(--ham-accent, #6f5cff);
+}
+.ham-math-popover-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ham-math-hint {
+  font-size: 11px;
+  color: var(--ham-muted, #6b6880);
+}
+.ham-math-btn {
+  border: 1px solid var(--ham-surface-border, #e3e1ee);
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.ham-math-btn.ham-math-del {
+  color: #c0392b;
+  border-color: #e9c4c0;
+}
+.ham-math-btn:hover {
+  background: #f6f5fb;
+}
 
 /* Remote collaborator cursors (CollaborationCaret) — the extension sets each
    user's color inline; these rules only handle layout. ----------------------- */

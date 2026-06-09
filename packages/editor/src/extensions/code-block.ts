@@ -46,8 +46,6 @@ export const HamCodeBlock = CodeBlockLowlight.extend({
       const header = document.createElement("div");
       header.className = "ham-code-block-header";
       header.contentEditable = "false";
-      // Don't let clicks in the header move the editor selection into the block.
-      header.addEventListener("mousedown", (e) => e.preventDefault());
 
       const select = document.createElement("select");
       select.className = "ham-code-lang";
@@ -100,6 +98,14 @@ export const HamCodeBlock = CodeBlockLowlight.extend({
       });
 
       header.append(select, copy);
+      // Stop a click on the bare chrome from moving the editor selection into the
+      // block — but DON'T preventDefault on the interactive controls themselves,
+      // or the native <select> dropdown never opens and the button can't focus.
+      header.addEventListener("mousedown", (e) => {
+        const t = e.target as Node;
+        if (select.contains(t) || copy.contains(t)) return;
+        e.preventDefault();
+      });
 
       const pre = document.createElement("pre");
       const code = document.createElement("code");

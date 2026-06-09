@@ -20,6 +20,7 @@ import {
   type AnnotationSuggestState,
 } from "./annotations/suggest";
 import { SuggestPopover } from "./annotations/SuggestPopover";
+import { MathPopover, type OpenMath } from "./components/MathPopover";
 import { createHocuspocusCollab, flushAndDestroy } from "./collab/hocuspocus";
 import { BlockFold, blockFoldKey, type BlockFoldContext } from "./extensions/block-fold";
 import {
@@ -108,6 +109,10 @@ function HamEditorInner<AnnotationData = unknown>(
   const foldRef = useRef<BlockFoldContext | null>(null);
   // The annotation popover currently open (Floating UI).
   const [openAnnotation, setOpenAnnotation] = useState<OpenAnnotation | null>(null);
+  // The math node being edited (click-to-edit LaTeX popover).
+  const [openMath, setOpenMath] = useState<OpenMath | null>(null);
+  // Live editor ref so the (build-once) math-click handler resolves the node DOM.
+  const editorRef = useRef<Editor | null>(null);
   // The annotation type-ahead (search) state, plus the highlighted candidate.
   const suggestCtxRef = useRef<AnnotationSuggestContext | null>(null);
   const [suggest, setSuggest] = useState<AnnotationSuggestState>({
@@ -240,6 +245,13 @@ function HamEditorInner<AnnotationData = unknown>(
       ...createHamEditorExtensions({
         ...(collab ? { collab } : {}),
         imageUpload: { getContext: () => imageUploadRef.current },
+        onMathClick: (info) => {
+          const ed = editorRef.current;
+          if (!ed || !ed.isEditable) return;
+          const el = ed.view.nodeDOM(info.pos) as HTMLElement | null;
+          if (!el) return;
+          setOpenMath({ ...info, element: el });
+        },
       }),
       BlockGutter.configure({ getContext: () => ctxRef.current }),
       BlockFold.configure({ getContext: () => foldRef.current }),
@@ -294,6 +306,41 @@ function HamEditorInner<AnnotationData = unknown>(
       }
     },
   });
+  editorRef.current = editor;
+
+  // Write edited LaTeX back to / delete a math node by position (drives MathPopover).
+  const setMathLatex = useStable(
+    (pos: number, latex: string) => {
+      if (!editor) return;
+      editor
+        .chain()
+        .focus(undefined, { scrollIntoView: false })
+        .command(({ tr, state }) => {
+          const node = state.doc.nodeAt(pos);
+          if (!node || !("latex" in node.attrs)) return false;
+          tr.setNodeMarkup(pos, undefined, { ...node.attrs, latex });
+          return true;
+        })
+        .run();
+    },
+    [editor],
+  );
+  const deleteMath = useStable(
+    (pos: number) => {
+      if (!editor) return;
+      editor
+        .chain()
+        .focus(undefined, { scrollIntoView: false })
+        .command(({ tr, state }) => {
+          const node = state.doc.nodeAt(pos);
+          if (!node || !("latex" in node.attrs)) return false;
+          tr.delete(pos, pos + node.nodeSize);
+          return true;
+        })
+        .run();
+    },
+    [editor],
+  );
 
   // Switch the edit surface. To source: snapshot the current markdown into the
   // textarea. To rich: re-parse the (possibly edited) markdown — but only when it
@@ -623,6 +670,12 @@ function HamEditorInner<AnnotationData = unknown>(
         editor={editor}
         onHover={setSuggestHighlight}
         onSelect={commitSuggestion}
+      />
+      <MathPopover
+        open={openMath}
+        onCommit={setMathLatex}
+        onDelete={deleteMath}
+        onClose={() => setOpenMath(null)}
       />
     </div>
   );

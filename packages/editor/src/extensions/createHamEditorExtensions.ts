@@ -6,12 +6,12 @@ import { Placeholder } from "@tiptap/extension-placeholder";
 import { TableKit } from "@tiptap/extension-table";
 import { Image } from "@tiptap/extension-image";
 import { Markdown } from "@tiptap/markdown";
-import { Mathematics } from "@tiptap/extension-mathematics";
 import { Collaboration } from "@tiptap/extension-collaboration";
 import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
 
 import { BlockId } from "./block-id";
 import { HamCodeBlock } from "./code-block";
+import { HamBlockMath, HamInlineMath, type HamMathClick } from "./math";
 import { ImageUpload, type ImageUploadContext } from "./image-upload";
 import { TaskInputRules } from "./task-input-rules";
 import type { HamCollaborationProvider, HamCollaborationUser } from "../types";
@@ -37,6 +37,8 @@ export interface HamEditorExtensionOptions {
   blockIdTypes?: string[];
   /** Render `$…$` / `$$…$$` math with KaTeX. Default true. */
   math?: boolean;
+  /** Fired when an editable math node is clicked (drives the LaTeX edit popover). */
+  onMathClick?: (info: HamMathClick) => void;
   /**
    * Wire image paste / drop / picker uploads to a host handler. When omitted,
    * the image node still renders/round-trips but no upload path is installed.
@@ -50,7 +52,14 @@ export interface HamEditorExtensionOptions {
  * block-id extension.
  */
 export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}): Extensions {
-  const { placeholder = "Write…", blockIdTypes, math = true, collab, imageUpload } = opts;
+  const {
+    placeholder = "Write…",
+    blockIdTypes,
+    math = true,
+    collab,
+    imageUpload,
+    onMathClick,
+  } = opts;
   const collaboration = opts.collaboration || !!collab;
 
   const extensions: Extensions = [
@@ -80,9 +89,10 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
   }
 
   if (math) {
-    // throwOnError:false → a malformed `$\frac$` renders as a red error token
-    // instead of crashing the editor.
-    extensions.push(Mathematics.configure({ katexOptions: { throwOnError: false } }));
+    // Markdown-aligned input rules ($…$ inline, $$…$$ block) + click-to-edit;
+    // throwOnError:false renders malformed LaTeX as a red error token.
+    const mathOpts = onMathClick ? { onClick: onMathClick } : {};
+    extensions.push(HamInlineMath(mathOpts), HamBlockMath(mathOpts));
   }
 
   if (collab) {
