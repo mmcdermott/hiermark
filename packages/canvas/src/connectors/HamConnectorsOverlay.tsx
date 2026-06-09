@@ -91,8 +91,13 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
     const out: EdgeGeometry<EdgeMeta>[] = [];
     for (const edge of shown) {
       const card = findByAttr(root, "data-surface-id", edge.fromSurfaceId);
-      // Anchor to the source block when its editor is mounted, else the card.
-      const fromEl = (card && findByAttr(card, "data-block-id", edge.fromBlockId)) ?? card;
+      // Prefer the branch-child chip (the "bubble" naming the child) as the
+      // anchor, then the source block, then the card — so the line springs from
+      // the chip's edge rather than the block's far right edge.
+      const fromEl =
+        (card && findByAttr(card, "data-ham-branch-child", edge.toSurfaceId)) ??
+        (card && findByAttr(card, "data-block-id", edge.fromBlockId)) ??
+        card;
       const toEl = findByAttr(root, "data-surface-id", edge.toSurfaceId);
       if (!fromEl || !toEl) continue;
       const g = geometryFor(

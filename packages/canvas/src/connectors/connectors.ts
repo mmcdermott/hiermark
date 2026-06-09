@@ -46,18 +46,34 @@ export function visibleEdges<E>(
     }
     case "hover": {
       if (!hovered) return [];
-      const fromSurface = edges.filter((e) => e.fromSurfaceId === hovered.surfaceId);
-      if (!hovered.blockId) return fromSurface;
-      // Narrow to the hovered block's own branches, but only if it actually has
-      // any — otherwise fall back to every edge from the surface. This keeps
-      // hover responsive anywhere on a surface (not just exactly on an anchor
-      // block) and robust to anchor ids that don't resolve to a rendered block.
-      const fromBlock = fromSurface.filter((e) => e.fromBlockId === hovered.blockId);
-      return fromBlock.length ? fromBlock : fromSurface;
+      // Edges TO the hovered surface — its link(s) up to its parent — are always
+      // shown, so hovering a surface reveals where it came from as well as where
+      // it branches to.
+      const incoming = edges.filter((e) => e.toSurfaceId === hovered.surfaceId);
+      const outgoing = edges.filter((e) => e.fromSurfaceId === hovered.surfaceId);
+      if (!hovered.blockId) return dedupeById([...incoming, ...outgoing]);
+      // Narrow the children to the hovered block's own branches, but only if it
+      // actually has any — otherwise keep every edge from the surface. Keeps
+      // hover responsive anywhere on a surface and robust to anchor ids that
+      // don't resolve to a rendered block. Parent edges are always included.
+      const fromBlock = outgoing.filter((e) => e.fromBlockId === hovered.blockId);
+      return dedupeById([...incoming, ...(fromBlock.length ? fromBlock : outgoing)]);
     }
     default:
       return [];
   }
+}
+
+/** De-duplicate edges by id, preserving first-seen order. */
+function dedupeById<E>(edges: HamBranchEdge<E>[]): HamBranchEdge<E>[] {
+  const seen = new Set<string>();
+  const out: HamBranchEdge<E>[] = [];
+  for (const e of edges) {
+    if (seen.has(e.id)) continue;
+    seen.add(e.id);
+    out.push(e);
+  }
+  return out;
 }
 
 /** Styling state for an edge: on the active lineage, off an ancestor, or muted. */

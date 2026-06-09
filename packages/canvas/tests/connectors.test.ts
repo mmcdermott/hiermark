@@ -47,6 +47,19 @@ describe("visibleEdges", () => {
     expect(byBlock).toEqual(["e_b"]);
   });
 
+  it("hover also shows the edge UP to the hovered surface's parent", () => {
+    // s_a has a parent edge e_a (root → s_a) AND a child edge e_deep (s_a → s_deep);
+    // hovering it reveals both directions.
+    const shown = visibleEdges("hover", edges, activePath, { surfaceId: "s_a" }).map((e) => e.id);
+    expect(shown.sort()).toEqual(["e_a", "e_deep"]);
+    // The parent edge stays included even when a specific block is hovered.
+    const byBlock = visibleEdges("hover", edges, activePath, {
+      surfaceId: "s_a",
+      blockId: "blk_x",
+    }).map((e) => e.id);
+    expect(byBlock.sort()).toEqual(["e_a", "e_deep"]);
+  });
+
   it("falls back to surface-level edges when the hovered block has none of its own", () => {
     // Hovering a block that isn't an anchor (or an id that doesn't resolve) still
     // shows the surface's edges rather than nothing.

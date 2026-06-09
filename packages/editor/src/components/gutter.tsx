@@ -45,6 +45,9 @@ export function DefaultBranchChildChip({ child, onOpen }: HamBranchChildChipProp
     <button
       type="button"
       className={"ham-branch-child-chip" + (child.active ? " ham-branch-child-chip-active" : "")}
+      // Lets the canvas connectors anchor an edge to this chip (the "bubble"
+      // around the child's name) rather than the block's far right edge.
+      data-ham-branch-child={child.surfaceId}
       aria-label={`Open branch child: ${child.title ?? "Untitled"}`}
       onMouseDown={(e) => e.preventDefault()}
       onClick={(e) => {

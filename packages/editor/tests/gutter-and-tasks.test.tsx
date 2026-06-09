@@ -134,6 +134,35 @@ describe("branch gutter — right side + slots", () => {
     });
   });
 
+  it("tags branch-child chips with data-ham-branch-child (for connector anchoring)", async () => {
+    const { container } = await mount({
+      value: {
+        kind: "tiptap-json",
+        json: {
+          type: "doc",
+          content: [
+            {
+              type: "heading",
+              attrs: { level: 2, dataBlockId: "blk_anchor" },
+              content: [{ type: "text", text: "Section" }],
+            },
+            { type: "paragraph", content: [{ type: "text", text: "body" }] },
+          ],
+        },
+      },
+      branchChildren: {
+        blk_anchor: [
+          { edgeId: "e1", surfaceId: "s_child", order: 0, title: "Child", active: false },
+        ],
+      },
+    });
+    await waitFor(() => {
+      const chip = container.querySelector(".ham-branch-child-chip");
+      expect(chip).not.toBeNull();
+      expect(chip!.getAttribute("data-ham-branch-child")).toBe("s_child");
+    });
+  });
+
   it("uses a custom BlockBranchButton slot component when provided", async () => {
     const CustomButton = ({ blockId, onBranch }: HamBlockSlotProps) => (
       <button className="my-custom-branch" data-for={blockId} onClick={() => onBranch()}>
