@@ -8,8 +8,9 @@ import { common, createLowlight } from "lowlight";
  */
 export const hamLowlight = createLowlight(common);
 
-/** Languages offered in the code block's language picker (""/auto first). */
-const PICKER_LANGUAGES = ["", ...hamLowlight.listLanguages().sort()];
+interface LowlightInstance {
+  listLanguages: () => string[];
+}
 
 const PRETTY: Record<string, string> = {
   "": "plain text",
@@ -37,8 +38,14 @@ function prettyLang(lang: string): string {
  */
 export const HamCodeBlock = CodeBlockLowlight.extend({
   addNodeView() {
+    // Derive the picker from the *configured* lowlight instance, so a host that
+    // registers extra grammars (e.g. `createLowlight(all)`) gets them in the menu.
+    const lowlight = (this.options.lowlight as LowlightInstance | undefined) ?? hamLowlight;
+    const pickerLanguages = ["", ...lowlight.listLanguages().sort()];
+
     return ({ node, editor, getPos }) => {
       let current = node;
+      let wrapped = false;
 
       const dom = document.createElement("div");
       dom.className = "ham-code-block";
@@ -50,7 +57,7 @@ export const HamCodeBlock = CodeBlockLowlight.extend({
       const select = document.createElement("select");
       select.className = "ham-code-lang";
       select.setAttribute("aria-label", "Code language");
-      for (const lang of PICKER_LANGUAGES) {
+      for (const lang of pickerLanguages) {
         const opt = document.createElement("option");
         opt.value = lang;
         opt.textContent = prettyLang(lang);
@@ -97,13 +104,26 @@ export const HamCodeBlock = CodeBlockLowlight.extend({
         }
       });
 
-      header.append(select, copy);
+      // Soft-wrap toggle (view-local — long lines wrap instead of scrolling).
+      const wrap = document.createElement("button");
+      wrap.type = "button";
+      wrap.className = "ham-code-wrap";
+      wrap.title = "Toggle soft wrap";
+      wrap.setAttribute("aria-pressed", "false");
+      wrap.textContent = "↵";
+      wrap.addEventListener("click", () => {
+        wrapped = !wrapped;
+        dom.setAttribute("data-wrap", String(wrapped));
+        wrap.setAttribute("aria-pressed", String(wrapped));
+      });
+
+      header.append(select, wrap, copy);
       // Stop a click on the bare chrome from moving the editor selection into the
       // block — but DON'T preventDefault on the interactive controls themselves,
       // or the native <select> dropdown never opens and the button can't focus.
       header.addEventListener("mousedown", (e) => {
         const t = e.target as Node;
-        if (select.contains(t) || copy.contains(t)) return;
+        if (select.contains(t) || copy.contains(t) || wrap.contains(t)) return;
         e.preventDefault();
       });
 
