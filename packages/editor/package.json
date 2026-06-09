@@ -69,7 +69,7 @@
     "@tiptap/react": "^3",
     "@tiptap/starter-kit": "^3",
     "@tiptap/suggestion": "^3",
-    "katex": "^0.16.4",
+    "katex": "^0.17.0",
     "lowlight": "^3.3.0",
     "nanoid": "^5",
     "y-prosemirror": "^1.3",
