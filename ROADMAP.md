@@ -161,9 +161,12 @@ features, in either track.
   group; and **Alt+C** toggles collapse of the active surface (non-destructive). _Destructive
   single-keystroke bindings (delete/branch/add-sibling) intentionally deferred — they want a
   confirm affordance rather than a bare Alt+key, tracked separately._
-- **Loading / error / empty states** `[P1 · M]` — _partly done:_ an empty canvas now renders a
-  placeholder (+ an `EmptyCanvas` slot), and a polite `aria-live` status region announces pending
-  ops. Still open: a per-surface error badge driven by `onOperationError`, and a skeleton visual.
+- **Loading / error / empty states** `[P1 · M]` — _mostly done:_ an empty canvas renders a
+  placeholder (+ an `EmptyCanvas` slot); a polite `aria-live` status region announces pending
+  ops; and each surface now carries **`aria-busy`** plus a **visible header spinner** while an
+  async op is in flight (not just the prior dimming). A built-in per-surface _error_ badge is
+  deliberately left to the host via the `onOperationError` seam — a library-imposed retry chip
+  would presume recovery semantics the host owns.
 - **Render orphan / duplicate-incoming surfaces** `[P2 · M]` — surfaces with a second incoming
   edge, or with no path to root, silently never appear (`validateHamTopology` can detect both but
   is never called). Project unreachable surfaces into a "detached" region and surface

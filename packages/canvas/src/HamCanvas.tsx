@@ -284,6 +284,9 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
       )}
       <span className="ham-surface-title">{surface.title ?? "Untitled"}</span>
       <span className="ham-surface-spacer" />
+      {pending && (
+        <span className="ham-surface-spinner" role="status" aria-label="Saving…" title="Saving…" />
+      )}
       {item.pathState !== "active" && (
         <button type="button" className="ham-surface-open" onClick={onActivate}>
           Open
@@ -428,6 +431,7 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
       aria-label={surface.title ?? "Untitled surface"}
       aria-current={item.pathState === "active" ? "true" : undefined}
       aria-expanded={hasChildren ? (collapsed ? "false" : "true") : undefined}
+      aria-busy={pending || undefined}
     >
       {Frame ? (
         <Frame item={item} mode={item.displayMode}>

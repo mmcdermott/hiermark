@@ -163,6 +163,26 @@
   opacity: 0.6;
   pointer-events: none;
 }
+/* Visible (not just dimmed) pending affordance in the surface header. */
+.ham-surface-spinner {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--ham-surface-border, #e3e1ee);
+  border-top-color: var(--ham-accent, #6f5cff);
+  animation: ham-spin 0.7s linear infinite;
+}
+@keyframes ham-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ham-surface-spinner {
+    animation-duration: 2s;
+  }
+}
 
 .ham-surface-header {
   display: flex;

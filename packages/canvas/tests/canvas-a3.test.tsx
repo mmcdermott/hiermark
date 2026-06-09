@@ -176,6 +176,27 @@ describe("canvas A3 — keyboard navigation", () => {
     expect(onActiveChange).toHaveBeenCalledWith({ surfaceId: "s_b", blockId: null });
   });
 
+  it("marks a surface aria-busy + shows a spinner while an op is pending", async () => {
+    // A delete handler that never resolves keeps the surface in the pending set.
+    const deleteSurface = vi.fn(() => new Promise<void>(() => {}));
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={navSurfaces}
+        branchEdges={navEdges}
+        handlers={{ ...handlers, deleteSurface }}
+      />,
+    );
+    const aEl = () => container.querySelector('[data-surface-id="s_a"]');
+    await waitFor(() => expect(aEl()).not.toBeNull());
+    const del = aEl()!.querySelector<HTMLButtonElement>(".ham-surface-delete")!;
+    fireEvent.click(del);
+    await waitFor(() => {
+      expect(aEl()?.getAttribute("aria-busy")).toBe("true");
+      expect(aEl()?.querySelector(".ham-surface-spinner")).not.toBeNull();
+    });
+  });
+
   it("Alt+C toggles collapse of the active surface", async () => {
     const { container } = render(
       <HamCanvas
