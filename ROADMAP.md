@@ -30,10 +30,10 @@ product that consumes them.
 > whole-document affordance; compact-card sizing (no min-height in outline/rail; rail collapses
 > to its header) and scroll-only-on-overflow; hover connectors in **both** directions and
 > anchored to the child chip; **scroll-to-reveal** (select a block → its branch scrolls into
-> view; click an editor → it aligns to the canvas start); and the docs now disable branch
+> view; click an editor → it aligns to the canvas start); the docs now disable branch
 > buttons on standalone editors and surface "Edit as markdown" (source mode) as a general
-> capability. **Still open from this batch:** the P0 source-mode id-preserving round-trip
-> (below) — editing markdown in source mode still re-stamps block ids.
+> capability; and **source-mode edits now preserve block ids** (content+position alignment on
+> re-parse), so branch edges / annotations survive editing the raw markdown.
 
 The packages are intentionally **generic**. Application concepts — a document/project
 model, citation records, tasks reconciliation, LLM actions, final-text/LaTeX assembly,
@@ -64,13 +64,14 @@ features, in either track.
   latest edits on the common navigate-away path. Add an `inFlight`/epoch ref, chain
   re-entrant saves, and await the in-flight promise on unmount; consider promoting save
   coordination into `useHamCanvas` alongside `pendingSurfaceIds`. _(Deep-review rank 8.)_
-- **Make source-mode round-trips id-preserving** `[P0 · L]` — switching to rich
-  (`HamEditor.tsx:301` `applyModeRef`) re-parses edited markdown via
-  `setContent(..., contentType:"markdown")`, which re-stamps **fresh** block ids on every
-  block, orphaning the branch edges and annotations keyed on the old ids. The
-  `<!-- ham:block=<id> -->` grammar already exists (`markdown/stable-id.ts`, wired for
-  tasks in `checklist.ts`); inject block-id comments on entering source mode and read them
-  back on re-parse to preserve identity.
+- ~~**Make source-mode round-trips id-preserving**~~ `[P0 · L]` — **✅ DONE.** Switching to
+  rich now captures the pre-edit block identities and, after the markdown re-parse, restores
+  ids onto matching blocks via content+position alignment (`snapshot/blockIdentity.ts`:
+  `collectBlockIdentities` + `planBlockIdRestore`, wired in `HamEditor.tsx` `applyModeRef`):
+  an exact (type+text) pass for unchanged/reordered blocks, then a positional-by-type pass for
+  edited-in-place blocks — so branch edges / annotations survive. (Chose content alignment over
+  embedding `<!-- ham:block= -->` comments to keep the source textarea clean; the comment
+  grammar still serves the separate git-export item in A2.)
 - **Gate `immediatelyRender` for SSR** `[P0 · S]` — `HamEditor.tsx:272` passes
   `immediatelyRender: true` unconditionally, which hard-crashes / hydration-mismatches
   under Next.js App Router and Remix. Default it to `typeof window !== "undefined"` (or a

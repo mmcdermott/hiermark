@@ -74,6 +74,45 @@ describe("source mode (edit as table or markdown)", () => {
     expect(getHandle().getMarkdown()).toContain("| C   |");
   });
 
+  it("preserves block ids of unchanged AND edited-in-place blocks across a source edit", async () => {
+    // root → "# Method" (heading), "We describe it." (para), "## Data" (heading),
+    // "The dataset." (para). Edit ONLY the last paragraph in source mode; every
+    // OTHER block must keep its id (so a branch/annotation anchored there survives)
+    // and the edited paragraph keeps its id too (positional-by-type match).
+    const { container, getHandle } = await mount(
+      "# Method\n\nWe describe it.\n\n## Data\n\nThe dataset.\n",
+    );
+    const idOf = (preview: string) => {
+      const snap = getHandle().getSnapshot();
+      return Object.values(snap.blocks).find((x) => x.textPreview.startsWith(preview))?.id;
+    };
+    const methodId = idOf("Method");
+    const dataHeadingId = idOf("Data");
+    const describeId = idOf("We describe");
+    const dataParaId = idOf("The dataset");
+    expect([methodId, dataHeadingId, describeId, dataParaId].every(Boolean)).toBe(true);
+
+    getHandle().setMode("source");
+    const ta = await waitFor(() => {
+      const el = container.querySelector<HTMLTextAreaElement>(".ham-source-editor");
+      expect(el).not.toBeNull();
+      return el!;
+    });
+    // Reword only the last paragraph.
+    fireEvent.change(ta, {
+      target: { value: "# Method\n\nWe describe it.\n\n## Data\n\nThe dataset is eICU.\n" },
+    });
+    getHandle().setMode("rich");
+
+    await waitFor(() => expect(idOf("The dataset is eICU")).toBeTruthy());
+    // Unchanged blocks keep their exact ids.
+    expect(idOf("Method")).toBe(methodId);
+    expect(idOf("We describe")).toBe(describeId);
+    expect(idOf("Data")).toBe(dataHeadingId);
+    // The edited-in-place paragraph keeps its id too (positional-by-type).
+    expect(idOf("The dataset is eICU")).toBe(dataParaId);
+  });
+
   it("fires onModeChange and preserves block ids on an unedited round-trip", async () => {
     const onModeChange = vi.fn();
     const { getHandle } = await mount("# Title\n\nA paragraph.\n", { onModeChange });

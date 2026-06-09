@@ -37,6 +37,7 @@ import {
 import { uploadHamImages, type ImageUploadContext } from "./extensions/image-upload";
 import { stripStableIds } from "./markdown/stable-id";
 import { surfaceSnapshotFromDoc } from "./snapshot/getHamSurfaceSnapshot";
+import { collectBlockIdentities, planBlockIdRestore } from "./snapshot/blockIdentity";
 import type {
   HamAnnotationSuggestion,
   HamBlockId,
@@ -360,10 +361,21 @@ function HamEditorInner<AnnotationData = unknown>(
     }
     // → rich
     if (editor && sourceTextRef.current !== sourceEnteredRef.current) {
+      // Capture the pre-edit block identities, re-parse the markdown (which
+      // re-stamps fresh ids), then restore ids onto the matching blocks so
+      // branch edges / annotations keyed on them survive the round-trip.
+      const oldIdentities = collectBlockIdentities(editor.state.doc);
       editor.commands.setContent(sourceTextRef.current, {
         emitUpdate: true,
         contentType: "markdown",
       } as Parameters<typeof editor.commands.setContent>[1]);
+      const plan = planBlockIdRestore(oldIdentities, editor.state.doc);
+      if (plan.length) {
+        const tr = editor.state.tr;
+        for (const { pos, id } of plan) tr.setNodeAttribute(pos, "dataBlockId", id);
+        tr.setMeta("addToHistory", false);
+        editor.view.dispatch(tr);
+      }
     }
     setEditorMode("rich");
     modeRef.current = "rich";

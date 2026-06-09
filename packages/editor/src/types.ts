@@ -408,7 +408,9 @@ export interface HamEditorHandle {
   getMode(): HamEditorMode;
   /**
    * Switch between the rich editor and the raw-markdown source `<textarea>`.
-   * Switching to `"rich"` re-parses the edited markdown. No-op under active
+   * Switching to `"rich"` re-parses the edited markdown; block ids are restored
+   * onto unchanged, reordered, and edited-in-place blocks (so branch edges /
+   * annotations anchored on them survive the round-trip). No-op under active
    * collaboration (source mode would clobber the shared doc) — `getMode` then
    * stays `"rich"`.
    */

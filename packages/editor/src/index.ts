@@ -60,6 +60,8 @@ export {
   isEmptyBlockNode,
 } from "./snapshot/blockTreePolicy";
 export type { BranchabilityContext } from "./snapshot/blockTreePolicy";
+export { collectBlockIdentities, planBlockIdRestore } from "./snapshot/blockIdentity";
+export type { BlockIdentity, BlockIdRestore } from "./snapshot/blockIdentity";
 
 // Markdown helpers (import/export & server-reconciliation path)
 export { fnv1a64Hex, normalizeForHash } from "./markdown/hash";
