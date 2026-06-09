@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      tiptap:
+        patterns:
+          - "@tiptap/*"
+      dev:
+        dependency-type: development
+    open-pull-requests-limit: 8
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

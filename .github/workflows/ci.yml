@@ -17,12 +17,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22", "24"]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
-          node-version-file: ".nvmrc"
+          node-version: ${{ matrix.node }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - name: Build packages
@@ -37,3 +41,5 @@ jobs:
         run: pnpm test
       - name: Docs build
         run: pnpm -F @ham/docs build
+      - name: Packaging check (publint)
+        run: pnpm -r --filter "./packages/*" exec publint

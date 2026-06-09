@@ -239,21 +239,26 @@ features, in either track.
 
 ### A7 · Packaging & release
 
-- **Release pipeline with Changesets** `[P1 · M]` — no `.changeset`, CHANGELOG, or publish workflow;
+- ~~**Release pipeline with Changesets**~~ `[P1 · M]` — **✅ DONE** (`.changeset/`, root
+  `changeset`/`version`/`release` scripts, `release.yml` via `changesets/action`). Original: — no `.changeset`, CHANGELOG, or publish workflow;
   both packages are publishable but stuck at 0.1.0. Add `@changesets/cli` + a `version`/`publish`
   Action; note that canvas depends on editor via `workspace:^`, which Changesets rewrites on publish
   (a manual `npm publish` would ship a broken canvas tarball).
-- **CJS build or explicit ESM-only** `[P1 · M]` — tsup emits ESM only, but `"main"` points at the
+- ~~**CJS build or explicit ESM-only**~~ `[P1 · M]` — **✅ DONE** (dual ESM+CJS via tsup; `main`
+  now points at `.cjs`, per-condition `import`/`require` types). Original: — tsup emits ESM only, but `"main"` points at the
   ESM file and there's no `require` export condition — a CJS interop trap. Either add a `cjs` format +
   `require` condition or drop `main` and document ESM-only.
-- **Packaging validation in CI** `[P1 · S]` — add `publint` + `@arethetypeswrong/cli` against
+- ~~**Packaging validation in CI**~~ `[P1 · S]` — **✅ publint** gate added to CI (passes; an attw
+  types-resolution nicety for native-node16 CJS remains, documented). Original: — add `publint` + `@arethetypeswrong/cli` against
   `packages/*`; they immediately flag the `main`/`require`/types-resolution issues above.
-- **Provenance + `publishConfig.access: public`** `[P2 · S]` — scoped packages need `access: public`
+- ~~**Provenance + `publishConfig.access: public`**~~ `[P2 · S]` — **✅ DONE** (both packages). Original: — scoped packages need `access: public`
   on first publish; add `--provenance` under the trusted OIDC publish job. _(After the release pipeline.)_
-- **Per-package READMEs + CONTRIBUTING** `[P2 · S]` — `files:["dist"]` means the npm tarball ships with
+- ~~**Per-package READMEs + CONTRIBUTING**~~ `[P2 · S]` — **✅ DONE**. Original: — `files:["dist"]` means the npm tarball ships with
   no README (blank package page); add minimal per-package READMEs and a CONTRIBUTING covering the
   changeset workflow.
-- **CI matrix + bundle-size budgets + automated deps** `[P2 · S each]` — extend CI to Node 22 + 24
+- **CI matrix + bundle-size budgets + automated deps** `[P2 · S each]` — _partly done:_ CI now runs
+  a **Node 22 + 24 matrix**, and **Dependabot** (npm + actions) + **CODEOWNERS** were added. Still
+  open: `size-limit` bundle budgets. Original: — extend CI to Node 22 + 24
   (and optionally Windows, given the tsup `copyFileSync` styles step); add `size-limit` budgets (the
   editor pulls in the full Tiptap stack + katex + lowlight + yjs); add Dependabot/Renovate + CODEOWNERS
   (a manual Actions bump already bit this repo once).

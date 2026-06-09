@@ -28,15 +28,21 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "docs:build": "pnpm build && pnpm -F @ham/docs build",
+    "lint:pkg": "pnpm build && pnpm -r --filter \"./packages/*\" exec publint",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish",
     "clean": "pnpm -r exec rm -rf dist dist-types coverage .vite"
   },
   "devDependencies": {
+    "@changesets/cli": "^2",
     "@eslint/js": "^9",
     "@types/node": "^22",
     "eslint": "^9",
     "eslint-plugin-react-hooks": "^5",
     "globals": "^16",
     "prettier": "^3",
+    "publint": "^0.3",
     "typescript": "^5",
     "typescript-eslint": "^8"
   },
