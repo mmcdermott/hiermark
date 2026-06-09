@@ -107,9 +107,10 @@ features, in either track.
   alt text (accessibility-critical), title, and dimensions are uneditable in-app (only set
   from the upload handler). Add an image/figure node view with alt/caption fields and resize
   handles (mirror TableKit's resizable columns). _(Depends on the Figure node.)_
-- **Link mark + inline link editor** `[P1 · M]` — only StarterKit's bare link mark renders;
-  there's no add/edit/remove affordance or autolink. Add `@tiptap/extension-link` + a small
-  Floating-UI link popover (reuse the AnnotationPopover pattern) and paste-link-over-selection.
+- ~~**Link mark + inline link editor**~~ `[P1 · M]` — **✅ DONE.** `LinkEditor` extension +
+  `LinkPopover`: clicking a link (or `Mod-k` over a selection) opens a Floating-UI popover to
+  set/edit/remove the href (`setLink`/`unsetLink`); links open via the popover, not navigation
+  (`openOnClick:false`), and carry safe `rel`.
 - **Markdown round-trip fidelity audit** `[P1 · L]` — footnotes (`[^1]`), definition lists,
   raw HTML blocks, and nested/aligned tables aren't modeled, so they drop or mangle on the
   `getMarkdown ↔ setContent` round-trip that source mode and collab seeding depend on. Build
@@ -120,10 +121,10 @@ features, in either track.
   that injects `<!-- ham:block=<id> -->` per block so a persisted file carries identity for a
   true git round-trip. _(Shares machinery with the P0 source-mode fix; unblocks Track B
   git-sync.)_
-- **Code block polish** `[P2 · S–M]` — broaden the language picker beyond highlight.js
-  `common` (expose the lowlight instance / accepted set as config); add optional line numbers,
-  a soft-wrap toggle (node attr), and a host-visible copy success/failure callback
-  (`code-block.ts`).
+- **Code block polish** `[P2 · S–M]` — _partly done:_ the language picker now derives from the
+  _configured_ lowlight instance (a host using `createLowlight(all)` gets every grammar), and a
+  **soft-wrap** toggle was added. Still open: line numbers + a host-visible copy success/failure
+  callback.
 - **Annotations on atom blocks** `[P2 · M]` — `buildBlockTextIndex` indexes only inline text,
   so citations/mentions inside tables, code, and images can't be placed (hits silently drop).
   Add block-level (chip/gutter) placement keyed to the block id for atom blocks.

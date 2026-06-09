@@ -21,6 +21,12 @@ export { HamInlineMath, HamBlockMath } from "./extensions/math";
 export type { HamMathClick, HamMathOptions } from "./extensions/math";
 export { Sanitize, isSafeUri, isSafeImageSrc } from "./extensions/sanitize";
 export type { SanitizeOptions } from "./extensions/sanitize";
+export { LinkEditor, linkEditorKey } from "./extensions/link-editor";
+export type {
+  LinkEditorOptions,
+  LinkEditorContext,
+  LinkEditTarget,
+} from "./extensions/link-editor";
 export { ImageUpload, uploadHamImages, imageUploadKey } from "./extensions/image-upload";
 export type { ImageUploadContext, ImageUploadOptions } from "./extensions/image-upload";
 export { BlockGutter, blockGutterKey } from "./extensions/block-gutter";

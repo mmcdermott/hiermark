@@ -13,6 +13,7 @@ import { BlockId } from "./block-id";
 import { HamCodeBlock } from "./code-block";
 import { HamBlockMath, HamInlineMath, type HamMathClick } from "./math";
 import { ImageUpload, type ImageUploadContext } from "./image-upload";
+import { LinkEditor, type LinkEditorContext } from "./link-editor";
 import { Sanitize, isSafeUri } from "./sanitize";
 import { TaskInputRules } from "./task-input-rules";
 import type { HamCollaborationProvider, HamCollaborationUser } from "../types";
@@ -50,6 +51,8 @@ export interface HamEditorExtensionOptions {
    * javascript:/vbscript:/file:/data:text/html; `data:image/*` stays allowed).
    */
   isAllowedImageSrc?: (src: string) => boolean;
+  /** Wire link click / Mod-k to a host edit popover. */
+  linkEditor?: { getContext: () => LinkEditorContext | null };
 }
 
 /**
@@ -66,6 +69,7 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
     imageUpload,
     onMathClick,
     isAllowedImageSrc,
+    linkEditor,
   } = opts;
   const collaboration = opts.collaboration || !!collab;
 
@@ -78,6 +82,7 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
       link: {
         protocols: ["http", "https", "mailto"],
         defaultProtocol: "https",
+        openOnClick: false, // clicking opens the edit popover (LinkEditor), not a nav
         isAllowedUri: (url, ctx) => ctx.defaultValidate(url) && isSafeUri(url),
         HTMLAttributes: { rel: "noopener noreferrer nofollow" },
       },
@@ -104,6 +109,9 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
 
   if (imageUpload) {
     extensions.push(ImageUpload.configure({ getContext: imageUpload.getContext }));
+  }
+  if (linkEditor) {
+    extensions.push(LinkEditor.configure({ getContext: linkEditor.getContext }));
   }
 
   if (math) {

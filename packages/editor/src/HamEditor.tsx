@@ -21,6 +21,8 @@ import {
 } from "./annotations/suggest";
 import { SuggestPopover } from "./annotations/SuggestPopover";
 import { MathPopover, type OpenMath } from "./components/MathPopover";
+import { LinkPopover } from "./components/LinkPopover";
+import type { LinkEditTarget, LinkEditorContext } from "./extensions/link-editor";
 import { createHocuspocusCollab, flushAndDestroy } from "./collab/hocuspocus";
 import { BlockFold, blockFoldKey, type BlockFoldContext } from "./extensions/block-fold";
 import {
@@ -113,6 +115,9 @@ function HamEditorInner<AnnotationData = unknown>(
   const [openAnnotation, setOpenAnnotation] = useState<OpenAnnotation | null>(null);
   // The math node being edited (click-to-edit LaTeX popover).
   const [openMath, setOpenMath] = useState<OpenMath | null>(null);
+  // The link being edited (click / Mod-k popover).
+  const [openLink, setOpenLink] = useState<LinkEditTarget | null>(null);
+  const linkEditCtxRef = useRef<LinkEditorContext>({ onEdit: () => {} });
   // Live editor ref so the (build-once) math-click handler resolves the node DOM.
   const editorRef = useRef<Editor | null>(null);
   // The annotation type-ahead (search) state, plus the highlighted candidate.
@@ -248,6 +253,7 @@ function HamEditorInner<AnnotationData = unknown>(
       ...createHamEditorExtensions({
         ...(collab ? { collab } : {}),
         imageUpload: { getContext: () => imageUploadRef.current },
+        linkEditor: { getContext: () => linkEditCtxRef.current },
         ...(isAllowedImageSrc ? { isAllowedImageSrc } : {}),
         onMathClick: (info) => {
           const ed = editorRef.current;
@@ -313,6 +319,32 @@ function HamEditorInner<AnnotationData = unknown>(
     },
   });
   editorRef.current = editor;
+  // Link editing: the extension reports a click / Mod-k; we open the popover.
+  linkEditCtxRef.current = { onEdit: (target) => setOpenLink(target) };
+  const applyLink = useStable(
+    (from: number, to: number, href: string) => {
+      editor
+        ?.chain()
+        .focus(undefined, { scrollIntoView: false })
+        .setTextSelection({ from, to })
+        .extendMarkRange("link")
+        .setLink({ href })
+        .run();
+    },
+    [editor],
+  );
+  const removeLink = useStable(
+    (from: number, to: number) => {
+      editor
+        ?.chain()
+        .focus(undefined, { scrollIntoView: false })
+        .setTextSelection({ from, to })
+        .extendMarkRange("link")
+        .unsetLink()
+        .run();
+    },
+    [editor],
+  );
 
   // Write edited LaTeX back to / delete a math node by position (drives MathPopover).
   const setMathLatex = useStable(
@@ -509,6 +541,9 @@ function HamEditorInner<AnnotationData = unknown>(
   const onSuggestKeyDown = useStable(
     (event: KeyboardEvent): boolean => {
       if (!editor) return false;
+      // Never act on keys while an IME composition is in progress (CJK input):
+      // committing/navigating mid-composition would eat the user's input.
+      if (event.isComposing || event.keyCode === 229) return false;
       const st = annotationSuggestKey.getState(editor.state)?.suggest;
       if (!st?.active || st.items.length === 0) return false;
       const n = st.items.length;
@@ -693,6 +728,12 @@ function HamEditorInner<AnnotationData = unknown>(
         onCommit={setMathLatex}
         onDelete={deleteMath}
         onClose={() => setOpenMath(null)}
+      />
+      <LinkPopover
+        open={openLink}
+        onApply={applyLink}
+        onRemove={removeLink}
+        onClose={() => setOpenLink(null)}
       />
     </div>
   );
