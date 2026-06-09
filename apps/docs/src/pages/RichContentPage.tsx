@@ -136,6 +136,7 @@ function TableExample() {
       <HamEditor
         surfaceId="tbl-doc"
         rootBlockId="blk_tbl"
+        branchPolicy="off"
         value={{ kind: "markdown", markdown: TABLE_MD }}
         onReady={(h) => {
           handle.current = h;
@@ -229,6 +230,7 @@ function ImageExample() {
       <HamEditor
         surfaceId="img-doc"
         rootBlockId="blk_img"
+        branchPolicy="off"
         value={{ kind: "markdown", markdown: IMG_MD }}
         onImageUpload={onImageUpload}
         onReady={(h) => {
@@ -265,6 +267,7 @@ export function RichContentPage() {
         <HamEditor
           surfaceId="code-doc"
           rootBlockId="blk_code"
+          branchPolicy="off"
           value={{ kind: "markdown", markdown: CODE_MD }}
         />
       </LiveExample>
@@ -278,6 +281,7 @@ export function RichContentPage() {
         <HamEditor
           surfaceId="math-doc"
           rootBlockId="blk_math"
+          branchPolicy="off"
           value={{ kind: "markdown", markdown: MATH_MD }}
         />
       </LiveExample>

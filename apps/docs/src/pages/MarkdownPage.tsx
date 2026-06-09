@@ -1,5 +1,11 @@
-import { useMemo, useState } from "react";
-import { HamEditor, createExampleAnnotationRegistry, type HamEditorProps } from "@ham/editor";
+import { useMemo, useRef, useState } from "react";
+import {
+  HamEditor,
+  createExampleAnnotationRegistry,
+  type HamEditorHandle,
+  type HamEditorMode,
+  type HamEditorProps,
+} from "@ham/editor";
 
 import { LiveExample } from "../demos/LiveExample";
 import { annotationContext } from "../lib/examples";
@@ -123,6 +129,8 @@ const SYNTAX: { feature: string; syntax: string; renders: string }[] = [
 export function MarkdownPage() {
   const registry = useMemo(() => createExampleAnnotationRegistry() as Registry, []);
   const [key, setKey] = useState(0);
+  const handle = useRef<HamEditorHandle | null>(null);
+  const [mode, setMode] = useState<HamEditorMode>("rich");
   return (
     <section className="page">
       <h2>Markdown &amp; rendering</h2>
@@ -133,14 +141,36 @@ export function MarkdownPage() {
         round-trip. The example below is a <strong>live editor</strong> — what you see is exactly
         what the package renders.
       </p>
+      <p>
+        <strong>Edit as markdown</strong> is a general capability of every surface (
+        <code>handle.setMode(&quot;source&quot;)</code>) — toggle it below to edit the raw markdown
+        and re-parse. It&apos;s the way to hand-edit content that has no inline affordance, such as
+        a table&apos;s structure.
+      </p>
 
       <LiveExample
         title="Live editor — edit me"
         source={SOURCE}
         controls={
-          <button type="button" className="demo-btn" onClick={() => setKey((k) => k + 1)}>
-            Reset
-          </button>
+          <>
+            <button
+              type="button"
+              className="demo-btn"
+              onClick={() => handle.current?.setMode(mode === "rich" ? "source" : "rich")}
+            >
+              {mode === "rich" ? "Edit as markdown" : "Back to rich"}
+            </button>
+            <button
+              type="button"
+              className="demo-btn"
+              onClick={() => {
+                setMode("rich");
+                setKey((k) => k + 1);
+              }}
+            >
+              Reset
+            </button>
+          </>
         }
       >
         <HamEditor
@@ -150,6 +180,11 @@ export function MarkdownPage() {
           value={{ kind: "markdown", markdown: SAMPLE }}
           annotations={registry}
           annotationContext={annotationContext}
+          branchPolicy="off"
+          onReady={(h) => {
+            handle.current = h;
+          }}
+          onModeChange={setMode}
         />
       </LiveExample>
 

@@ -105,6 +105,7 @@ export function AnnotationsPage() {
             key={key}
             surfaceId="anno-doc"
             rootBlockId="blk_anno"
+            branchPolicy="off"
             value={{ kind: "markdown", markdown: annotatedMarkdown }}
             annotations={registry}
             annotationContext={annotationContext}

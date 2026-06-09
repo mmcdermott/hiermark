@@ -7,19 +7,33 @@ product that consumes them.
 ## Where things stand
 
 - **`@ham/editor`** — a Tiptap 3 markdown surface with stable block ids, tree
-  snapshots, a branch gutter, a generic annotation layer (citations / mentions /
-  URLs / tasks + an `@`-type-ahead), inline + display KaTeX math, syntax-highlighted
-  code blocks (lowlight) with a copy button + language picker, image upload via a host
-  handler, Yjs/Hocuspocus collaboration with visible remote cursors, and a raw-markdown
-  source mode.
+  snapshots, a branch gutter (with a **bubble-up** affordance policy + an `"off"` switch),
+  a generic annotation layer (citations / mentions / URLs / tasks + an `@`-type-ahead),
+  inline + display KaTeX math (markdown-aligned `$…$`/`$$…$$` input rules + **click-to-edit
+  LaTeX**), syntax-highlighted code blocks (lowlight) with a copy button + language picker,
+  image upload via a host handler, Yjs/Hocuspocus collaboration with visible remote cursors,
+  and a raw-markdown source mode.
 - **`@ham/canvas`** — a 2D canvas of surfaces linked by per-block branch edges:
   depth-banded projection (split into a snapshot-free context + a cheap ordering pass),
-  active-path display modes, SVG connectors (decoupled re-subscription vs. re-measure),
-  drag-reorder, and pessimistic topology operations through host handlers.
+  active-path display modes (compact cards collapse to content; rail = header-only), SVG
+  connectors (decoupled re-subscription vs. re-measure; hover shows parent+child; anchored to
+  the child chip), drag-reorder, scroll-to-reveal on selection, and pessimistic topology
+  operations through host handlers.
 - **`apps/docs`** — a Vite SPA doubling as a live playground, with concept guides and
   "</> Source"-toggle demos. Deployed to GitHub Pages.
-- **Tests:** 178 green (editor 111, canvas 62, docs 5), all jsdom. CI is a single
+- **Tests:** ~192 green (editor 122, canvas 65, docs 5), all jsdom. CI is a single
   ubuntu / Node 22 job: build → format → typecheck → lint → test → docs build.
+
+> **Recently shipped (UX / bug-fix batch).** Code-block language dropdown fix; single-`$`
+> inline + `$$` block math input rules and a click-to-edit LaTeX popover; the **bubble-up**
+> branch-affordance policy (single nested branch point bubbles up; default) plus `"off"` and a
+> whole-document affordance; compact-card sizing (no min-height in outline/rail; rail collapses
+> to its header) and scroll-only-on-overflow; hover connectors in **both** directions and
+> anchored to the child chip; **scroll-to-reveal** (select a block → its branch scrolls into
+> view; click an editor → it aligns to the canvas start); and the docs now disable branch
+> buttons on standalone editors and surface "Edit as markdown" (source mode) as a general
+> capability. **Still open from this batch:** the P0 source-mode id-preserving round-trip
+> (below) — editing markdown in source mode still re-stamps block ids.
 
 The packages are intentionally **generic**. Application concepts — a document/project
 model, citation records, tasks reconciliation, LLM actions, final-text/LaTeX assembly,

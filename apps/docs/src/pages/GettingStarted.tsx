@@ -25,6 +25,7 @@ export function MySurface() {
     <HamEditor
       surfaceId="s1"
       rootBlockId="blk_root"
+      branchPolicy="off"
       value={{ kind: "markdown", markdown: "# Hello\\n\\nStart writing…" }}
       annotations={createExampleAnnotationRegistry()}
       annotationContext={{ references: { vaswani2017: { title: "Attention" } } }}
