@@ -10,11 +10,46 @@
   --ham-accent: #6f5cff;
   --ham-accent-soft: #efecff;
   --ham-danger: #c73b3b;
+  /* Surfaces that aren't variabilized below (inline code / table header / source
+     textarea bg) read from these so dark mode can retheme them. */
+  --ham-inline-code-bg: #f1f0f8;
+  --ham-th-bg: #f1f0f8;
+  --ham-source-bg: #fbfbfe;
   --ham-radius: 12px;
   --ham-column-gap: 24px;
   --ham-surface-gap: 16px;
   --ham-gutter-right: 2em;
   --ham-gutter-left: 1.4em;
+}
+
+/* Dark theme — applied by the OS preference (unless a host opts a subtree into
+   light via [data-theme="light"]) or explicitly via [data-theme="dark"]. Only
+   the tokens change; the code block is already dark in both. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ham-bg: #15151c;
+    --ham-surface-bg: #1b1b24;
+    --ham-surface-border: #34343f;
+    --ham-text: #e7e7f1;
+    --ham-muted: #9a9aab;
+    --ham-accent: #9c8cff;
+    --ham-accent-soft: #2a2740;
+    --ham-inline-code-bg: #2a2a36;
+    --ham-th-bg: #23232e;
+    --ham-source-bg: #1b1b24;
+  }
+}
+[data-theme="dark"] {
+  --ham-bg: #15151c;
+  --ham-surface-bg: #1b1b24;
+  --ham-surface-border: #34343f;
+  --ham-text: #e7e7f1;
+  --ham-muted: #9a9aab;
+  --ham-accent: #9c8cff;
+  --ham-accent-soft: #2a2740;
+  --ham-inline-code-bg: #2a2a36;
+  --ham-th-bg: #23232e;
+  --ham-source-bg: #1b1b24;
 }
 
 .ham-editor {
@@ -45,7 +80,7 @@
   border: 1px solid var(--ham-surface-border);
   border-radius: 8px;
   padding: 10px 12px;
-  background: #fbfbfe;
+  background: var(--ham-source-bg);
   color: var(--ham-text);
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.86em;
@@ -108,7 +143,7 @@
 .ham-editor .ProseMirror code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.88em;
-  background: #f1f0f8;
+  background: var(--ham-inline-code-bg);
   border-radius: 4px;
   padding: 1px 4px;
 }
@@ -295,7 +330,7 @@
   text-align: left;
 }
 .ham-editor .ProseMirror th {
-  background: #f1f0f8;
+  background: var(--ham-th-bg);
   font-weight: 600;
 }
 .ham-editor .ProseMirror .selectedCell::after {

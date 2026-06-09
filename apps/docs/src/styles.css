@@ -577,3 +577,36 @@ pre.block code {
 .doc-source-copy:hover {
   background: #39394d;
 }
+
+/* Dark mode toggle + dark docs chrome -------------------------------------- */
+.theme-toggle {
+  align-self: flex-start;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #d8d8e6;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.prose-list {
+  max-width: 760px;
+  line-height: 1.6;
+}
+.prose-list li {
+  margin: 0.3em 0;
+}
+
+[data-theme="dark"] {
+  --doc-bg: #101017;
+  --doc-text: #e7e7f1;
+  --doc-muted: #9a9aab;
+  --doc-border: #2c2c38;
+  --doc-code-bg: #1b1b24;
+  color-scheme: dark;
+}

@@ -12,6 +12,27 @@
   --ham-radius: 12px;
 }
 
+/* Dark theme (OS preference, opt-out per subtree via [data-theme="light"], or
+   force via [data-theme="dark"]). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ham-canvas-bg: #101017;
+    --ham-surface-bg: #1b1b24;
+    --ham-surface-border: #34343f;
+    --ham-accent: #9c8cff;
+    --ham-accent-soft: #2a2740;
+    --ham-muted: #9a9aab;
+  }
+}
+[data-theme="dark"] {
+  --ham-canvas-bg: #101017;
+  --ham-surface-bg: #1b1b24;
+  --ham-surface-border: #34343f;
+  --ham-accent: #9c8cff;
+  --ham-accent-soft: #2a2740;
+  --ham-muted: #9a9aab;
+}
+
 .ham-canvas {
   position: relative; /* containing block for the connectors SVG overlay */
   display: flex;

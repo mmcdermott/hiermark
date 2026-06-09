@@ -40,6 +40,7 @@ import { uploadHamImages, type ImageUploadContext } from "./extensions/image-upl
 import { stripStableIds } from "./markdown/stable-id";
 import { surfaceSnapshotFromDoc } from "./snapshot/getHamSurfaceSnapshot";
 import { collectBlockIdentities, planBlockIdRestore } from "./snapshot/blockIdentity";
+import { devWarn } from "./devWarn";
 import type {
   HamAnnotationSuggestion,
   HamBlockId,
@@ -646,7 +647,14 @@ function HamEditorInner<AnnotationData = unknown>(
     // the user just deleted. Seed only after a *real* sync (`seedAllowed`), never
     // on the timeout fallback, so late-arriving server state can't duplicate it.
     if (seededRef.current || !editor || !collab || !props.seedAllowed) return;
-    if (value.kind !== "markdown") return; // json seeding into a Y.Doc is unsupported
+    if (value.kind !== "markdown") {
+      // json seeding into a Y.Doc is unsupported — the doc just stays empty.
+      devWarn(
+        "collab-json-seed",
+        "collaboration seeds from markdown only; a `tiptap-json` value won't seed the shared doc.",
+      );
+      return;
+    }
     seededRef.current = true;
     if (editor.isEmpty) {
       editor.commands.setContent(stripStableIds(value.markdown).trim(), {
@@ -931,6 +939,12 @@ function CollabHamEditor<AnnotationData = unknown>(props: HamEditorProps<Annotat
  */
 export function HamEditor<AnnotationData = unknown>(props: HamEditorProps<AnnotationData>) {
   if (props.collaboration?.enabled) {
+    if (!props.collaboration.runtime && !props.collaboration.url) {
+      devWarn(
+        "collab-no-transport",
+        "collaboration.enabled is true but neither `url` nor a custom `runtime` is set — the editor can't connect.",
+      );
+    }
     return <CollabHamEditor {...props} />;
   }
   return <HamEditorInner {...props} />;

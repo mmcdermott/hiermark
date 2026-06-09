@@ -35,6 +35,7 @@ import {
 } from "@ham/editor";
 
 import { resolveBehavior, resolveLayout } from "./defaults";
+import { devWarn } from "./devWarn";
 import { useHamCanvas } from "./useHamCanvas";
 import { HamConnectorsOverlay } from "./connectors/HamConnectorsOverlay";
 import type { HamHoverTarget } from "./connectors/connectors";
@@ -729,6 +730,12 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   const EmptyCanvas = props.slots?.EmptyCanvas;
   const hasSurfaces = canvas.columns.some((c) => c.items.length > 0);
   const pendingCount = canvas.pendingSurfaceIds.size;
+  if (!props.surfaces[props.rootSurfaceId]) {
+    devWarn(
+      "root-missing",
+      `rootSurfaceId "${props.rootSurfaceId}" is not in \`surfaces\` — the canvas will render empty.`,
+    );
+  }
   const GroupHeader = layout.showGroupHeaders
     ? (props.slots?.GroupHeader ?? DefaultGroupHeader)
     : undefined;

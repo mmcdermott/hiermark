@@ -276,16 +276,22 @@ features, in either track.
 
 - **Generated API reference** `[P1 · L]` — `ApiReference.tsx` hand-lists ~24 entries while the packages
   export ~80 symbols; wire TypeDoc / api-extractor so the reference can't drift.
-- **"Limitations & known issues" page** `[P1 · S]` — state the current constraints honestly (SSR,
+- ~~**"Limitations & known issues" page**~~ `[P1 · S]` — **✅ DONE** (the new "Production notes"
+  docs page). Original: — state the current constraints honestly (SSR,
   dark mode, mobile/touch, host-run collab server, host-owned image storage, gutter-annotation
   placement). Cheap; sets correct expectations.
-- **Collab-server setup recipe** `[P1 · M]` — the single biggest "how do I actually run this" gap:
+- ~~**Collab-server setup recipe**~~ `[P1 · M]` — **✅ DONE** (Hocuspocus server + client recipe on
+  the Production notes page, incl. the Uint8Array + JWT contracts). Original: — the single biggest "how do I actually run this" gap:
   a minimal `@hocuspocus/server` with `onAuthenticate` + persistence and the client `createHocuspocusCollab`
   wiring, end to end.
-- **Design-token reference + dark mode** `[P1 · M]` — theming is advertised but the token set is
-  undocumented and there's zero `prefers-color-scheme`/`[data-theme]` support. Document the tokens and
-  ship a dark theme + a docs theme toggle.
-- **Dev-time warnings / opt-in debug logging** `[P2 · M]` — there are zero `console.warn`s in either
+- ~~**Design-token reference + dark mode**~~ `[P1 · M]` — **✅ DONE.** Both packages ship a dark
+  theme (OS `prefers-color-scheme` + `[data-theme="dark"]`/`"light"`); the docs have a token table
+  - a live theme toggle. Original: — theming is advertised but the token set is
+    undocumented and there's zero `prefers-color-scheme`/`[data-theme]` support. Document the tokens and
+    ship a dark theme + a docs theme toggle.
+- ~~**Dev-time warnings / opt-in debug logging**~~ `[P2 · M]` — **✅ DONE** (a `devWarn` one-time
+  NODE_ENV-gated warner in both packages, flagging collab-without-transport, json-seed-under-collab,
+  and a missing root surface). Original: — there are zero `console.warn`s in either
   package, so misconfigurations fail silently (collab without a runtime, images pasted with no upload
   handler, invalid topology, duplicate ids). Add `NODE_ENV`-guarded warnings + an optional debug flag.
 - **Starter template (StackBlitz / degit)** `[P2 · M]` — no runnable starter exists; `demoHost.ts` is a

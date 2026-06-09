@@ -6,6 +6,7 @@ import { MarkdownPage } from "./pages/MarkdownPage";
 import { RichContentPage } from "./pages/RichContentPage";
 import { AnnotationsPage } from "./pages/AnnotationsPage";
 import { ApiReference } from "./pages/ApiReference";
+import { ProductionPage } from "./pages/ProductionPage";
 import { EditorDemo } from "./demos/EditorDemo";
 import { CanvasDemo } from "./demos/CanvasDemo";
 import { CanvasStylesDemo } from "./demos/CanvasStylesDemo";
@@ -157,6 +158,12 @@ const SECTIONS: Section[] = [
       </section>
     ),
   },
+  {
+    id: "production",
+    label: "Production notes",
+    group: "Reference",
+    render: () => <ProductionPage />,
+  },
   { id: "api", label: "API reference", group: "Reference", render: () => <ApiReference /> },
 ];
 
@@ -167,12 +174,19 @@ function sectionFromHash(): string {
 
 export function App() {
   const [active, setActive] = useState<string>(sectionFromHash);
+  const [dark, setDark] = useState(
+    () => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false,
+  );
 
   useEffect(() => {
     const onHash = () => setActive(sectionFromHash());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+  }, [dark]);
 
   const section = SECTIONS.find((s) => s.id === active) ?? SECTIONS[0]!;
   const groups = [...new Set(SECTIONS.map((s) => s.group))];
@@ -183,6 +197,15 @@ export function App() {
         Skip to content
       </a>
       <aside className="sidebar">
+        <button
+          type="button"
+          className="theme-toggle"
+          aria-pressed={dark}
+          title="Toggle dark mode"
+          onClick={() => setDark((d) => !d)}
+        >
+          {dark ? "☀︎ Light" : "☾ Dark"}
+        </button>
         <a className="brand" href="#overview">
           <span className="brand-mark">▦</span>
           <span>
