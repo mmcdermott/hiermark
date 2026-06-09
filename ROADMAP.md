@@ -213,11 +213,15 @@ features, in either track.
 
 ### A6 · Testing & quality
 
-- **Coverage measurement + baseline gate** `[P1 · M]` — no `@vitest/coverage-v8`, no thresholds.
+- ~~**Coverage measurement + baseline gate**~~ `[P1 · M]` — **✅ DONE.** `@vitest/coverage-v8` with
+  per-package thresholds (editor ~84/74/80/88, canvas ~80/69/73/83) gated in a CI coverage step.
+  Original: — no `@vitest/coverage-v8`, no thresholds.
   Enable v8 coverage in the three vitest configs, run `--coverage` in CI, and gate (start
   informational). Target the pure utils first: `markdown/hash.ts`, `stable-id.ts`, `containment.ts`,
   `annotations/conflict.ts` + `recognize.ts`, `topology/*`, `connectors/connectors.ts`. _(Rank 19.)_
-- **Failure-mode tests for canvas handlers + collab** `[P1 · M]` — handler rejections
+- **Failure-mode tests for canvas handlers + collab** `[P1 · M]` — _partly done:_ a
+  createSurfaceFromBlock-rejection test (onOperationError + pending clears) + the collab
+  retry/flush tests landed. More handler-rejection cases remain. Original: — handler rejections
   (create/sibling/reorder/delete/save) and the collab gate's failure paths (connect rejection,
   flush timeout, unsync-then-sync) are untested; add `mockRejectedValueOnce` cases asserting
   `onOperationError`, pending-state clearing, and no double-call. _(Ranks 17 + the collab subset;
@@ -231,7 +235,8 @@ features, in either track.
   feature.)_
 - **Accessibility (axe) assertions** `[P2 · M]` — wire `jest-axe` into the existing component tests
   and add explicit role/keyboard assertions for the gutter and popovers.
-- **Public-API type tests** `[P3 · M]` — add `expectTypeOf`/`tsd` over the ~80 exports (and consider
+- ~~**Public-API type tests**~~ `[P3 · M]` — **✅ DONE** (export-presence guard + `expectTypeOf`
+  on key public types in public-api.test.ts). Original: — add `expectTypeOf`/`tsd` over the ~80 exports (and consider
   type-checking against the built `.d.ts`) so a signature change can't ship silently.
 - **Large-doc / collab stress** `[P3 · L]` — the editor structural-stress half landed
   (`scale.test.tsx`); still open: collab convergence on a large Y.Doc and round-trip on pathological

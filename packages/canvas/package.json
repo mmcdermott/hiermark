@@ -68,6 +68,7 @@
     "@testing-library/user-event": "^14",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.8",
     "jsdom": "^29",
     "tsup": "^8",
     "typescript": "^5",

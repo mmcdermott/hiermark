@@ -39,6 +39,8 @@ jobs:
         run: pnpm lint
       - name: Test
         run: pnpm test
+      - name: Coverage (thresholds)
+        run: pnpm -r --filter "./packages/*" exec vitest run --coverage
       - name: Docs build
         run: pnpm -F @ham/docs build
       - name: Packaging check (publint)
