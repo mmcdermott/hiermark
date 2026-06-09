@@ -759,3 +759,18 @@
   color: #c0392b;
   border-color: #e9c4c0;
 }
+.ham-image-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--ham-muted, #6b6880);
+}
+.ham-image-field > span {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+/* Clicking an image opens the alt-text editor; hint that it is interactive. */
+.ham-editor[data-mode="rich"] .ProseMirror img {
+  cursor: pointer;
+}

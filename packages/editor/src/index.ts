@@ -29,6 +29,12 @@ export type {
 } from "./extensions/link-editor";
 export { ImageUpload, uploadHamImages, imageUploadKey } from "./extensions/image-upload";
 export type { ImageUploadContext, ImageUploadOptions } from "./extensions/image-upload";
+export { ImageEditor, imageEditorKey } from "./extensions/image-editor";
+export type {
+  ImageEditorOptions,
+  ImageEditorContext,
+  ImageEditTarget,
+} from "./extensions/image-editor";
 export { BlockGutter, blockGutterKey } from "./extensions/block-gutter";
 export type {
   BlockGutterContext,

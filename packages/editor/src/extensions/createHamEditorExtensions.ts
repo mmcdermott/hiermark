@@ -13,6 +13,7 @@ import { BlockId } from "./block-id";
 import { HamCodeBlock } from "./code-block";
 import { HamBlockMath, HamInlineMath, type HamMathClick } from "./math";
 import { ImageUpload, type ImageUploadContext } from "./image-upload";
+import { ImageEditor, type ImageEditorContext } from "./image-editor";
 import { LinkEditor, type LinkEditorContext } from "./link-editor";
 import { Sanitize, isSafeUri } from "./sanitize";
 import { TaskInputRules } from "./task-input-rules";
@@ -53,6 +54,8 @@ export interface HamEditorExtensionOptions {
   isAllowedImageSrc?: (src: string) => boolean;
   /** Wire link click / Mod-k to a host edit popover. */
   linkEditor?: { getContext: () => LinkEditorContext | null };
+  /** Wire image click to a host alt-text / title edit popover. */
+  imageEditor?: { getContext: () => ImageEditorContext | null };
 }
 
 /**
@@ -70,6 +73,7 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
     onMathClick,
     isAllowedImageSrc,
     linkEditor,
+    imageEditor,
   } = opts;
   const collaboration = opts.collaboration || !!collab;
 
@@ -112,6 +116,9 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
   }
   if (linkEditor) {
     extensions.push(LinkEditor.configure({ getContext: linkEditor.getContext }));
+  }
+  if (imageEditor) {
+    extensions.push(ImageEditor.configure({ getContext: imageEditor.getContext }));
   }
 
   if (math) {

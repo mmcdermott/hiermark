@@ -157,6 +157,9 @@ Paste or drop an image, or use **Insert image…** above. Every image file is
 routed through your \`onImageUpload\` handler, so *you* decide where the bytes go
 (server upload, S3, an object URL, base64). The editor only inserts the \`src\`
 you return — and \`![alt](src)\` round-trips through markdown.
+
+**Click any image** to edit its alt text (for accessibility) and title; the
+edit writes straight back to the \`![alt](src "title")\` markdown.
 `;
 
 const IMG_SRC = `import { useRef } from "react";

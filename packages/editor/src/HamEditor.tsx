@@ -23,6 +23,8 @@ import { SuggestPopover } from "./annotations/SuggestPopover";
 import { MathPopover, type OpenMath } from "./components/MathPopover";
 import { LinkPopover } from "./components/LinkPopover";
 import type { LinkEditTarget, LinkEditorContext } from "./extensions/link-editor";
+import { ImagePopover } from "./components/ImagePopover";
+import type { ImageEditTarget, ImageEditorContext } from "./extensions/image-editor";
 import { createHocuspocusCollab, flushAndDestroy } from "./collab/hocuspocus";
 import { BlockFold, blockFoldKey, type BlockFoldContext } from "./extensions/block-fold";
 import {
@@ -119,6 +121,9 @@ function HamEditorInner<AnnotationData = unknown>(
   // The link being edited (click / Mod-k popover).
   const [openLink, setOpenLink] = useState<LinkEditTarget | null>(null);
   const linkEditCtxRef = useRef<LinkEditorContext>({ onEdit: () => {} });
+  // The image being edited (alt text / title popover).
+  const [openImage, setOpenImage] = useState<ImageEditTarget | null>(null);
+  const imageEditCtxRef = useRef<ImageEditorContext>({ onEdit: () => {} });
   // Live editor ref so the (build-once) math-click handler resolves the node DOM.
   const editorRef = useRef<Editor | null>(null);
   // The annotation type-ahead (search) state, plus the highlighted candidate.
@@ -255,6 +260,7 @@ function HamEditorInner<AnnotationData = unknown>(
         ...(collab ? { collab } : {}),
         imageUpload: { getContext: () => imageUploadRef.current },
         linkEditor: { getContext: () => linkEditCtxRef.current },
+        imageEditor: { getContext: () => imageEditCtxRef.current },
         ...(isAllowedImageSrc ? { isAllowedImageSrc } : {}),
         onMathClick: (info) => {
           const ed = editorRef.current;
@@ -322,6 +328,31 @@ function HamEditorInner<AnnotationData = unknown>(
   editorRef.current = editor;
   // Link editing: the extension reports a click / Mod-k; we open the popover.
   linkEditCtxRef.current = { onEdit: (target) => setOpenLink(target) };
+  imageEditCtxRef.current = {
+    onEdit: (target) => {
+      if (editor?.isEditable) setOpenImage(target);
+    },
+  };
+  const applyImage = useStable(
+    (pos: number, attrs: { alt: string; title: string }) => {
+      if (!editor) return;
+      editor
+        .chain()
+        .focus(undefined, { scrollIntoView: false })
+        .command(({ tr, state }) => {
+          const node = state.doc.nodeAt(pos);
+          if (!node || node.type.name !== "image") return false;
+          tr.setNodeMarkup(pos, undefined, {
+            ...node.attrs,
+            alt: attrs.alt || null,
+            title: attrs.title || null,
+          });
+          return true;
+        })
+        .run();
+    },
+    [editor],
+  );
   const applyLink = useStable(
     (from: number, to: number, href: string) => {
       editor
@@ -769,6 +800,7 @@ function HamEditorInner<AnnotationData = unknown>(
         onRemove={removeLink}
         onClose={() => setOpenLink(null)}
       />
+      <ImagePopover open={openImage} onApply={applyImage} onClose={() => setOpenImage(null)} />
     </div>
   );
 }

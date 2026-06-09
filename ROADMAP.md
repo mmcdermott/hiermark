@@ -103,10 +103,11 @@ features, in either track.
   / annotatable and have no caption. Add a `figure` node (img + optional `figcaption`),
   register it as a leaf block type, and serialize as a standalone-paragraph `![alt](src)`
   with a parse rule that lifts it into a figure.
-- **Image alt-text / caption / resize UI** `[P1 · M]` — there's no node view for images, so
-  alt text (accessibility-critical), title, and dimensions are uneditable in-app (only set
-  from the upload handler). Add an image/figure node view with alt/caption fields and resize
-  handles (mirror TableKit's resizable columns). _(Depends on the Figure node.)_
+- **Image alt-text / title editor** `[P1 · M]` — **✅ DONE.** `ImageEditor` extension +
+  `ImagePopover`: clicking any image opens a Floating-UI popover to edit its alt text
+  (accessibility-critical) and title, written straight back to the node attrs (and so to
+  `![alt](src "title")` markdown). Wired by default in `HamEditor`; the cursor hints images
+  are interactive. _Resize handles / caption still want the block Figure node below._
 - ~~**Link mark + inline link editor**~~ `[P1 · M]` — **✅ DONE.** `LinkEditor` extension +
   `LinkPopover`: clicking a link (or `Mod-k` over a selection) opens a Floating-UI popover to
   set/edit/remove the href (`setLink`/`unsetLink`); links open via the popover, not navigation

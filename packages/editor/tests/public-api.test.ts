@@ -22,6 +22,7 @@ describe("public API surface", () => {
       "Sanitize",
       "LinkEditor",
       "ImageUpload",
+      "ImageEditor",
       "BlockId",
       "BlockGutter",
     ] as const) {
