@@ -92,9 +92,7 @@ export function CollabDemo() {
     () =>
       peers && {
         enabled: true,
-        provider: "hocuspocus",
         documentName: "demo",
-        url: "",
         ydoc: peers.docA,
         runtime: peers.runtimeA,
         user: { name: "Alice", color: "#6f5cff" },
@@ -105,9 +103,7 @@ export function CollabDemo() {
     () =>
       peers && {
         enabled: true,
-        provider: "hocuspocus",
         documentName: "demo",
-        url: "",
         ydoc: peers.docB,
         runtime: peers.runtimeB,
         user: { name: "Bob", color: "#0a7d4f" },

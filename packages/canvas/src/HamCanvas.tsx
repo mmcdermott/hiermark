@@ -145,6 +145,8 @@ interface ItemProps {
   item: HamCanvasItem;
   canvas: ReturnType<typeof useHamCanvas>;
   props: HamCanvasProps;
+  /** Report this surface's live editor handle to the canvas (null on teardown). */
+  registerHandle: (surfaceId: HamSurfaceId, handle: HamEditorHandle | null) => void;
   sortable: boolean;
   depth: number;
   /** 1-based position among this column's surfaces (ARIA tree). */
@@ -153,7 +155,16 @@ interface ItemProps {
   setsize: number;
 }
 
-function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }: ItemProps) {
+function SurfaceItem({
+  item,
+  canvas,
+  props,
+  registerHandle,
+  sortable,
+  depth,
+  posinset,
+  setsize,
+}: ItemProps) {
   const surface = item.surface;
   const hasChildren = props.branchEdges.some((e) => e.fromSurfaceId === surface.id);
   const collapsed = canvas.collapsedSurfaceIds.has(surface.id);
@@ -273,6 +284,7 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
       // never save a freshly-remounted editor's seed content over real edits.
       flushOnTeardown();
       handleRef.current = null;
+      registerHandle(surface.id, null);
     };
     // flushOnTeardown reads everything via refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -391,15 +403,20 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
         // colliding id in another surface light up as active.
         activeBlockId={surface.id === canvas.activeSurfaceId ? canvas.activeBlockId : null}
         branchChildren={childrenForSurface(surface.id, props, activeSurfaceSet)}
-        // Disabling branch creation hides every gutter affordance (the action
-        // is guarded too); otherwise use the configured policy.
-        branchPolicy={behavior.enableBranchCreation ? behavior.branchPolicy : NO_BRANCH}
+        // No create handler or disabled branch creation hides every gutter
+        // affordance (the action is guarded too); otherwise use the policy.
+        branchPolicy={
+          behavior.enableBranchCreation && props.handlers.createSurfaceFromBlock
+            ? behavior.branchPolicy
+            : NO_BRANCH
+        }
         {...(props.annotationRegistry ? { annotations: props.annotationRegistry } : {})}
         {...(props.annotationContext !== undefined
           ? { annotationContext: props.annotationContext }
           : {})}
         onReady={(handle) => {
           handleRef.current = handle;
+          registerHandle(surface.id, handle);
           // Seed the snapshot cache immediately so this surface's child
           // column orders by document preorder before any edit.
           canvas.actions.updateSnapshot(surface.id, handle.getSnapshot());
@@ -792,6 +809,24 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     revealBranchFromBlock,
   ]);
 
+  // Live editor handles by surface, so the canvas handle can hand focus INTO
+  // a block. Activating a card may mount its editor asynchronously — a focus
+  // requested before the editor exists parks here and lands on registration.
+  const editorHandlesRef = useRef(new Map<HamSurfaceId, HamEditorHandle>());
+  const pendingFocusRef = useRef<{ surfaceId: HamSurfaceId; blockId: HamBlockId } | null>(null);
+  const registerHandle = useCallback((surfaceId: HamSurfaceId, handle: HamEditorHandle | null) => {
+    if (handle) {
+      editorHandlesRef.current.set(surfaceId, handle);
+      const pending = pendingFocusRef.current;
+      if (pending && pending.surfaceId === surfaceId) {
+        pendingFocusRef.current = null;
+        handle.focusBlock(pending.blockId, { scroll: true });
+      }
+    } else {
+      editorHandlesRef.current.delete(surfaceId);
+    }
+  }, []);
+
   // Publish the imperative canvas handle once (live data via a ref).
   const liveRef = useRef({ canvas, scrollSurfaceIntoView, revealChildren });
   liveRef.current = { canvas, scrollSurfaceIntoView, revealChildren };
@@ -808,6 +843,9 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       focusBlock: (id, blockId) => {
         liveRef.current.canvas.actions.activate(id, blockId);
         liveRef.current.scrollSurfaceIntoView(id);
+        const handle = editorHandlesRef.current.get(id);
+        if (handle) handle.focusBlock(blockId, { scroll: true });
+        else pendingFocusRef.current = { surfaceId: id, blockId };
       },
       scrollSurfaceIntoView: (id) => liveRef.current.scrollSurfaceIntoView(id),
       revealChildren: (id) => liveRef.current.revealChildren(id),
@@ -830,6 +868,12 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     devWarn(
       "root-missing",
       `rootSurfaceId "${props.rootSurfaceId}" is not in \`surfaces\` — the canvas will render empty.`,
+    );
+  }
+  if (behavior.enableBranchCreation && !props.handlers.createSurfaceFromBlock) {
+    devWarn(
+      "create-handler-missing",
+      "behavior.enableBranchCreation is on but handlers.createSurfaceFromBlock is not set — branch affordances are hidden. Provide the handler, or set enableBranchCreation: false for a read-only canvas.",
     );
   }
   const GroupHeader = layout.showGroupHeaders
@@ -1084,6 +1128,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
                             item={item as HamCanvasItem}
                             canvas={canvas}
                             props={props as HamCanvasProps}
+                            registerHandle={registerHandle}
                             sortable={sortable}
                             depth={column.depth}
                             posinset={

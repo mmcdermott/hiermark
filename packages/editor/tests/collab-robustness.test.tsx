@@ -44,9 +44,7 @@ describe("collaboration robustness", () => {
         value={{ kind: "markdown", markdown: "" }}
         collaboration={{
           enabled: true,
-          provider: "hocuspocus",
           documentName: "d",
-          url: "",
           ydoc,
           runtime,
           onStatusChange: (s) => statuses.push(s),
@@ -91,9 +89,7 @@ describe("collaboration robustness", () => {
         value={{ kind: "markdown", markdown: "" }}
         collaboration={{
           enabled: true,
-          provider: "hocuspocus",
           documentName: "d",
-          url: "",
           ydoc,
           runtime,
           onUnsyncedChangesChange: (n) => unsynced.push(n),

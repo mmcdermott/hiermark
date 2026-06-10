@@ -227,9 +227,7 @@ describe("source mode (edit as table or markdown)", () => {
         value={{ kind: "markdown", markdown: "Hello collab.\n" }}
         collaboration={{
           enabled: true,
-          provider: "hocuspocus",
           documentName: "doc",
-          url: "",
           ydoc,
           runtime,
         }}

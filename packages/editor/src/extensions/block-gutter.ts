@@ -22,6 +22,8 @@ export interface GutterEntry {
 export interface BlockGutterContext {
   branchPolicy: HamBranchPolicy;
   activeBlockId: HamBlockId | null;
+  /** Blocks decorated with `ham-block-highlighted` (search hits, errors, …). */
+  highlightedBlockIds?: ReadonlySet<HamBlockId>;
   editable: boolean;
   /** Branch-edge count already anchored at each block (drives `add-sibling` mode). */
   branchChildCounts: Record<HamBlockId, number>;
@@ -74,6 +76,7 @@ function build(
 
     const classes = ["ham-block"];
     if (ctx && blockId === ctx.activeBlockId) classes.push("ham-block-active");
+    if (ctx?.highlightedBlockIds?.has(blockId)) classes.push("ham-block-highlighted");
     decos.push(Decoration.node(pos, pos + node.nodeSize, { class: classes.join(" ") }));
 
     // A stable overlay container per block (PM reuses it across rebuilds via the

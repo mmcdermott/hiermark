@@ -1,5 +1,5 @@
 import type { Editor } from "@tiptap/core";
-import type { ComponentType, ReactNode } from "react";
+import type { ComponentType } from "react";
 
 // ---------------------------------------------------------------------------
 // Core identity + block tree (spec §2.1, §2.2)
@@ -116,7 +116,6 @@ export interface HamEditorSavePayload {
     markdown: string;
   };
   snapshot: HamSurfaceSnapshot;
-  revision?: string | number;
 }
 
 export interface HamBranchRequestEvent {
@@ -133,7 +132,6 @@ export interface HamBranchRequestEvent {
   mode: HamBranchMode;
   /** Persist the source surface (so the source block id exists) before branching. */
   save: () => Promise<HamEditorSavePayload>;
-  nativeEvent?: Event;
 }
 
 export interface HamOpenBranchChildEvent {
@@ -146,16 +144,6 @@ export interface HamOpenBranchChildEvent {
 export interface HamEditorChangeEvent {
   surfaceId: HamSurfaceId;
   content: HamEditorContent;
-}
-
-export type HamBlockEventType = "created" | "updated" | "deleted";
-
-export interface HamBlockEvent {
-  type: HamBlockEventType;
-  surfaceId: HamSurfaceId;
-  blockId: HamBlockId;
-  blockType: string;
-  textPreview: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -282,12 +270,6 @@ export interface HamBranchChildChipProps {
   onOpen: () => void;
 }
 
-export interface HamBlockGutterProps {
-  surfaceId: HamSurfaceId;
-  blockId: HamBlockId;
-  children?: ReactNode;
-}
-
 export interface HamEditorSlots {
   BlockBranchButton?: ComponentType<HamBlockSlotProps>;
   /**
@@ -297,8 +279,6 @@ export interface HamEditorSlots {
    */
   BlockSiblingBranchButton?: ComponentType<HamBlockSlotProps>;
   BranchChildChip?: ComponentType<HamBranchChildChipProps>;
-  BlockGutter?: ComponentType<HamBlockGutterProps>;
-  EmptyState?: ComponentType<{ surfaceId: HamSurfaceId }>;
   LoadingState?: ComponentType<{ surfaceId: HamSurfaceId }>;
   ErrorState?: ComponentType<{ surfaceId: HamSurfaceId; error: Error; retry?: () => void }>;
   /** Replace the default annotation type-ahead popover (e.g. richer rows). */
@@ -343,18 +323,14 @@ export interface HamCollaborationFlushResult {
   pendingChanges?: number;
 }
 
-export interface HamCollaborationConfig {
+/** Options shared by both collaboration transports. */
+export interface HamCollaborationCommonConfig {
   enabled: boolean;
   documentName: string;
-  provider: "hocuspocus";
-  url: string;
-  token?: string;
   user?: HamCollaborationUser;
   initialSyncTimeoutMs?: number;
   /** Reuse an existing Y.Doc instead of creating one (e.g. for tests). */
   ydoc?: unknown;
-  /** Inject a custom runtime (custom transport or a test double). */
-  runtime?: HamCollaborationRuntime;
   /** Bounded reconnect attempts on a failed `connect()` (default 3, backoff 1/2/4s). */
   maxRetries?: number;
   /** Observe the connection lifecycle (connecting → connected → synced / error). */
@@ -368,6 +344,32 @@ export interface HamCollaborationConfig {
   /** Reports the teardown flush outcome (so a host can warn about lost edits). */
   onBeforeUnmount?: (result: HamCollaborationFlushResult) => void;
 }
+
+/** Built-in Hocuspocus transport: connect to `url` for `documentName`. */
+export interface HamCollaborationHocuspocusConfig extends HamCollaborationCommonConfig {
+  provider: "hocuspocus";
+  url: string;
+  token?: string;
+  runtime?: never;
+}
+
+/** Custom transport: the host injects a {@link HamCollaborationRuntime}. */
+export interface HamCollaborationRuntimeConfig extends HamCollaborationCommonConfig {
+  /** A custom transport (or a test double) — no Hocuspocus fields required. */
+  runtime: HamCollaborationRuntime;
+  provider?: never;
+  url?: never;
+  token?: never;
+}
+
+/**
+ * A discriminated union: pass `provider: "hocuspocus"` + `url` for the
+ * built-in transport, or `runtime` for a custom one — never fake one to
+ * satisfy the other.
+ */
+export type HamCollaborationConfig =
+  | HamCollaborationHocuspocusConfig
+  | HamCollaborationRuntimeConfig;
 
 // ---------------------------------------------------------------------------
 // Images / figures (host-owned storage)
@@ -487,6 +489,11 @@ export interface HamEditorProps<AnnotationData = unknown> {
   editable?: boolean;
   autofocus?: boolean | "start" | "end" | HamBlockId;
 
+  /**
+   * Blocks to visually highlight (class `ham-block-highlighted`, themable via
+   * `--ham-highlight-bg`) — e.g. search hits or validation errors. Updates
+   * re-decorate in place without remounting.
+   */
   highlightedBlockIds?: Iterable<HamBlockId>;
   activeBlockId?: HamBlockId | null;
   collapsedBlockIds?: Iterable<HamBlockId>;
@@ -550,7 +557,6 @@ export interface HamEditorProps<AnnotationData = unknown> {
    */
   onChange?: (event: HamEditorChangeEvent) => void;
   onSnapshotChange?: (snapshot: HamSurfaceSnapshot) => void;
-  onBlockEvents?: (events: HamBlockEvent[]) => void;
   onBranchRequest?: (event: HamBranchRequestEvent) => void;
   onOpenBranchChild?: (event: HamOpenBranchChildEvent) => void;
   onActiveBlockChange?: (blockId: HamBlockId | null) => void;

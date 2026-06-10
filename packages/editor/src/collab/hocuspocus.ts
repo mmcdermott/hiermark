@@ -2,8 +2,8 @@ import { HocuspocusProvider } from "@hocuspocus/provider";
 import * as Y from "yjs";
 
 import type {
-  HamCollaborationConfig,
   HamCollaborationFlushResult,
+  HamCollaborationHocuspocusConfig,
   HamCollaborationProvider,
   HamCollaborationRuntime,
 } from "../types";
@@ -16,7 +16,7 @@ import type {
  * `instanceof Doc` check and silently loads empty).
  */
 export function createHocuspocusCollab(
-  config: HamCollaborationConfig,
+  config: HamCollaborationHocuspocusConfig,
   existingYdoc?: Y.Doc,
 ): HamCollaborationRuntime {
   const ydoc = existingYdoc ?? (config.ydoc as Y.Doc | undefined) ?? new Y.Doc();

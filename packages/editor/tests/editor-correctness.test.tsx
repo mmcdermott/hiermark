@@ -149,9 +149,7 @@ describe("collab gate timeout", () => {
           value={{ kind: "markdown", markdown: "Hi.\n" }}
           collaboration={{
             enabled: true,
-            provider: "hocuspocus",
             documentName: "doc",
-            url: "",
             ydoc,
             runtime,
             initialSyncTimeoutMs: 50,

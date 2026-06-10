@@ -311,7 +311,14 @@ function HamEditorInner<AnnotationData = unknown>(
   const editor = useEditor({
     extensions,
     editable,
-    autofocus: typeof props.autofocus === "boolean" ? props.autofocus : false,
+    // booleans and "start"/"end" map straight onto Tiptap's autofocus; a
+    // block id is resolved after mount (effect below) via findBlockPos.
+    autofocus:
+      typeof props.autofocus === "boolean" ||
+      props.autofocus === "start" ||
+      props.autofocus === "end"
+        ? props.autofocus
+        : false,
     // Render synchronously in the browser, but NOT during SSR — Tiptap throws /
     // hydration-mismatches if it renders on the server (Next.js App Router, Remix).
     immediatelyRender: typeof window !== "undefined",
@@ -556,13 +563,25 @@ function HamEditorInner<AnnotationData = unknown>(
     }
   }, [editor, foldedSet, editable, toggleFold]);
 
+  // Normalize the host's iterable into a Set memoized by CONTENT, so a fresh
+  // iterable with the same ids doesn't force a decoration rebuild every render.
+  const highlightedKey = props.highlightedBlockIds
+    ? [...props.highlightedBlockIds].sort().join("\u0000")
+    : "";
+  const highlightedSet = useMemo(
+    () => (highlightedKey ? new Set(highlightedKey.split("\u0000")) : undefined),
+    [highlightedKey],
+  );
+
   // Keep the gutter context current and force a decoration rebuild when the
-  // branch policy / active block / editability change, or when a block's branch
-  // children change (which can flip a block's mode to `add-sibling`).
+  // branch policy / active block / highlight set / editability change, or when
+  // a block's branch children change (which can flip a block's mode to
+  // `add-sibling`).
   useEffect(() => {
     ctxRef.current = {
       branchPolicy,
       activeBlockId: props.activeBlockId ?? null,
+      ...(highlightedSet ? { highlightedBlockIds: highlightedSet } : {}),
       editable,
       branchChildCounts,
       computeSnapshot,
@@ -571,7 +590,15 @@ function HamEditorInner<AnnotationData = unknown>(
     if (editor) {
       editor.view.dispatch(editor.state.tr.setMeta(blockGutterKey, true));
     }
-  }, [editor, branchPolicy, props.activeBlockId, editable, branchChildCounts, computeSnapshot]);
+  }, [
+    editor,
+    branchPolicy,
+    props.activeBlockId,
+    highlightedSet,
+    editable,
+    branchChildCounts,
+    computeSnapshot,
+  ]);
 
   // Keep the annotation context current and rebuild the annotation decorations.
   useEffect(() => {
@@ -773,6 +800,21 @@ function HamEditorInner<AnnotationData = unknown>(
     // content change (it armed the canvas autosave timer on every mount).
     if (editor && editor.isEditable !== editable) editor.setEditable(editable);
   }, [editor, editable]);
+
+  // Block-id autofocus (mount-time, like `value`): place the caret inside the
+  // requested block once the editor exists. Unknown ids fail gracefully.
+  const autofocusBlockRef = useRef(props.autofocus);
+  useEffect(() => {
+    const target = autofocusBlockRef.current;
+    if (!editor || typeof target !== "string" || target === "start" || target === "end") return;
+    const pos = findBlockPos(editor.state.doc, target);
+    if (pos == null) return;
+    editor
+      .chain()
+      .focus()
+      .setTextSelection(pos + 1)
+      .run();
+  }, [editor]);
 
   // Declarative revision swap: when `revision` changes after mount, re-apply
   // `value` (history restore / server push) — preserving block ids for matching

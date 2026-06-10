@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { HamBlockId, HamBranchRequestEvent, HamSurfaceSnapshot } from "@ham/editor";
 
 import { resolveBehavior, resolveLayout } from "./defaults";
+import { devWarn } from "./devWarn";
 import { getHamActivePath } from "./topology/getHamActivePath";
 import { buildProjectionContext, projectColumnsFromContext } from "./topology/projectHamColumns";
 import {
@@ -224,8 +225,16 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       }
       // Respect the behavior flag even if a stray affordance fired.
       if (!behavior.enableBranchCreation) return;
+      const createSurfaceFromBlock = props.handlers.createSurfaceFromBlock;
+      if (!createSurfaceFromBlock) {
+        devWarn(
+          "no-create-handler",
+          "a branch was requested but handlers.createSurfaceFromBlock is not set — provide it or set behavior.enableBranchCreation to false.",
+        );
+        return;
+      }
       await withPending(event.surfaceId, "create-branch", async () => {
-        const result = await props.handlers.createSurfaceFromBlock({
+        const result = await createSurfaceFromBlock({
           sourceSurfaceId: event.surfaceId,
           sourceBlockId: event.blockId,
           sourceBlockSnapshot: event.blockSnapshot,

@@ -27,7 +27,7 @@ function fakeRuntime(ydoc: Y.Doc): HamCollaborationRuntime {
 }
 
 function collabConfig(ydoc: Y.Doc, runtime: HamCollaborationRuntime): HamCollaborationConfig {
-  return { enabled: true, provider: "hocuspocus", documentName: "doc", url: "", ydoc, runtime };
+  return { enabled: true, documentName: "doc", ydoc, runtime };
 }
 
 async function mountCollab(

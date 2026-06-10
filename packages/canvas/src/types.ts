@@ -164,7 +164,6 @@ export interface HamCanvasBehaviorConfig {
   enableKeyboardNavigation: boolean;
   branchPolicy: HamBranchPolicy;
   deleteSurfacePolicy: HamDeleteSurfacePolicy;
-  pendingOperationMode: "optimistic" | "pessimistic";
 }
 
 // ---------------------------------------------------------------------------
@@ -177,7 +176,6 @@ export interface HamCreateSurfaceFromBlockEvent {
   sourceBlockSnapshot: HamBlockSnapshot;
   sourceSurfaceSnapshot: HamSurfaceSnapshot;
   suggestedTitle?: string;
-  insertAfterEdgeId?: HamBranchEdgeId;
   saveSourceSurface: () => Promise<HamEditorSavePayload>;
 }
 
@@ -221,7 +219,12 @@ export interface HamDeleteSurfaceEvent {
 }
 
 export interface HamCanvasHandlers<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  createSurfaceFromBlock(
+  /**
+   * Create a new surface branched from a block. Optional so read-only /
+   * preview canvases need no dummy handler — without it (or with
+   * `behavior.enableBranchCreation: false`) branch affordances are hidden.
+   */
+  createSurfaceFromBlock?(
     event: HamCreateSurfaceFromBlockEvent,
   ): Promise<HamCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
   createSiblingSurface?(
@@ -349,7 +352,10 @@ export interface HamCanvasSlots<SurfaceMeta = unknown, EdgeMeta = unknown> {
 export interface HamCanvasHandle {
   /** Activate a surface (and scroll it into view). */
   focusSurface(surfaceId: HamSurfaceId): void;
-  /** Activate a surface focused on a specific block. */
+  /**
+   * Activate a surface, scroll it into view, and move the caret INTO the
+   * given block (once that surface's editor has mounted).
+   */
   focusBlock(surfaceId: HamSurfaceId, blockId: HamBlockId): void;
   scrollSurfaceIntoView(surfaceId: HamSurfaceId): void;
   /** Scroll a surface's child surfaces into view in the next column. */
@@ -381,6 +387,36 @@ export interface HamCanvasOperationError {
   reason?: string;
 }
 
+/**
+ * Editor props a host may default for every canvas-mounted editor. This is
+ * {@link HamEditorProps} minus the canvas-OWNED wiring (content, identity,
+ * branch/save/snapshot callbacks…): those were silently overridden before,
+ * which read as the host's callbacks being dropped. Extend the Omit list when
+ * the canvas takes ownership of a new editor prop.
+ */
+export type HamCanvasEditorDefaults = Partial<
+  Omit<
+    HamEditorProps,
+    | "surfaceId"
+    | "rootBlockId"
+    | "value"
+    | "title"
+    | "editable"
+    | "activeBlockId"
+    | "branchChildren"
+    | "branchPolicy"
+    | "annotations"
+    | "annotationContext"
+    | "revision"
+    | "onReady"
+    | "onChange"
+    | "onSnapshotChange"
+    | "onBranchRequest"
+    | "onOpenBranchChild"
+    | "onActiveBlockChange"
+  >
+>;
+
 export interface HamCanvasProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
   rootSurfaceId: HamSurfaceId;
   surfaces: Record<HamSurfaceId, HamSurface<SurfaceMeta>>;
@@ -393,7 +429,7 @@ export interface HamCanvasProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
   behavior?: Partial<HamCanvasBehaviorConfig>;
   slots?: HamCanvasSlots<SurfaceMeta, EdgeMeta>;
 
-  editorDefaults?: Partial<HamEditorProps>;
+  editorDefaults?: HamCanvasEditorDefaults;
   annotationRegistry?: HamAnnotationRegistry;
   annotationContext?: unknown;
 

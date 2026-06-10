@@ -27,7 +27,6 @@ export const defaultBehavior: HamCanvasBehaviorConfig = {
   enableKeyboardNavigation: true,
   branchPolicy: "bubble-up",
   deleteSurfacePolicy: "prevent-if-has-children",
-  pendingOperationMode: "pessimistic",
 };
 
 export function resolveLayout(partial?: Partial<HamCanvasLayoutConfig>): HamCanvasLayoutConfig {
