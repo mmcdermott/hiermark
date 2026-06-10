@@ -325,7 +325,7 @@ function HamEditorInner<AnnotationData = unknown>(
       },
     },
     ...initialContent,
-    onUpdate({ editor }) {
+    onUpdate({ editor, transaction }) {
       // Every open popover anchors to a position/element captured at click
       // time; ANY doc change (remote collab edit, image upload resolving, host
       // setContent, sanitize pass) can shift those positions, after which a
@@ -335,10 +335,15 @@ function HamEditorInner<AnnotationData = unknown>(
       setOpenMath(null);
       setOpenLink(null);
       setOpenImage(null);
-      onChange?.({
-        surfaceId,
-        content: { kind: "tiptap-json", json: editor.getJSON() },
-      });
+      // The initial block-id stamp is mount mechanics, not a user edit: hosts
+      // (e.g. the canvas autosave) must not see a change event for it. The
+      // snapshot below still refreshes, so id consumers stay correct.
+      if (transaction.getMeta("hamInitialBlockIdStamp") !== true) {
+        onChange?.({
+          surfaceId,
+          content: { kind: "tiptap-json", json: editor.getJSON() },
+        });
+      }
       // Debounce the host snapshot emission: it drives only the canvas's column
       // ordering (cosmetic), while branch/save capture snapshots synchronously
       // when they actually need them. This keeps a full projection off the
@@ -763,7 +768,10 @@ function HamEditorInner<AnnotationData = unknown>(
 
   // Reflect editable changes.
   useEffect(() => {
-    editor?.setEditable(editable);
+    // Only when it actually changes — Tiptap's setEditable emits an `update`
+    // event even when the value is identical, which hosts would misread as a
+    // content change (it armed the canvas autosave timer on every mount).
+    if (editor && editor.isEditable !== editable) editor.setEditable(editable);
   }, [editor, editable]);
 
   // Declarative revision swap: when `revision` changes after mount, re-apply

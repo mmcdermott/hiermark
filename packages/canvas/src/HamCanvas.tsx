@@ -42,6 +42,7 @@ import type { HamHoverTarget } from "./connectors/connectors";
 import { siblingEdgeOrder } from "./topology/siblingOrder";
 import type {
   HamAddSiblingButtonProps,
+  HamBlockId,
   HamCanvasColumn,
   HamCanvasItem,
   HamCanvasProps,
@@ -185,7 +186,10 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
   // newest snapshot always wins, fixing the unmount/remount + double-timer race).
   const savingRef = useRef(false);
   const pendingRef = useRef(false);
-  const unmountedRef = useRef(false);
+  // A payload captured at editor teardown while a save was in flight — sent as
+  // exactly one final write after the in-flight save settles (even though the
+  // component may be gone by then), so the user's last edits are never dropped.
+  const trailingPayloadRef = useRef<Awaited<ReturnType<HamEditorHandle["save"]>> | null>(null);
   const runSave = () => {
     const handle = handleRef.current;
     const save = saveSurfaceRef.current;
@@ -204,30 +208,75 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
       )
       .finally(() => {
         savingRef.current = false;
-        // Re-save the latest content if more edits arrived mid-save — but not
-        // after unmount (the editor handle is being torn down).
-        if (pendingRef.current && !unmountedRef.current) runSave();
+        // A teardown-captured payload is the authoritative final content.
+        const trailing = trailingPayloadRef.current;
+        if (trailing) {
+          trailingPayloadRef.current = null;
+          void Promise.resolve()
+            .then(() => saveSurfaceRef.current?.(trailing))
+            .catch((error: unknown) =>
+              onOperationErrorRef.current?.({ type: "save-surface", surfaceId: surface.id, error }),
+            );
+          return;
+        }
+        // Re-save the latest content if more edits arrived mid-save — the
+        // editor may already be unmounting, but Tiptap serves save() from the
+        // cached state, and skipping here is what used to drop final edits.
+        if (pendingRef.current && handleRef.current) runSave();
       });
   };
   const scheduleSave = () => {
     if (!saveSurfaceRef.current) return;
+    // Changes before onReady (the editor's initial block-id stamping) are
+    // mount mechanics, not user edits — arming the timer for them made every
+    // freshly-mounted surface "dirty" and fired spurious unmount saves.
+    if (!handleRef.current) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(runSave, 800);
   };
-  // Flush any pending edit on unmount so edits aren't lost when the surface
-  // leaves the projection (navigation/reshape), not only when the timer fires.
-  // If a save is already in flight it has captured ~current content, so we let it
-  // finish rather than chain another through the unmounting editor.
-  useEffect(
-    () => () => {
-      unmountedRef.current = true;
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      if (!savingRef.current) runSave();
-    },
-    // runSave reads everything via refs; safe to run once.
+  // Flush UNSAVED edits when the editor goes away — both when the surface item
+  // unmounts entirely (navigation/reshape) and when it merely de-expands
+  // (displayMode flips, unmounting only the inner editor while this component
+  // stays). With no unsaved edits this is a no-op, so deactivating an
+  // untouched surface no longer fires a spurious save (e.g. right after the
+  // host deleted it).
+  const flushOnTeardown = () => {
+    const hadTimer = saveTimer.current != null;
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    if (!hadTimer && !pendingRef.current) return;
+    if (!savingRef.current) {
+      runSave();
+      return;
+    }
+    // A save is in flight and newer edits exist: capture the latest payload
+    // NOW, while the editor still serves content, and queue it as the single
+    // trailing write. (handle.save() builds its payload synchronously.)
+    pendingRef.current = false;
+    void handleRef.current
+      ?.save()
+      .then((payload) => {
+        trailingPayloadRef.current = payload;
+      })
+      .catch(() => {
+        // The editor was torn down too far to capture — nothing to flush.
+      });
+  };
+  const isExpanded = item.displayMode === "expanded";
+  useEffect(() => {
+    if (!isExpanded) return;
+    return () => {
+      // The inner editor is about to unmount (de-expand or full unmount):
+      // flush while the handle is live, then drop it so a stale timer can
+      // never save a freshly-remounted editor's seed content over real edits.
+      flushOnTeardown();
+      handleRef.current = null;
+    };
+    // flushOnTeardown reads everything via refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
+  }, [isExpanded]);
 
   const frameClass = [
     "ham-surface",
@@ -337,7 +386,10 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
         value={surface.content}
         {...(surface.title !== undefined ? { title: surface.title } : {})}
         editable={!surface.readonly}
-        activeBlockId={canvas.activeBlockId}
+        // Block ids are surface-scoped: the active block id belongs to the
+        // active surface only. Broadcasting it to every mounted editor let a
+        // colliding id in another surface light up as active.
+        activeBlockId={surface.id === canvas.activeSurfaceId ? canvas.activeBlockId : null}
         branchChildren={childrenForSurface(surface.id, props, activeSurfaceSet)}
         // Disabling branch creation hides every gutter affordance (the action
         // is guarded too); otherwise use the configured policy.
@@ -596,13 +648,21 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     const dst = from === "undo" ? redoStack : undoStack;
     const entry = src.current.pop();
     if (!entry) return false;
-    // Record the inverse on the opposite stack before re-applying.
-    dst.current.push({
+    const inverse: ReorderHistory = {
       fromSurfaceId: entry.fromSurfaceId,
       fromBlockId: entry.fromBlockId,
       order: siblingEdgeOrder(props.branchEdges, entry.fromSurfaceId, entry.fromBlockId),
-    });
-    void canvas.actions.reorderSiblings(entry.fromSurfaceId, entry.fromBlockId, entry.order);
+    };
+    // Commit the stack bookkeeping only when the host handler succeeds — a
+    // rejected reorder must leave both stacks exactly as they were (the entry
+    // goes back, no inverse is recorded), so undo/redo can't desynchronize
+    // from the actual topology.
+    void canvas.actions
+      .reorderSiblings(entry.fromSurfaceId, entry.fromBlockId, entry.order)
+      .then((ok) => {
+        if (ok) dst.current.push(inverse);
+        else src.current.push(entry);
+      });
     return true;
   };
 
@@ -625,14 +685,19 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     const to = group.indexOf(String(over.id));
     if (from < 0 || to < 0) return;
     const ordered = arrayMove(group, from, to);
-    // Record the pre-reorder order for undo; a fresh user action invalidates redo.
-    undoStack.current.push({
-      fromSurfaceId: activeEdge.fromSurfaceId,
-      fromBlockId: activeEdge.fromBlockId,
-      order: group,
-    });
-    redoStack.current = [];
-    void canvas.actions.reorderSiblings(activeEdge.fromSurfaceId, activeEdge.fromBlockId, ordered);
+    void canvas.actions
+      .reorderSiblings(activeEdge.fromSurfaceId, activeEdge.fromBlockId, ordered)
+      .then((ok) => {
+        // Record undo only for a reorder that actually committed; a fresh user
+        // action invalidates redo.
+        if (!ok) return;
+        undoStack.current.push({
+          fromSurfaceId: activeEdge.fromSurfaceId,
+          fromBlockId: activeEdge.fromBlockId,
+          order: group,
+        });
+        redoStack.current = [];
+      });
   };
 
   // Find a surface card by id without interpolating the id into a selector
@@ -688,7 +753,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   // selecting a paragraph under a branched heading scrolls that heading's child
   // surface into view). Falls back to the surface's first child.
   const revealBranchFromBlock = useCallback(
-    (surfaceId: HamSurfaceId, blockId: HamSurfaceId | null) => {
+    (surfaceId: HamSurfaceId, blockId: HamBlockId | null) => {
       const fromEdges = props.branchEdges.filter((e) => e.fromSurfaceId === surfaceId);
       if (!fromEdges.length) return;
       const snap = snapshotsRef.current[surfaceId];
@@ -962,9 +1027,13 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
                     afterEdgeId: string | undefined,
                     insertOrder: number,
                     isAppend: boolean,
+                    // Visual gap index — used for the React key, because raw
+                    // edge orders can repeat (duplicate sibling orders) and a
+                    // duplicate key would drop an inserter.
+                    gapIndex: number,
                   ) => (
                     <AddSib
-                      key={`add-${group.key}-${insertOrder}`}
+                      key={`add-${group.key}-${gapIndex}`}
                       fromSurfaceId={anchor!.fromSurfaceId}
                       fromBlockId={anchor!.fromBlockId}
                       {...(afterEdgeId ? { afterEdgeId } : {})}
@@ -1008,7 +1077,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
                           }
                         />
                       )}
-                      {showInserters && inserter(undefined, 0, false)}
+                      {showInserters && inserter(undefined, 0, false, 0)}
                       {group.items.map((item, i) => (
                         <Fragment key={item.surface.id}>
                           <SurfaceItem
@@ -1027,6 +1096,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
                               item.incomingEdge!.id,
                               item.incomingEdge!.order + 1,
                               i === group.items.length - 1,
+                              i + 1,
                             )}
                         </Fragment>
                       ))}
