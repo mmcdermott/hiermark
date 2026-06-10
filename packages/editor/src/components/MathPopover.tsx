@@ -26,6 +26,8 @@ export interface MathPopoverProps {
   /** Remove the math node at `pos`. */
   onDelete: (pos: number) => void;
   onClose: () => void;
+  /** Called when a keyboard cancel should hand focus back to the editor. */
+  onRequestEditorFocus?: () => void;
 }
 
 /**
@@ -33,7 +35,13 @@ export interface MathPopoverProps {
  * Enter / outside-click commit; Escape cancels; a Delete button removes the
  * node. Anchored with Floating-UI so it tracks scroll.
  */
-export function MathPopover({ open, onCommit, onDelete, onClose }: MathPopoverProps) {
+export function MathPopover({
+  open,
+  onCommit,
+  onDelete,
+  onClose,
+  onRequestEditorFocus,
+}: MathPopoverProps) {
   const [value, setValue] = useState("");
   const valueRef = useRef("");
   valueRef.current = value;
@@ -78,6 +86,8 @@ export function MathPopover({ open, onCommit, onDelete, onClose }: MathPopoverPr
   const cancel = () => {
     closingRef.current = true;
     onClose();
+    // Escape must not strand keyboard focus on <body>.
+    onRequestEditorFocus?.();
   };
 
   return (

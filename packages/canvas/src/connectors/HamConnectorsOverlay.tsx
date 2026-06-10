@@ -82,7 +82,15 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
   const [size, setSize] = useState({ w: 0, h: 0 });
   const raf = useRef(0);
 
+  // Volatile measure inputs flow through a ref so `measure` (and `schedule`)
+  // keep ONE identity: the ResizeObserver effect below depends on `schedule`,
+  // and a hover/active-path churned identity used to re-subscribe every anchor
+  // on each cursor move — exactly what geometryKey exists to prevent.
+  const measureInputsRef = useRef({ shown, curvature, activePath });
+  measureInputsRef.current = { shown, curvature, activePath };
+
   const measure = useCallback(() => {
+    const { shown, curvature, activePath } = measureInputsRef.current;
     const root = rootRef.current;
     if (!root) return;
     const rootRect = root.getBoundingClientRect();
@@ -122,13 +130,17 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
         surfaceEls.get(edge.fromSurfaceId);
       const toEl = surfaceEls.get(edge.toSurfaceId);
       if (!fromEl || !toEl) continue;
-      const g = geometryFor(
-        fromEl.getBoundingClientRect(),
-        toEl.getBoundingClientRect(),
-        rootRect,
-        scroll,
-        curvature,
-      );
+      const fromRect = fromEl.getBoundingClientRect();
+      const toRect = toEl.getBoundingClientRect();
+      // A display:none anchor measures 0×0 at the viewport origin — drawing
+      // to it smears a degenerate bezier across the canvas. Skip until shown.
+      if (
+        (fromRect.width === 0 && fromRect.height === 0) ||
+        (toRect.width === 0 && toRect.height === 0)
+      ) {
+        continue;
+      }
+      const g = geometryFor(fromRect, toRect, rootRect, scroll, curvature);
       out.push({ edge, ...g, state: connectorState(edge, activePath) });
     }
     setGeom(out);
@@ -136,7 +148,7 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
       w: Math.max(root.scrollWidth, root.clientWidth),
       h: Math.max(root.scrollHeight, root.clientHeight),
     });
-  }, [rootRef, shown, curvature, activePath]);
+  }, [rootRef]);
 
   const schedule = useCallback(() => {
     cancelAnimationFrame(raf.current);
@@ -144,10 +156,10 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
   }, [measure]);
 
   // Re-measure synchronously after any layout-affecting change (edges shown,
-  // columns reshaped, active path moved) before the browser paints.
+  // columns reshaped, active path moved, hover set changed) before paint.
   useLayoutEffect(() => {
     if (mode !== "off") measure();
-  }, [mode, measure, reshapeKey]);
+  }, [mode, measure, reshapeKey, shown]);
 
   // Observe geometry sources: the root and every anchor element. Observing the
   // anchors (not just the root) is what makes typing-into-a-block move its line

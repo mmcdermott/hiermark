@@ -18,10 +18,12 @@ export interface ImagePopoverProps {
   /** Write edited alt / title back to the image node at `pos`. */
   onApply: (pos: number, attrs: { alt: string; title: string }) => void;
   onClose: () => void;
+  /** Called when a keyboard cancel should hand focus back to the editor. */
+  onRequestEditorFocus?: () => void;
 }
 
 /** Edit an image's alt text (a11y) + title. Anchored to the clicked `<img>`. */
-export function ImagePopover({ open, onApply, onClose }: ImagePopoverProps) {
+export function ImagePopover({ open, onApply, onClose, onRequestEditorFocus }: ImagePopoverProps) {
   const [alt, setAlt] = useState("");
   const [title, setTitle] = useState("");
 
@@ -79,6 +81,8 @@ export function ImagePopover({ open, onApply, onClose }: ImagePopoverProps) {
               } else if (e.key === "Escape") {
                 e.preventDefault();
                 onClose();
+                // Escape must not strand keyboard focus on <body>.
+                onRequestEditorFocus?.();
               }
             }}
           />

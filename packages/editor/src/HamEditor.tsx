@@ -924,6 +924,7 @@ function HamEditorInner<AnnotationData = unknown>(
         onCommit={setMathLatex}
         onDelete={deleteMath}
         onClose={() => setOpenMath(null)}
+        onRequestEditorFocus={() => editor?.commands.focus()}
       />
       <LinkPopover
         open={openLink}
@@ -931,8 +932,14 @@ function HamEditorInner<AnnotationData = unknown>(
         onRemove={removeLink}
         onClose={() => setOpenLink(null)}
         isAllowedHref={isAllowedLinkHref ?? isSafeUri}
+        onRequestEditorFocus={() => editor?.commands.focus()}
       />
-      <ImagePopover open={openImage} onApply={applyImage} onClose={() => setOpenImage(null)} />
+      <ImagePopover
+        open={openImage}
+        onApply={applyImage}
+        onClose={() => setOpenImage(null)}
+        onRequestEditorFocus={() => editor?.commands.focus()}
+      />
       <BubbleToolbar editor={editor} enabled={props.bubbleMenu !== false && !inSource} />
     </div>
   );

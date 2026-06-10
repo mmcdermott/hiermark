@@ -119,14 +119,17 @@ function DefaultGroupHeader({
   );
 }
 
-function childrenForSurface(
-  surfaceId: HamSurfaceId,
+/** Branch-child summaries for every surface, computed in ONE pass over the
+ * edges (per change), instead of a per-rendered-surface scan of every edge on
+ * every render — which also handed each editor a fresh `branchChildren`
+ * object per render, forcing a gutter-decoration rebuild in every mounted
+ * editor whenever the canvas re-rendered (e.g. on hover). */
+function buildChildrenBySurface(
   props: HamCanvasProps,
   activeSurfaceSet: Set<HamSurfaceId>,
-): Record<string, HamBranchChildSummary[]> {
-  const out: Record<string, HamBranchChildSummary[]> = {};
+): Map<HamSurfaceId, Record<string, HamBranchChildSummary[]>> {
+  const out = new Map<HamSurfaceId, Record<string, HamBranchChildSummary[]>>();
   for (const edge of props.branchEdges) {
-    if (edge.fromSurfaceId !== surfaceId) continue;
     const summary: HamBranchChildSummary = {
       edgeId: edge.id,
       surfaceId: edge.toSurfaceId,
@@ -136,10 +139,17 @@ function childrenForSurface(
         : {}),
       active: activeSurfaceSet.has(edge.toSurfaceId),
     };
-    (out[edge.fromBlockId] ??= []).push(summary);
+    const bySurface = out.get(edge.fromSurfaceId) ?? {};
+    (bySurface[edge.fromBlockId] ??= []).push(summary);
+    out.set(edge.fromSurfaceId, bySurface);
+  }
+  for (const bySurface of out.values()) {
+    for (const list of Object.values(bySurface)) list.sort((a, b) => a.order - b.order);
   }
   return out;
 }
+
+const NO_CHILDREN: Record<string, HamBranchChildSummary[]> = {};
 
 interface ItemProps {
   item: HamCanvasItem;
@@ -147,6 +157,10 @@ interface ItemProps {
   props: HamCanvasProps;
   /** Report this surface's live editor handle to the canvas (null on teardown). */
   registerHandle: (surfaceId: HamSurfaceId, handle: HamEditorHandle | null) => void;
+  /** Precomputed branch-child summaries for THIS surface (stable identity). */
+  branchChildren: Record<string, HamBranchChildSummary[]>;
+  /** Hand keyboard focus into a surface's editor (parks until it mounts). */
+  focusEditor: (surfaceId: HamSurfaceId, blockId: HamBlockId | null) => void;
   sortable: boolean;
   depth: number;
   /** 1-based position among this column's surfaces (ARIA tree). */
@@ -160,13 +174,15 @@ function SurfaceItem({
   canvas,
   props,
   registerHandle,
+  branchChildren,
+  focusEditor,
   sortable,
   depth,
   posinset,
   setsize,
 }: ItemProps) {
   const surface = item.surface;
-  const hasChildren = props.branchEdges.some((e) => e.fromSurfaceId === surface.id);
+  const hasChildren = Object.keys(branchChildren).length > 0;
   const collapsed = canvas.collapsedSurfaceIds.has(surface.id);
   const edgeId = item.incomingEdge?.id ?? surface.id;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -179,10 +195,6 @@ function SurfaceItem({
     opacity: isDragging ? 0.6 : 1,
   };
   const pending = canvas.pendingSurfaceIds.has(surface.id);
-  const activeSurfaceSet = useMemo(
-    () => new Set(canvas.activePath.surfaceIds),
-    [canvas.activePath.surfaceIds],
-  );
 
   // Debounced persistence through the host's saveSurface handler.
   const handleRef = useRef<HamEditorHandle | null>(null);
@@ -305,7 +317,13 @@ function SurfaceItem({
   const HeaderSlot = props.slots?.SurfaceHeader;
   const PreviewSlot = props.slots?.SurfacePreview;
   const behavior = resolveBehavior(props.behavior);
-  const onActivate = () => canvas.actions.activate(surface.id, null);
+  // Explicit activation affordances (Open, preview, outline) unmount on
+  // success — without a focus hand-off a keyboard user lands on <body> and
+  // re-tabs from the top of the page. The editor receives focus once mounted.
+  const onActivate = () => {
+    canvas.actions.activate(surface.id, null);
+    focusEditor(surface.id, null);
+  };
   // Affordances honor the behavior flags, not just handler presence.
   const canDelete =
     !!item.incomingEdge && !!props.handlers.deleteSurface && behavior.enableSurfaceDeletion;
@@ -402,7 +420,7 @@ function SurfaceItem({
         // active surface only. Broadcasting it to every mounted editor let a
         // colliding id in another surface light up as active.
         activeBlockId={surface.id === canvas.activeSurfaceId ? canvas.activeBlockId : null}
-        branchChildren={childrenForSurface(surface.id, props, activeSurfaceSet)}
+        branchChildren={branchChildren}
         // No create handler or disabled branch creation hides every gutter
         // affordance (the action is guarded too); otherwise use the policy.
         branchPolicy={
@@ -496,6 +514,9 @@ function SurfaceItem({
       data-surface-id={surface.id}
       data-path-state={item.pathState}
       role="treeitem"
+      // Roving tabindex: only the active surface's treeitem is tabbable; the
+      // others are reachable through Alt+Arrow navigation (which focuses them).
+      tabIndex={item.pathState === "active" ? 0 : -1}
       aria-level={depth + 1}
       aria-setsize={setsize}
       aria-posinset={posinset}
@@ -593,6 +614,15 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 ) {
   const canvas = useHamCanvas(props);
   const rootRef = useRef<HTMLDivElement>(null);
+  const activeSurfaceSet = useMemo(
+    () => new Set(canvas.activePath.surfaceIds),
+    [canvas.activePath.surfaceIds],
+  );
+  const childrenBySurface = useMemo(
+    () => buildChildrenBySurface(props as HamCanvasProps, activeSurfaceSet),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the inputs the builder reads
+    [props.branchEdges, props.surfaces, activeSurfaceSet],
+  );
   const layout = useMemo(() => resolveLayout(props.layout), [props.layout]);
   const behavior = useMemo(() => resolveBehavior(props.behavior), [props.behavior]);
 
@@ -809,23 +839,47 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     revealBranchFromBlock,
   ]);
 
-  // Live editor handles by surface, so the canvas handle can hand focus INTO
-  // a block. Activating a card may mount its editor asynchronously — a focus
-  // requested before the editor exists parks here and lands on registration.
+  // Live editor handles by surface, so the canvas can hand focus INTO an
+  // editor (a specific block, or just the caret). Activating a card may mount
+  // its editor asynchronously — a focus requested before the editor exists
+  // parks here and lands on registration.
   const editorHandlesRef = useRef(new Map<HamSurfaceId, HamEditorHandle>());
-  const pendingFocusRef = useRef<{ surfaceId: HamSurfaceId; blockId: HamBlockId } | null>(null);
-  const registerHandle = useCallback((surfaceId: HamSurfaceId, handle: HamEditorHandle | null) => {
-    if (handle) {
-      editorHandlesRef.current.set(surfaceId, handle);
-      const pending = pendingFocusRef.current;
-      if (pending && pending.surfaceId === surfaceId) {
-        pendingFocusRef.current = null;
-        handle.focusBlock(pending.blockId, { scroll: true });
-      }
-    } else {
-      editorHandlesRef.current.delete(surfaceId);
+  const pendingFocusRef = useRef<{ surfaceId: HamSurfaceId; blockId: HamBlockId | null } | null>(
+    null,
+  );
+  const focusHandle = useCallback((handle: HamEditorHandle, blockId: HamBlockId | null) => {
+    if (blockId) {
+      handle.focusBlock(blockId, { scroll: true });
+      return;
     }
+    const ed = handle.getUnsafeTiptapEditor() as {
+      commands?: { focus?: () => void };
+    } | null;
+    ed?.commands?.focus?.();
   }, []);
+  const focusEditor = useCallback(
+    (surfaceId: HamSurfaceId, blockId: HamBlockId | null) => {
+      const handle = editorHandlesRef.current.get(surfaceId);
+      if (handle) focusHandle(handle, blockId);
+      else pendingFocusRef.current = { surfaceId, blockId };
+    },
+    [focusHandle],
+  );
+  const registerHandle = useCallback(
+    (surfaceId: HamSurfaceId, handle: HamEditorHandle | null) => {
+      if (handle) {
+        editorHandlesRef.current.set(surfaceId, handle);
+        const pending = pendingFocusRef.current;
+        if (pending && pending.surfaceId === surfaceId) {
+          pendingFocusRef.current = null;
+          focusHandle(handle, pending.blockId);
+        }
+      } else {
+        editorHandlesRef.current.delete(surfaceId);
+      }
+    },
+    [focusHandle],
+  );
 
   // Publish the imperative canvas handle once (live data via a ref).
   const liveRef = useRef({ canvas, scrollSurfaceIntoView, revealChildren });
@@ -843,16 +897,14 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       focusBlock: (id, blockId) => {
         liveRef.current.canvas.actions.activate(id, blockId);
         liveRef.current.scrollSurfaceIntoView(id);
-        const handle = editorHandlesRef.current.get(id);
-        if (handle) handle.focusBlock(blockId, { scroll: true });
-        else pendingFocusRef.current = { surfaceId: id, blockId };
+        focusEditor(id, blockId);
       },
       scrollSurfaceIntoView: (id) => liveRef.current.scrollSurfaceIntoView(id),
       revealChildren: (id) => liveRef.current.revealChildren(id),
       getActivePath: () => liveRef.current.canvas.activePath,
       getColumns: () => liveRef.current.canvas.columns,
     });
-  }, [onReady]);
+  }, [onReady, focusEditor]);
 
   const reorderEnabled = behavior.enableSurfaceReorder && !!props.handlers.reorderBranchSiblings;
   const canAddSibling =
@@ -896,9 +948,16 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       }),
     );
     if (colIdx < 0) return;
+    // Activating also moves DOM focus to the new treeitem — Alt+Arrow
+    // navigation used to restyle the canvas while focus stayed put, so the
+    // "navigation" was unreachable for keyboard users.
+    const activateAndFocus = (id: HamSurfaceId) => {
+      canvas.actions.activate(id, null);
+      surfaceEl(id)?.focus();
+    };
     if (dir === "left") {
       const parent = canvas.activePath.surfaceIds.at(-2);
-      if (parent) canvas.actions.activate(parent, null);
+      if (parent) activateAndFocus(parent);
     } else if (dir === "right") {
       // Descend along the *active block's* first outgoing edge when a block is
       // focused (items in the next column are already in sortOutgoing order, so
@@ -910,13 +969,13 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         (activeBlock
           ? next.find((it) => it.parentSurfaceId === active && it.anchorBlockId === activeBlock)
           : undefined) ?? next.find((it) => it.parentSurfaceId === active);
-      if (child) canvas.actions.activate(child.surface.id, null);
+      if (child) activateAndFocus(child.surface.id);
     } else if (dir === "down") {
       const next = cols[colIdx]?.items[itemIdx + 1];
-      if (next) canvas.actions.activate(next.surface.id, null);
+      if (next) activateAndFocus(next.surface.id);
     } else if (dir === "up") {
       const prev = cols[colIdx]?.items[itemIdx - 1];
-      if (prev) canvas.actions.activate(prev.surface.id, null);
+      if (prev) activateAndFocus(prev.surface.id);
     }
   };
 
@@ -941,6 +1000,18 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       }
       if ((k === "z" && event.shiftKey) || k === "y") {
         if (applyHistory("redo")) event.preventDefault();
+        return;
+      }
+    }
+    // Enter on a focused treeitem hands focus into that surface's editor —
+    // the standard tree "activate/enter" gesture.
+    if (event.key === "Enter") {
+      const t = event.target as HTMLElement;
+      const sid = t.getAttribute?.("data-surface-id");
+      if (sid && t.getAttribute("role") === "treeitem") {
+        event.preventDefault();
+        canvas.actions.activate(sid, null);
+        focusEditor(sid, null);
         return;
       }
     }
@@ -1129,6 +1200,8 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
                             canvas={canvas}
                             props={props as HamCanvasProps}
                             registerHandle={registerHandle}
+                            branchChildren={childrenBySurface.get(item.surface.id) ?? NO_CHILDREN}
+                            focusEditor={focusEditor}
                             sortable={sortable}
                             depth={column.depth}
                             posinset={

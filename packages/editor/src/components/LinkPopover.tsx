@@ -24,13 +24,22 @@ export interface LinkPopoverProps {
    * the popover must not offer to navigate one mid-strip either).
    */
   isAllowedHref?: (href: string) => boolean;
+  /** Called when a keyboard cancel should hand focus back to the editor. */
+  onRequestEditorFocus?: () => void;
 }
 
 /**
  * Edit the link over a range: type/Enter applies `setLink`, Remove clears it,
  * Open follows it. Anchored with Floating-UI to the clicked `<a>` (or selection).
  */
-export function LinkPopover({ open, onApply, onRemove, onClose, isAllowedHref }: LinkPopoverProps) {
+export function LinkPopover({
+  open,
+  onApply,
+  onRemove,
+  onClose,
+  isAllowedHref,
+  onRequestEditorFocus,
+}: LinkPopoverProps) {
   const [href, setHref] = useState("");
 
   const {
@@ -88,6 +97,8 @@ export function LinkPopover({ open, onApply, onRemove, onClose, isAllowedHref }:
             } else if (e.key === "Escape") {
               e.preventDefault();
               onClose();
+              // Escape must not strand keyboard focus on <body>.
+              onRequestEditorFocus?.();
             }
           }}
         />
