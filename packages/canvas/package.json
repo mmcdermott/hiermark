@@ -56,7 +56,7 @@
     "@dnd-kit/utilities": "^3"
   },
   "peerDependencies": {
-    "@ham/editor": "workspace:^",
+    "@ham/editor": ">=0.1.0 <1.0.0",
     "react": "^19",
     "react-dom": "^19"
   },

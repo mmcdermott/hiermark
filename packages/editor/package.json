@@ -23,7 +23,6 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -34,7 +33,6 @@
       }
     },
     "./markdown": {
-      "types": "./dist/markdown.d.ts",
       "import": {
         "types": "./dist/markdown.d.ts",
         "default": "./dist/markdown.js"

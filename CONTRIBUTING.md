@@ -37,8 +37,10 @@ pnpm changeset     # pick the packages + bump type, write a summary
 ```
 
 Commit the generated `.changeset/*.md` with your PR. On merge to `main` the
-release workflow opens a **Version Packages** PR; merging that publishes to npm.
-`@ham/docs` is never published.
+release workflow opens a **Version Packages** PR; merging that tags the new
+versions and creates GitHub Releases (npm publishing is off until the npm
+scope is claimed and an `NPM_TOKEN` secret is added — see
+`.github/workflows/release.yml`). `@ham/docs` is never published.
 
 ## PRs
 

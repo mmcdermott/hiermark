@@ -26,10 +26,11 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - name: Build packages
-        run: pnpm build
-      - name: Build docs site
-        run: pnpm -F @ham/docs build
+      # The composite docs:build = packages build → TypeDoc API reference →
+      # Vite build, so the deployed site always includes /api (the output dir
+      # is gitignored; skipping the TypeDoc step here shipped a 404).
+      - name: Build docs site (packages + API reference + Vite)
+        run: pnpm docs:build
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:

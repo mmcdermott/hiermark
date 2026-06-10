@@ -29,10 +29,10 @@
     "format:check": "prettier --check .",
     "docs:api": "typedoc",
     "docs:build": "pnpm build && pnpm docs:api && pnpm -F @ham/docs build",
-    "lint:pkg": "pnpm build && pnpm -r --filter \"./packages/*\" exec publint",
+    "lint:pkg": "pnpm build && pnpm -r --filter \"./packages/*\" exec publint --strict",
     "size": "size-limit",
     "changeset": "changeset",
-    "version": "changeset version",
+    "version-packages": "changeset version",
     "release": "pnpm build && changeset publish",
     "clean": "pnpm -r exec rm -rf dist dist-types coverage .vite"
   },
