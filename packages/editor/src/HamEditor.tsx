@@ -40,6 +40,7 @@ import {
   type HamCollabBinding,
 } from "./extensions/createHamEditorExtensions";
 import { uploadHamImages, type ImageUploadContext } from "./extensions/image-upload";
+import { isSafeUri } from "./extensions/sanitize";
 import { stripStableIds } from "./markdown/stable-id";
 import { surfaceSnapshotFromDoc } from "./snapshot/getHamSurfaceSnapshot";
 import { collectBlockIdentities, planBlockIdRestore } from "./snapshot/blockIdentity";
@@ -159,6 +160,7 @@ function HamEditorInner<AnnotationData = unknown>(
     onImageUploadError,
     onModeChange,
     isAllowedImageSrc,
+    isAllowedLinkHref,
   } = props;
 
   // Edit surface: the rich editor or a raw-markdown <textarea> (source mode).
@@ -267,6 +269,7 @@ function HamEditorInner<AnnotationData = unknown>(
         linkEditor: { getContext: () => linkEditCtxRef.current },
         imageEditor: { getContext: () => imageEditCtxRef.current },
         ...(isAllowedImageSrc ? { isAllowedImageSrc } : {}),
+        ...(isAllowedLinkHref ? { isAllowedLinkHref } : {}),
         onMathClick: (info) => {
           const ed = editorRef.current;
           if (!ed || !ed.isEditable) return;
@@ -856,6 +859,7 @@ function HamEditorInner<AnnotationData = unknown>(
         onApply={applyLink}
         onRemove={removeLink}
         onClose={() => setOpenLink(null)}
+        isAllowedHref={isAllowedLinkHref ?? isSafeUri}
       />
       <ImagePopover open={openImage} onApply={applyImage} onClose={() => setOpenImage(null)} />
       <BubbleToolbar editor={editor} enabled={props.bubbleMenu !== false && !inSource} />

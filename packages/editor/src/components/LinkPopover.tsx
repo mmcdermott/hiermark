@@ -18,13 +18,19 @@ export interface LinkPopoverProps {
   onApply: (from: number, to: number, href: string) => void;
   onRemove: (from: number, to: number) => void;
   onClose: () => void;
+  /**
+   * Policy gate for the "Open" anchor — a stored href that fails it renders no
+   * navigation affordance (the sanitizer strips such links from the doc, but
+   * the popover must not offer to navigate one mid-strip either).
+   */
+  isAllowedHref?: (href: string) => boolean;
 }
 
 /**
  * Edit the link over a range: type/Enter applies `setLink`, Remove clears it,
  * Open follows it. Anchored with Floating-UI to the clicked `<a>` (or selection).
  */
-export function LinkPopover({ open, onApply, onRemove, onClose }: LinkPopoverProps) {
+export function LinkPopover({ open, onApply, onRemove, onClose, isAllowedHref }: LinkPopoverProps) {
   const [href, setHref] = useState("");
 
   const {
@@ -94,7 +100,7 @@ export function LinkPopover({ open, onApply, onRemove, onClose }: LinkPopoverPro
           >
             Apply
           </button>
-          {open.href && (
+          {open.href && (isAllowedHref?.(open.href) ?? true) && (
             <a
               className="ham-link-btn"
               href={open.href}

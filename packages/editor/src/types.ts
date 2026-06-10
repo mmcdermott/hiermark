@@ -509,11 +509,18 @@ export interface HamEditorProps<AnnotationData = unknown> {
   /** Reports an image upload rejection (the handler threw). */
   onImageUploadError?: (error: unknown, file: File) => void;
   /**
-   * Image-`src` policy enforced by the sanitizer (defaults to blocking
-   * javascript:/vbscript:/file:/data:text/html; `data:image/*` stays allowed).
-   * Return false to strip an image with a disallowed src.
+   * Image-`src` policy enforced by the sanitizer. The default allowlist is
+   * http/https/blob, relative URLs, and `data:image/*`. Return false to strip
+   * an image with a disallowed src.
    */
   isAllowedImageSrc?: (src: string) => boolean;
+  /**
+   * Link-`href` policy enforced by the sanitizer (and by the link popover's
+   * "Open" affordance). The default allowlist is http/https/mailto plus
+   * relative URLs, after control-character normalization. Return false to
+   * strip the link mark (its text is kept).
+   */
+  isAllowedLinkHref?: (href: string) => boolean;
 
   /** Fires when the edit surface toggles between rich and raw-markdown source. */
   onModeChange?: (mode: HamEditorMode) => void;
