@@ -167,10 +167,12 @@ features, in either track.
   async op is in flight (not just the prior dimming). A built-in per-surface _error_ badge is
   deliberately left to the host via the `onOperationError` seam — a library-imposed retry chip
   would presume recovery semantics the host owns.
-- **Render orphan / duplicate-incoming surfaces** `[P2 · M]` — surfaces with a second incoming
-  edge, or with no path to root, silently never appear (`validateHamTopology` can detect both but
-  is never called). Project unreachable surfaces into a "detached" region and surface
-  duplicate-incoming as a warning, so data isn't invisible.
+- **Render orphan / duplicate-incoming surfaces** `[P2 · M]` — **✅ DONE** (orphans).
+  `projectColumnsFromContext` now BFSes surfaces unreachable from the root (seeded from their
+  local roots, with a cycle-only fallback so nothing is dropped) into trailing `detached: true`
+  columns; the canvas renders a "Not linked to root" divider before them, so orphaned data is
+  never silently invisible. _Duplicate-incoming-edge warning still open (the projection visits
+  each surface once; `validateHamTopology` already detects the case for hosts that call it)._
 - **Harden drag-reorder** `[P2 · M]` — the reorder path has zero test coverage; invalid
   cross-anchor drops are a silent no-op, and connectors only fade (don't track) during a drag.
   Add clear rejection feedback, better in-drag connector behavior, and reorder tests (incl. the

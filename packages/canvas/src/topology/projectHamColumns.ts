@@ -153,5 +153,50 @@ export function projectColumnsFromContext<SurfaceMeta = unknown, EdgeMeta = unkn
     depth += 1;
   }
 
+  // Surfaces unreachable from the root (orphans / detached subtrees) would
+  // otherwise be silently invisible. Project them into trailing `detached`
+  // columns, seeded from the detached "local roots" (those not reached by
+  // another detached surface), so the data is never lost from view.
+  const remaining = Object.keys(input.surfaces).filter(
+    (id) => input.surfaces[id] && !visited.has(id),
+  );
+  if (remaining.length > 0) {
+    const remainingSet = new Set(remaining);
+    const reachedWithin = new Set<HamSurfaceId>();
+    for (const fromId of remaining) {
+      for (const edge of childEdgesBySurface.get(fromId) ?? []) {
+        if (remainingSet.has(edge.toSurfaceId)) reachedWithin.add(edge.toSurfaceId);
+      }
+    }
+    // Local roots, then any cycle-only remainder (no entry point) so nothing is dropped.
+    let detachedCurrent = remaining.filter((id) => !reachedWithin.has(id));
+    if (detachedCurrent.length === 0) detachedCurrent = remaining;
+    for (const id of detachedCurrent) visited.add(id);
+    let detachedDepth = 0;
+
+    while (detachedCurrent.length > 0) {
+      const items = detachedCurrent
+        .map((id) => ctx.itemBySurface.get(id))
+        .filter((item): item is HamCanvasItem<SurfaceMeta, EdgeMeta> => item !== undefined);
+      columns.push({ depth: depth + detachedDepth, items, detached: true });
+
+      const next: HamSurfaceId[] = [];
+      for (const surfaceId of detachedCurrent) {
+        const outgoing = sortOutgoing(
+          childEdgesBySurface.get(surfaceId) ?? [],
+          input.snapshotsBySurfaceId[surfaceId],
+        );
+        for (const edge of outgoing) {
+          if (!visited.has(edge.toSurfaceId) && input.surfaces[edge.toSurfaceId]) {
+            visited.add(edge.toSurfaceId);
+            next.push(edge.toSurfaceId);
+          }
+        }
+      }
+      detachedCurrent = next;
+      detachedDepth += 1;
+    }
+  }
+
   return columns;
 }

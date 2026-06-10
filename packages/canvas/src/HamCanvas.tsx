@@ -733,6 +733,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   const EmptyColumn = props.slots?.EmptyColumn;
   const EmptyCanvas = props.slots?.EmptyCanvas;
   const hasSurfaces = canvas.columns.some((c) => c.items.length > 0);
+  const firstDetachedDepth = canvas.columns.find((c) => c.detached)?.depth ?? null;
   const pendingCount = canvas.pendingSurfaceIds.size;
   if (!props.surfaces[props.rootSurfaceId]) {
     devWarn(
@@ -885,14 +886,23 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
             (m, i) => (DISPLAY_MODE_RANK[i.displayMode] > DISPLAY_MODE_RANK[m] ? i.displayMode : m),
             "hidden",
           );
-          return (
+          const columnEl = (
             <div
-              className={"ham-column" + (isActiveColumn ? " ham-column-active" : "")}
+              className={
+                "ham-column" +
+                (isActiveColumn ? " ham-column-active" : "") +
+                (column.detached ? " ham-column-detached" : "")
+              }
               key={column.depth}
               data-depth={column.depth}
               data-col-mode={colMode}
+              {...(column.detached ? { "data-detached": "true" } : {})}
               role="group"
-              aria-label={`Column ${column.depth + 1}`}
+              aria-label={
+                column.detached
+                  ? "Detached surfaces (not linked to root)"
+                  : `Column ${column.depth + 1}`
+              }
             >
               {ColumnHeader && <ColumnHeader depth={column.depth} count={column.items.length} />}
               {column.items.length === 0 && EmptyColumn ? (
@@ -982,6 +992,18 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
               )}
             </div>
           );
+          // Mark the boundary between the reachable tree and detached orphans.
+          if (column.detached && column.depth === firstDetachedDepth) {
+            return (
+              <Fragment key={`detached-${column.depth}`}>
+                <div className="ham-detached-divider" role="separator" aria-orientation="vertical">
+                  <span>Not linked to root</span>
+                </div>
+                {columnEl}
+              </Fragment>
+            );
+          }
+          return columnEl;
         })}
         <HamConnectorsOverlay
           rootRef={rootRef}

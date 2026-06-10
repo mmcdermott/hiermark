@@ -184,6 +184,30 @@
   }
 }
 
+/* Boundary between the reachable tree and detached (orphan) surfaces. */
+.ham-detached-divider {
+  flex: none;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  border-left: 2px dashed var(--ham-surface-border, #e3e1ee);
+}
+.ham-detached-divider > span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ham-muted, #8a87a0);
+  white-space: nowrap;
+}
+.ham-column-detached {
+  opacity: 0.92;
+}
+
 .ham-surface-header {
   display: flex;
   align-items: center;

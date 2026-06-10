@@ -197,6 +197,51 @@ describe("canvas A3 — keyboard navigation", () => {
     });
   });
 
+  it("renders unreachable surfaces in a detached column with a divider", async () => {
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={{
+          s_root: surface("s_root", "# Root", "Root"),
+          s_a: surface("s_a", "# A", "A"),
+          s_orphan: surface("s_orphan", "# Orphan", "Orphan"),
+          s_orphan_child: surface("s_orphan_child", "# Child", "Child"),
+        }}
+        branchEdges={[
+          {
+            id: "e_a",
+            fromSurfaceId: "s_root",
+            fromBlockId: "blk_A",
+            toSurfaceId: "s_a",
+            order: 0,
+          },
+          // s_orphan has no path from root; s_orphan_child hangs off s_orphan.
+          {
+            id: "e_o",
+            fromSurfaceId: "s_orphan",
+            fromBlockId: "blk_X",
+            toSurfaceId: "s_orphan_child",
+            order: 0,
+          },
+        ]}
+        handlers={handlers}
+      />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector('[data-surface-id="s_orphan"]')).not.toBeNull();
+    });
+    // The orphan + its child are present but flagged detached, behind a divider.
+    expect(container.querySelector(".ham-detached-divider")).not.toBeNull();
+    const detachedCols = container.querySelectorAll('.ham-column[data-detached="true"]');
+    expect(detachedCols.length).toBe(2); // s_orphan, then s_orphan_child
+    expect(detachedCols[0]!.querySelector('[data-surface-id="s_orphan"]')).not.toBeNull();
+    expect(detachedCols[1]!.querySelector('[data-surface-id="s_orphan_child"]')).not.toBeNull();
+    // The reachable surfaces are NOT in a detached column.
+    expect(
+      container.querySelector('[data-surface-id="s_root"]')!.closest("[data-detached]"),
+    ).toBeNull();
+  });
+
   it("Alt+C toggles collapse of the active surface", async () => {
     const { container } = render(
       <HamCanvas
