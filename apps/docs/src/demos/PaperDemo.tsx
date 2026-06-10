@@ -25,6 +25,7 @@ export function PaperDemo() {
       }
     >
       <HamCanvas
+        key={canvas.resetToken}
         rootSurfaceId="s_paper"
         surfaces={canvas.surfaces}
         branchEdges={canvas.branchEdges}

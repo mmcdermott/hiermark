@@ -183,6 +183,7 @@ export function CanvasStylesDemo() {
       }
     >
       <HamCanvas
+        key={canvas.resetToken}
         rootSurfaceId="s_root"
         surfaces={canvas.surfaces}
         branchEdges={canvas.branchEdges}

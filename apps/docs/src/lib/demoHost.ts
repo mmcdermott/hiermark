@@ -12,6 +12,13 @@ export interface DemoCanvasState {
 export interface DemoCanvas extends DemoCanvasState {
   handlers: HamCanvasHandlers;
   reset: () => void;
+  /**
+   * Bumps on every reset — pass as a React `key` to the canvas so its
+   * INTERNAL state (active path, collapse set, reorder undo stack) resets
+   * along with the data; otherwise the active path can dangle on a surface
+   * the reset just removed, collapsing the canvas to bare cards.
+   */
+  resetToken: number;
 }
 
 /**
@@ -104,10 +111,12 @@ export function useDemoCanvas(initial: DemoCanvasState): DemoCanvas {
     },
   };
 
+  const [resetToken, setResetToken] = useState(0);
   const reset = () => {
     setSurfaces(initial.surfaces);
     setEdges(initial.branchEdges);
+    setResetToken((t) => t + 1);
   };
 
-  return { surfaces, branchEdges, handlers, reset };
+  return { surfaces, branchEdges, handlers, reset, resetToken };
 }

@@ -168,22 +168,37 @@ const SECTIONS: Section[] = [
   { id: "api", label: "API reference", group: "Reference", render: () => <ApiReference /> },
 ];
 
-function sectionFromHash(): string {
+/** The section id in the hash, or null for a non-section hash (e.g. the
+ * skip-link's `#main`, which must focus the content — not navigate). */
+function sectionFromHash(): string | null {
   const id = window.location.hash.replace(/^#/, "");
-  return SECTIONS.some((s) => s.id === id) ? id : SECTIONS[0]!.id;
+  return SECTIONS.some((s) => s.id === id) ? id : null;
 }
 
 export function App() {
-  const [active, setActive] = useState<string>(sectionFromHash);
+  const [active, setActive] = useState<string>(() => sectionFromHash() ?? SECTIONS[0]!.id);
   const [dark, setDark] = useState(
     () => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false,
   );
 
   useEffect(() => {
-    const onHash = () => setActive(sectionFromHash());
+    const onHash = () => {
+      // Unknown hashes are NOT navigation: the skip link (#main) used to
+      // resolve to the first section and silently swap the page (destroying
+      // demo state) instead of just moving focus.
+      const id = sectionFromHash();
+      if (id) setActive(id);
+    };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  // A page switch is a navigation: start the new page at the top (the swap
+  // used to inherit the previous page's scroll position, so a new page could
+  // open scrolled past its own content).
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [active]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";

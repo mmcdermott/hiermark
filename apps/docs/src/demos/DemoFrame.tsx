@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 
 import { SourcePanel } from "./ShowSource";
 
@@ -22,10 +22,12 @@ export function DemoFrame({
   const [full, setFull] = useState(false);
   const [showSource, setShowSource] = useState(false);
 
-  // Allow Escape to exit the expanded view.
+  // Allow Escape to exit the expanded view — but never steal an Escape an
+  // inner popover (link/math/image editor) already handled to dismiss itself.
   useEffect(() => {
     if (!full) return;
     const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       if (e.key === "Escape") setFull(false);
     };
     window.addEventListener("keydown", onKey);
@@ -65,7 +67,19 @@ export function DemoFrame({
             </button>
           </span>
         </figcaption>
-        <div className="demo-stage" style={full ? undefined : { height }}>
+        <div
+          className="demo-stage"
+          // The DEFAULT height flows through a CSS variable instead of an
+          // inline `height`: the browser's native corner-resize writes inline
+          // width/height directly on the element, and a React-managed height
+          // would overwrite the user's drag on the next style write (toggling
+          // Expand/Close used to snap the height back while the width stuck).
+          style={
+            {
+              "--demo-stage-height": typeof height === "number" ? `${height}px` : height,
+            } as CSSProperties
+          }
+        >
           {children}
         </div>
         {source && showSource && <SourcePanel source={source} />}

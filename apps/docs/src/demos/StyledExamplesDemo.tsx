@@ -29,6 +29,7 @@ export function FocusSidebarDemo() {
       height={460}
     >
       <HamCanvas
+        key={canvas.resetToken}
         rootSurfaceId="s_root"
         surfaces={canvas.surfaces}
         branchEdges={canvas.branchEdges}
@@ -63,6 +64,7 @@ export function FlatManuscriptDemo() {
       height={460}
     >
       <HamCanvas
+        key={canvas.resetToken}
         className="theme-manuscript"
         rootSurfaceId="s_root"
         surfaces={canvas.surfaces}
@@ -112,6 +114,7 @@ export function TopologyMapDemo() {
       height={460}
     >
       <HamCanvas
+        key={canvas.resetToken}
         className="theme-map"
         rootSurfaceId="s_root"
         surfaces={canvas.surfaces}

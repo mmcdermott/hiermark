@@ -349,13 +349,25 @@ pre.block code {
 .demo-stage {
   /* Default size; drag the bottom-right corner to resize in both directions,
      up to the available viewport width (⛶ Expand gives the full viewport). The
-     parent `.demo` is fit-content, so growing the stage grows the framed box. */
+     parent `.demo` is fit-content, so growing the stage grows the framed box.
+     The default height comes through a CSS variable (set by DemoFrame) so the
+     browser-written inline width/height from a corner-drag always win — React
+     never manages (and so never resets) the user's resize. */
   width: 820px;
+  height: var(--demo-stage-height, 460px);
   min-width: 320px;
   max-width: calc(100vw - 264px - 130px);
   min-height: 320px;
   overflow: auto;
   resize: both;
+  /* Stretch the demo content to the (possibly user-resized) stage, so growing
+     the box grows the canvas/editor instead of revealing dead space. */
+  display: flex;
+  flex-direction: column;
+}
+.demo-stage > * {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* Expand a demo to (almost) full-viewport so the canvas can use a wide screen. */
@@ -370,9 +382,12 @@ pre.block code {
   inset: 3vh 3vw;
   z-index: 1000;
   margin: 0;
+  /* Override .demo's fit-content so the inset actually defines the size. */
+  width: auto;
+  max-width: none;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--doc-bg, #fff);
   box-shadow: 0 24px 70px rgba(16, 16, 26, 0.4);
 }
 .demo-full .demo-stage {

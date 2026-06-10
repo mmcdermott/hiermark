@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
 import {
@@ -20,90 +20,101 @@ const RELAY = "relay";
  * cursor (which a single shared Y.Doc couldn't show).
  */
 function useCollabPeers() {
-  const peers = useMemo(() => {
-    const docA = new Y.Doc();
-    const docB = new Y.Doc();
-    const awA = new Awareness(docA);
-    const awB = new Awareness(docB);
-
-    const relayDoc = (from: Y.Doc, to: Y.Doc) =>
-      from.on("update", (update: Uint8Array, origin: unknown) => {
-        if (origin !== RELAY) Y.applyUpdate(to, update, RELAY);
-      });
-    const relayAwareness = (from: Awareness, to: Awareness) =>
-      from.on(
-        "update",
-        (
-          { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
-          origin: unknown,
-        ) => {
-          if (origin === RELAY) return;
-          const changed = [...added, ...updated, ...removed];
-          applyAwarenessUpdate(to, encodeAwarenessUpdate(from, changed), RELAY);
-        },
-      );
-    relayDoc(docA, docB);
-    relayDoc(docB, docA);
-    relayAwareness(awA, awB);
-    relayAwareness(awB, awA);
-
-    const provider = (awareness: Awareness): HamCollaborationProvider => ({
-      synced: true,
-      hasUnsyncedChanges: false,
-      awareness,
-      on() {},
-      off() {},
-      destroy() {},
-    });
-    const runtime = (ydoc: Y.Doc, awareness: Awareness): HamCollaborationRuntime => ({
-      ydoc,
-      connect: async () => provider(awareness),
-    });
-
-    return {
-      runtimeA: runtime(docA, awA),
-      runtimeB: runtime(docB, awB),
-      docA,
-      docB,
-      cleanup: () => {
-        awA.destroy();
-        awB.destroy();
-        docA.destroy();
-        docB.destroy();
-      },
-    };
+  // Created in an effect (not useMemo) so React StrictMode's dev double-mount
+  // can't destroy the memoized docs in the first cleanup pass and then hand
+  // the second render already-destroyed Y.Docs.
+  const [peers, setPeers] = useState<ReturnType<typeof createPeers> | null>(null);
+  useEffect(() => {
+    const next = createPeers();
+    setPeers(next);
+    return () => next.cleanup();
   }, []);
-
-  useEffect(() => peers.cleanup, [peers]);
   return peers;
+}
+
+function createPeers() {
+  const docA = new Y.Doc();
+  const docB = new Y.Doc();
+  const awA = new Awareness(docA);
+  const awB = new Awareness(docB);
+
+  const relayDoc = (from: Y.Doc, to: Y.Doc) =>
+    from.on("update", (update: Uint8Array, origin: unknown) => {
+      if (origin !== RELAY) Y.applyUpdate(to, update, RELAY);
+    });
+  const relayAwareness = (from: Awareness, to: Awareness) =>
+    from.on(
+      "update",
+      (
+        { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
+        origin: unknown,
+      ) => {
+        if (origin === RELAY) return;
+        const changed = [...added, ...updated, ...removed];
+        applyAwarenessUpdate(to, encodeAwarenessUpdate(from, changed), RELAY);
+      },
+    );
+  relayDoc(docA, docB);
+  relayDoc(docB, docA);
+  relayAwareness(awA, awB);
+  relayAwareness(awB, awA);
+
+  const provider = (awareness: Awareness): HamCollaborationProvider => ({
+    synced: true,
+    hasUnsyncedChanges: false,
+    awareness,
+    on() {},
+    off() {},
+    destroy() {},
+  });
+  const runtime = (ydoc: Y.Doc, awareness: Awareness): HamCollaborationRuntime => ({
+    ydoc,
+    connect: async () => provider(awareness),
+  });
+
+  return {
+    runtimeA: runtime(docA, awA),
+    runtimeB: runtime(docB, awB),
+    docA,
+    docB,
+    cleanup: () => {
+      awA.destroy();
+      awB.destroy();
+      docA.destroy();
+      docB.destroy();
+    },
+  };
 }
 
 export function CollabDemo() {
   const peers = useCollabPeers();
-  const configA = useMemo<HamCollaborationConfig>(
-    () => ({
-      enabled: true,
-      provider: "hocuspocus",
-      documentName: "demo",
-      url: "",
-      ydoc: peers.docA,
-      runtime: peers.runtimeA,
-      user: { name: "Alice", color: "#6f5cff" },
-    }),
+  const configA = useMemo<HamCollaborationConfig | null>(
+    () =>
+      peers && {
+        enabled: true,
+        provider: "hocuspocus",
+        documentName: "demo",
+        url: "",
+        ydoc: peers.docA,
+        runtime: peers.runtimeA,
+        user: { name: "Alice", color: "#6f5cff" },
+      },
     [peers],
   );
-  const configB = useMemo<HamCollaborationConfig>(
-    () => ({
-      enabled: true,
-      provider: "hocuspocus",
-      documentName: "demo",
-      url: "",
-      ydoc: peers.docB,
-      runtime: peers.runtimeB,
-      user: { name: "Bob", color: "#0a7d4f" },
-    }),
+  const configB = useMemo<HamCollaborationConfig | null>(
+    () =>
+      peers && {
+        enabled: true,
+        provider: "hocuspocus",
+        documentName: "demo",
+        url: "",
+        ydoc: peers.docB,
+        runtime: peers.runtimeB,
+        user: { name: "Bob", color: "#0a7d4f" },
+      },
     [peers],
   );
+  if (!configA || !configB) return null;
 
   return (
     <DemoFrame title="Collaboration — two editors, one shared document (no server)" height="auto">
