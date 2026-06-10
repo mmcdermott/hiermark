@@ -256,8 +256,14 @@ features, in either track.
   measurement, contenteditable selection, KaTeX/lowlight rendering, or real drag. Add a handful of
   browser smoke flows against the built docs site. _(Ranks 20 + the e2e gap; guards the caret-visibility
   feature.)_
-- **Accessibility (axe) assertions** `[P2 · M]` — wire `jest-axe` into the existing component tests
-  and add explicit role/keyboard assertions for the gutter and popovers.
+- **Accessibility (axe) assertions** `[P2 · M]` — **✅ DONE.** `vitest-axe` runs over a populated
+  editor surface and a branched canvas (+ the empty state) in `tests/a11y.test.tsx`. The first run
+  found and we **fixed four real violations**: the editor's `contenteditable` had no accessible
+  name (added `aria-label` + the `ariaLabel` prop + `aria-multiline`); the surface used
+  `role="treeitem"` on a `<section>` (→ `<div>`); `role="tree"` owned non-tree children (the
+  status region / empty placeholder moved out as siblings, decorative connectors + the detached
+  divider `aria-hidden`, and `role="tree"` gated to non-empty); and each card header was an
+  implicit `banner` landmark (`<header>` → `<div>`).
 - ~~**Public-API type tests**~~ `[P3 · M]` — **✅ DONE** (export-presence guard + `expectTypeOf`
   on key public types in public-api.test.ts). Original: — add `expectTypeOf`/`tsd` over the ~80 exports (and consider
   type-checking against the built `.d.ts`) so a signature change can't ship silently.

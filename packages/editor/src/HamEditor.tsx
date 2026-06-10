@@ -302,6 +302,15 @@ function HamEditorInner<AnnotationData = unknown>(
     // Render synchronously in the browser, but NOT during SSR — Tiptap throws /
     // hydration-mismatches if it renders on the server (Next.js App Router, Remix).
     immediatelyRender: typeof window !== "undefined",
+    // Give the contenteditable (role="textbox") an accessible name + multiline
+    // semantics, so screen readers announce it (axe: aria-input-field-name).
+    editorProps: {
+      attributes: {
+        role: "textbox",
+        "aria-label": props.ariaLabel ?? (title ? `Markdown editor: ${title}` : "Markdown editor"),
+        "aria-multiline": "true",
+      },
+    },
     ...initialContent,
     onUpdate({ editor }) {
       // The open popover anchors to a now-possibly-stale annotation element;

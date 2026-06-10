@@ -516,6 +516,13 @@ export interface HamEditorProps<AnnotationData = unknown> {
    */
   bubbleMenu?: boolean;
 
+  /**
+   * Accessible name for the editable region (the ProseMirror `role="textbox"`).
+   * Defaults to the `title` ("Markdown editor: <title>") or "Markdown editor".
+   * Set this when several surfaces share a screen so each is distinguishable.
+   */
+  ariaLabel?: string;
+
   slots?: HamEditorSlots;
   className?: string;
 

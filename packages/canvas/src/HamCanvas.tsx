@@ -238,7 +238,7 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
     .filter(Boolean)
     .join(" ");
 
-  // Slots (spec §6.11): the canvas keeps the outer <section> (ref/role/aria/dnd)
+  // Slots (spec §6.11): the canvas keeps the outer treeitem <div> (ref/role/aria/dnd)
   // and lets a slot own the chrome inside. Omitted slots fall back to defaults.
   const Frame = props.slots?.SurfaceFrame;
   const HeaderSlot = props.slots?.SurfaceHeader;
@@ -262,7 +262,8 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
   );
 
   const defaultHeader = (
-    <header className="ham-surface-header">
+    // A plain div (not <header>) — a card header is not a page `banner` landmark.
+    <div className="ham-surface-header">
       <button
         type="button"
         className="ham-surface-collapse"
@@ -303,7 +304,7 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
           ×
         </button>
       )}
-    </header>
+    </div>
   );
 
   const header = HeaderSlot ? (
@@ -419,7 +420,7 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
   );
 
   return (
-    <section
+    <div
       ref={setNodeRef}
       style={style}
       className={frameClass}
@@ -441,7 +442,7 @@ function SurfaceItem({ item, canvas, props, sortable, depth, posinset, setsize }
       ) : (
         inner
       )}
-    </section>
+    </div>
   );
 }
 
@@ -866,6 +867,21 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       }}
       onDragCancel={() => setDragging(false)}
     >
+      {/* Announce async create/delete/save activity. Kept OUTSIDE role="tree"
+          so the tree owns only group/treeitem children (axe aria-required-children). */}
+      <div className="ham-sr-only" aria-live="polite" role="status">
+        {pendingCount > 0
+          ? `${pendingCount} operation${pendingCount > 1 ? "s" : ""} in progress`
+          : ""}
+      </div>
+      {!hasSurfaces &&
+        (EmptyCanvas ? (
+          <EmptyCanvas rootSurfaceId={props.rootSurfaceId} />
+        ) : (
+          <div className="ham-canvas-empty" role="note">
+            No surfaces to show.
+          </div>
+        ))}
       <div
         ref={rootRef}
         className={[
@@ -894,26 +910,14 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
           } as CSSProperties
         }
         tabIndex={0}
-        role="tree"
-        aria-label="Canvas of linked surfaces"
+        // role="tree" only when it actually owns treeitems (an empty tree is
+        // invalid); the empty placeholder is rendered as a sibling above.
+        role={hasSurfaces ? "tree" : undefined}
+        aria-label={hasSurfaces ? "Canvas of linked surfaces" : undefined}
         onKeyDown={onKeyDown}
         onMouseOver={onPointerOver}
         onMouseLeave={() => hovered && setHovered(null)}
       >
-        {/* Announce async create/delete/save activity to assistive tech. */}
-        <div className="ham-sr-only" aria-live="polite" role="status">
-          {pendingCount > 0
-            ? `${pendingCount} operation${pendingCount > 1 ? "s" : ""} in progress`
-            : ""}
-        </div>
-        {!hasSurfaces &&
-          (EmptyCanvas ? (
-            <EmptyCanvas rootSurfaceId={props.rootSurfaceId} />
-          ) : (
-            <div className="ham-canvas-empty" role="note">
-              No surfaces to show.
-            </div>
-          ))}
         {canvas.columns.map((column) => {
           // The active column widens to expandedColumnWidth when activeColumnMode
           // is "expanded" (so the focused level gets more room).
@@ -1036,7 +1040,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
           if (column.detached && column.depth === firstDetachedDepth) {
             return (
               <Fragment key={`detached-${column.depth}`}>
-                <div className="ham-detached-divider" role="separator" aria-orientation="vertical">
+                <div className="ham-detached-divider" aria-hidden="true">
                   <span>Not linked to root</span>
                 </div>
                 {columnEl}
@@ -1045,16 +1049,19 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
           }
           return columnEl;
         })}
-        <HamConnectorsOverlay
-          rootRef={rootRef}
-          edges={props.branchEdges}
-          activePath={canvas.activePath}
-          layout={layout}
-          hovered={hovered}
-          reshapeKey={reshapeKey}
-          geometryKey={geometryKey}
-          slots={props.slots}
-        />
+        {/* Purely decorative cross-column lines — hide from the a11y tree. */}
+        <div aria-hidden="true" style={{ display: "contents" }}>
+          <HamConnectorsOverlay
+            rootRef={rootRef}
+            edges={props.branchEdges}
+            activePath={canvas.activePath}
+            layout={layout}
+            hovered={hovered}
+            reshapeKey={reshapeKey}
+            geometryKey={geometryKey}
+            slots={props.slots}
+          />
+        </div>
       </div>
     </DndContext>
   );
