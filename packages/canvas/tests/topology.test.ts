@@ -65,9 +65,13 @@ describe("projectHamColumns", () => {
       snapshotsBySurfaceId: snapshots,
       activeSurfaceId: "s_root",
     });
-    expect(cols).toHaveLength(2);
-    expect(cols[0]!.items.map((i) => i.surface.id)).toEqual(["s_root"]);
-    expect(cols[1]!.items.map((i) => i.surface.id)).toEqual(["s_a", "s_b"]);
+    // s_a2 is in `surfaces` but its edge is omitted here, so it is unreachable
+    // from the root and now projects into a trailing `detached` column.
+    const reachable = cols.filter((c) => !c.detached);
+    expect(reachable).toHaveLength(2);
+    expect(reachable[0]!.items.map((i) => i.surface.id)).toEqual(["s_root"]);
+    expect(reachable[1]!.items.map((i) => i.surface.id)).toEqual(["s_a", "s_b"]);
+    expect(cols.find((c) => c.detached)?.items.map((i) => i.surface.id)).toEqual(["s_a2"]);
   });
 
   it("orders same-block siblings by edge order, ahead of a later block's branch", () => {

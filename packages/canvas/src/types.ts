@@ -69,6 +69,12 @@ export interface HamCanvasItem<SurfaceMeta = unknown, EdgeMeta = unknown> {
 export interface HamCanvasColumn<SurfaceMeta = unknown, EdgeMeta = unknown> {
   depth: number;
   items: HamCanvasItem<SurfaceMeta, EdgeMeta>[];
+  /**
+   * True for trailing columns holding surfaces with no edge path from the root
+   * (orphans / detached subtrees). They are projected so the data is never
+   * silently invisible; the canvas renders a divider before the first one.
+   */
+  detached?: boolean;
 }
 
 /** The branch-edge lineage from the root surface to the active surface (spec §2.6). */
