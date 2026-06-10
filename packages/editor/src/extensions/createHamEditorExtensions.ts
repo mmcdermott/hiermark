@@ -48,10 +48,15 @@ export interface HamEditorExtensionOptions {
    */
   imageUpload?: { getContext: () => ImageUploadContext | null };
   /**
-   * Image-`src` policy for the sanitizer (defaults to blocking
-   * javascript:/vbscript:/file:/data:text/html; `data:image/*` stays allowed).
+   * Image-`src` policy for the sanitizer. Defaults to {@link isSafeImageSrc}:
+   * http/https/blob, relative URLs, and `data:image/*`.
    */
   isAllowedImageSrc?: (src: string) => boolean;
+  /**
+   * Link-`href` policy for the sanitizer. Defaults to {@link isSafeUri}:
+   * http/https/mailto and relative URLs (normalization-first allowlist).
+   */
+  isAllowedLinkHref?: (href: string) => boolean;
   /** Wire link click / Mod-k to a host edit popover. */
   linkEditor?: { getContext: () => LinkEditorContext | null };
   /** Wire image click to a host alt-text / title edit popover. */
@@ -72,6 +77,7 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
     imageUpload,
     onMathClick,
     isAllowedImageSrc,
+    isAllowedLinkHref,
     linkEditor,
     imageEditor,
   } = opts;
@@ -83,11 +89,15 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
       codeBlock: false,
       // Restrict link schemes (stored-XSS): no javascript:/data: etc., and open
       // external links safely. The Sanitize extension below is the catch-all.
+      // A host's isAllowedLinkHref override is authoritative on EVERY path —
+      // typed/pasted/autolink validation, render-time href blanking, and the
+      // sanitizer — so a widened policy (e.g. tel:) actually renders.
       link: {
         protocols: ["http", "https", "mailto"],
         defaultProtocol: "https",
         openOnClick: false, // clicking opens the edit popover (LinkEditor), not a nav
-        isAllowedUri: (url, ctx) => ctx.defaultValidate(url) && isSafeUri(url),
+        isAllowedUri: (url, ctx) =>
+          isAllowedLinkHref ? isAllowedLinkHref(url) : ctx.defaultValidate(url) && isSafeUri(url),
         HTMLAttributes: { rel: "noopener noreferrer nofollow" },
       },
       // Yjs provides collaborative history; StarterKit's would conflict.
@@ -109,7 +119,10 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
     Image.configure({ inline: true, allowBase64: true, resize: { enabled: true, minWidth: 48 } }),
     // Defense-in-depth: strip dangerous link hrefs / image srcs from any source
     // (paste, markdown parse, setContent, collab seed).
-    Sanitize.configure(isAllowedImageSrc ? { isAllowedImageSrc } : {}),
+    Sanitize.configure({
+      ...(isAllowedImageSrc ? { isAllowedImageSrc } : {}),
+      ...(isAllowedLinkHref ? { isAllowedLinkHref } : {}),
+    }),
     Placeholder.configure({ placeholder }),
     Markdown,
     BlockId.configure(blockIdTypes ? { types: blockIdTypes } : {}),
