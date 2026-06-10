@@ -210,6 +210,16 @@ export function MarkdownPage() {
         </tbody>
       </table>
 
+      <h3>Round-trip fidelity</h3>
+      <p>
+        Everything in the table above survives a full <code>markdown → editor → getMarkdown</code>{" "}
+        round-trip (a regression matrix guards this), so <strong>source mode</strong> and{" "}
+        <strong>collaboration seeding</strong> never mangle your document. Tables come back with
+        cells padded to the column width — still valid GFM. The constructs deliberately <em>not</em>{" "}
+        modeled (no schema node, so they flatten to text): footnotes <code>[^1]</code>, definition
+        lists, and raw inline HTML. Add them via custom extensions if your corpus needs them.
+      </p>
+
       <h3>Block model</h3>
       <p>
         Structural blocks — headings, paragraphs, list/task items, blockquotes, code blocks, and

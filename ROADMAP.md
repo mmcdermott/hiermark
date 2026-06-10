@@ -112,11 +112,14 @@ features, in either track.
   `LinkPopover`: clicking a link (or `Mod-k` over a selection) opens a Floating-UI popover to
   set/edit/remove the href (`setLink`/`unsetLink`); links open via the popover, not navigation
   (`openOnClick:false`), and carry safe `rel`.
-- **Markdown round-trip fidelity audit** `[P1 · L]` — footnotes (`[^1]`), definition lists,
-  raw HTML blocks, and nested/aligned tables aren't modeled, so they drop or mangle on the
-  `getMarkdown ↔ setContent` round-trip that source mode and collab seeding depend on. Build
-  a fixture-based round-trip matrix and add the missing marked extensions / schema nodes (or
-  an explicit raw-HTML passthrough).
+- **Markdown round-trip fidelity audit** `[P1 · L]` — **✅ DONE** (matrix).
+  `tests/markdown-roundtrip.test.tsx` pins `markdown → editor → getMarkdown` fidelity across the
+  supported set: headings, strong/em/`code`/strikethrough, links, images, bullet/ordered/**task**
+  lists (incl. nesting), blockquotes, fenced code **with language**, GFM **tables** (cells are
+  padded to column width — still valid GFM), and inline/block **math** (HAM single-`$`). All
+  survive. _Known out-of-scope (no schema node / marked extension, so they drop or flatten):
+  footnotes `[^1]`, definition lists, and raw-HTML blocks — documented on the Markdown docs page.
+  Adding those nodes is a separate opt-in._
 - **Block-id markdown export (git-sync identity)** `[P2 · M]` — `getMarkdown()` emits plain
   markdown with no block-id comments (only task ids are injected). Add an opt-in export mode
   that injects `<!-- ham:block=<id> -->` per block so a persisted file carries identity for a
