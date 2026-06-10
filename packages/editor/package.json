@@ -33,6 +33,17 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./markdown": {
+      "types": "./dist/markdown.d.ts",
+      "import": {
+        "types": "./dist/markdown.d.ts",
+        "default": "./dist/markdown.js"
+      },
+      "require": {
+        "types": "./dist/markdown.d.cts",
+        "default": "./dist/markdown.cjs"
+      }
+    },
     "./styles.css": "./dist/styles.css"
   },
   "main": "./dist/index.cjs",

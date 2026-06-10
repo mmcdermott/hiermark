@@ -222,6 +222,15 @@ features, in either track.
 
 ### A5 · Package extension points (surfaced by consumer needs)
 
+- **Pure markdown subpath (`@ham/editor/markdown`)** `[P1 · S]` — **✅ DONE** (issue #50). A host's
+  server reconciler / collab worker / git-sync CLI must run the editor's grammar + stable-id/hash
+  helpers — definition drift there is a data-loss bug — but importing them from the package root
+  pulled the whole React/Tiptap stack into a Node graph. The `markdown/*` files are already
+  import-pure, so this is just an export seam: a new `src/markdown/index.ts` barrel, a tsup
+  `markdown` entry (→ `dist/markdown.{js,cjs,d.ts,d.cts}`), and a `"./markdown"` `exports`
+  condition. The package root now re-exports _from_ that barrel, so client and server share one
+  source. A test statically asserts no `src/markdown/` file imports react/tiptap/katex/etc., so the
+  subpath can't silently regain a browser dep.
 - ~~**Controlled `value` / revision swap**~~ `[P2 · M]` — **✅ DONE.** A `revision` prop re-applies
   `value` after mount (history restore / server push), preserving matching block ids; ignored
   under collab. Original: — `value` is mount-time only; history/restore

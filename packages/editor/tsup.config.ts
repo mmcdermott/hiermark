@@ -2,7 +2,9 @@ import { defineConfig } from "tsup";
 import { copyFileSync, existsSync } from "node:fs";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  // Named entries → `dist/index.*` and `dist/markdown.*`. The `markdown` entry is the
+  // pure, React-free subpath (`@ham/editor/markdown`) for server-side reconcilers.
+  entry: { index: "src/index.ts", markdown: "src/markdown/index.ts" },
   format: ["esm", "cjs"],
   dts: true,
   sourcemap: true,

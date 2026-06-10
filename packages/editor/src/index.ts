@@ -77,36 +77,11 @@ export type { BranchabilityContext } from "./snapshot/blockTreePolicy";
 export { collectBlockIdentities, planBlockIdRestore } from "./snapshot/blockIdentity";
 export type { BlockIdentity, BlockIdRestore } from "./snapshot/blockIdentity";
 
-// Markdown helpers (import/export & server-reconciliation path)
-export { fnv1a64Hex, normalizeForHash } from "./markdown/hash";
-export {
-  stripStableIds,
-  readStableId,
-  injectInlineId,
-  blockIdLine,
-  type StableIdKind,
-} from "./markdown/stable-id";
-export {
-  headingDepthOf,
-  inferBlockContainment,
-  inferContainmentFromMarkdown,
-  type ContainmentBlock,
-} from "./markdown/containment";
-export {
-  parseChecklist,
-  normalize,
-  taskKey,
-  injectTaskIds,
-  type ChecklistItem,
-} from "./markdown/checklist";
-export { extractCitationKeys, findCitations, type CitationKey } from "./markdown/citations";
-export {
-  extractResourceLinks,
-  findResources,
-  detectResourceKind,
-  type ResourceRef,
-  type ResourceKind,
-} from "./markdown/resources";
+// Markdown helpers (import/export & server-reconciliation path).
+// Single-sourced from the pure `./markdown` barrel, which is also published as the
+// `@ham/editor/markdown` subpath so servers can import these without the React stack
+// (see GitHub issue #50). Re-exporting from there keeps the root and subpath in sync.
+export * from "./markdown";
 
 // Annotations
 export { recognizeAnnotations, type RecognizeInput } from "./annotations/recognize";

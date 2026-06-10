@@ -41,5 +41,30 @@ import "@ham/editor/styles.css";
   bounded reconnect, and lifecycle callbacks.
 - **Theming** — every visual is a CSS variable you can override.
 
+## Server-side markdown helpers (`@ham/editor/markdown`)
+
+The grammar that powers stable ids, containment, checklists, citations, and
+resource links is **pure** — no React, no Tiptap, no DOM. A host app's server
+(a save-time reconciler, a collab worker, a git-sync CLI) usually needs the
+_exact same_ implementation the client editor uses; sharing one source is the
+only way to avoid definition drift, which is a silent data-loss bug.
+
+Import those helpers from the dedicated subpath and the browser stack never
+enters your module graph:
+
+```ts
+// Runs in a plain Node process / Route Handler — no react-dom required.
+import {
+  stripStableIds,
+  inferContainmentFromMarkdown,
+  parseChecklist,
+  extractResourceLinks,
+  fnv1a64Hex,
+} from "@ham/editor/markdown";
+```
+
+The same symbols remain available from the package root (`@ham/editor`) for the
+client; the root simply re-exports this module.
+
 See the [live docs](https://mmcdermott.github.io/ham/) for runnable examples and
 the full API. Released under the MIT license.
