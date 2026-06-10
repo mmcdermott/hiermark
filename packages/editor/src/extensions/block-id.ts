@@ -12,32 +12,124 @@ export interface BlockIdOptions {
   generate: () => string;
 }
 
+interface IdOccurrence {
+  pos: number;
+  node: PMNode;
+}
+
 /**
  * Walk the whole doc assigning a fresh id to every allowlisted node that is
- * missing one *or* whose id was already seen (the paste/import dedup case).
- * Returns whether `tr` was modified. Shared by the initial pass and every
- * subsequent transaction so the invariant — every block has a unique id — holds.
+ * missing one, and resolve DUPLICATE ids in favor of the occurrence that most
+ * plausibly *is* the block the id referred to before this transaction — host
+ * persisted branch edges / annotations key on these ids, so picking the wrong
+ * keeper silently re-anchors them:
+ *
+ *  1. the occurrence whose text equals the pre-transaction holder's text —
+ *     identity follows content, so Enter at the START of a block keeps the id
+ *     on the half that carries the block's text, not the empty half above it;
+ *  2. tie-break by the old holder's position mapped through the transactions —
+ *     identity stays put, so a copy pasted ABOVE the original can't steal the
+ *     id merely by appearing first in document order;
+ *  3. otherwise the first occurrence (initial stamp / both-new case).
+ *
+ * Returns whether `tr` was modified. Shared by the initial pass (no `old`) and
+ * every subsequent transaction so the invariant — every block has a unique,
+ * stable id — holds.
  */
 function assignBlockIds(
   doc: PMNode,
   tr: Transaction,
   types: Set<string>,
   generate: () => string,
+  old?: { doc: PMNode; mapPos: (pos: number) => number },
 ): boolean {
-  let modified = false;
-  const seen = new Set<string>();
+  const byId = new Map<string, IdOccurrence[]>();
+  const missing: IdOccurrence[] = [];
   doc.descendants((node, pos) => {
     if (!types.has(node.type.name)) return;
     const id = node.attrs.dataBlockId as string | null;
-    if (!id || seen.has(id)) {
-      const fresh = generate();
-      tr.setNodeAttribute(pos, "dataBlockId", fresh);
-      seen.add(fresh);
-      modified = true;
+    if (!id) {
+      missing.push({ pos, node });
     } else {
-      seen.add(id);
+      const list = byId.get(id);
+      if (list) list.push({ pos, node });
+      else byId.set(id, [{ pos, node }]);
     }
   });
+
+  // Old holders, built lazily — only a transaction that actually produced a
+  // duplicate or a candidate id swap pays for the old-doc walk.
+  let oldByIdCache: Map<string, { pos: number; text: string }> | undefined;
+  const getOldById = (): Map<string, { pos: number; text: string }> | undefined => {
+    if (!old) return undefined;
+    if (!oldByIdCache) {
+      const map = new Map<string, { pos: number; text: string }>();
+      old.doc.descendants((node, pos) => {
+        if (!types.has(node.type.name)) return;
+        const oid = node.attrs.dataBlockId as string | null;
+        if (oid && !map.has(oid)) map.set(oid, { pos, text: node.textContent });
+      });
+      oldByIdCache = map;
+    }
+    return oldByIdCache;
+  };
+
+  let modified = false;
+  for (const m of missing) {
+    // Split-at-start detection (the splitListItem shape): the id stayed on the
+    // now-EMPTY first half while the id-less second half carries all of the
+    // block's text. Identity follows content — swap, so host-persisted branch
+    // edges / annotations keep pointing at the text they were anchored to.
+    let swapped = false;
+    if (old && m.node.textContent !== "") {
+      const $m = doc.resolve(m.pos);
+      const index = $m.index();
+      if (index > 0) {
+        const prev = $m.parent.child(index - 1);
+        const prevId = prev.attrs?.dataBlockId as string | null;
+        if (prevId && prev.type === m.node.type && prev.textContent === "") {
+          const holder = getOldById()?.get(prevId);
+          if (holder && holder.text === m.node.textContent) {
+            tr.setNodeAttribute(m.pos, "dataBlockId", prevId);
+            tr.setNodeAttribute(m.pos - prev.nodeSize, "dataBlockId", generate());
+            modified = true;
+            swapped = true;
+          }
+        }
+      }
+    }
+    if (!swapped) {
+      tr.setNodeAttribute(m.pos, "dataBlockId", generate());
+      modified = true;
+    }
+  }
+
+  for (const [id, occurrences] of byId) {
+    if (occurrences.length < 2) continue;
+    const holder = getOldById()?.get(id);
+    let keeperIndex = 0;
+    if (holder && old) {
+      const contentMatches = occurrences
+        .map((occ, index) => ({ occ, index }))
+        .filter(({ occ }) => occ.node.textContent === holder.text);
+      if (contentMatches.length === 1) {
+        keeperIndex = contentMatches[0]!.index;
+      } else {
+        const target = old.mapPos(holder.pos);
+        const pool = contentMatches.length
+          ? contentMatches
+          : occurrences.map((occ, index) => ({ occ, index }));
+        keeperIndex = pool.reduce((best, cur) =>
+          Math.abs(cur.occ.pos - target) < Math.abs(best.occ.pos - target) ? cur : best,
+        ).index;
+      }
+    }
+    occurrences.forEach((occ, index) => {
+      if (index === keeperIndex) return;
+      tr.setNodeAttribute(occ.pos, "dataBlockId", generate());
+      modified = true;
+    });
+  }
   return modified;
 }
 
@@ -131,7 +223,17 @@ export const BlockId = Extension.create<BlockIdOptions>({
             return null;
           }
           const tr = newState.tr;
-          const modified = assignBlockIds(newState.doc, tr, types, generate);
+          // Map an old-doc position through every transaction in this batch so
+          // duplicate resolution can find where the pre-edit holder ended up.
+          const mapPos = (pos: number) => {
+            let p = pos;
+            for (const t of transactions) p = t.mapping.map(p);
+            return p;
+          };
+          const modified = assignBlockIds(newState.doc, tr, types, generate, {
+            doc: _oldState.doc,
+            mapPos,
+          });
           return modified ? tr : null;
         },
       }),
