@@ -28,11 +28,16 @@ export interface HamCanvasActions {
     fromBlockId: HamBlockId,
     opts?: { insertOrder?: number; afterEdgeId?: string },
   ): Promise<void>;
+  /**
+   * Resolves `true` when the host handler committed the reorder, `false` when
+   * it rejected (the error went to `onOperationError`) — so callers (e.g. the
+   * canvas undo stack) can keep their bookkeeping consistent.
+   */
   reorderSiblings(
     fromSurfaceId: HamSurfaceId,
     fromBlockId: HamBlockId,
     orderedEdgeIds: string[],
-  ): Promise<void>;
+  ): Promise<boolean>;
   removeSurface(surfaceId: HamSurfaceId): Promise<void>;
 }
 
@@ -75,7 +80,10 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     {},
   );
   const [collapsedSurfaceIds, setCollapsed] = useState<Set<HamSurfaceId>>(new Set());
-  const [pendingSurfaceIds, setPending] = useState<Set<HamSurfaceId>>(new Set());
+  // Pending ops are COUNTED per surface (not a Set) so two overlapping ops on
+  // one surface don't clear its pending state when the first settles.
+  const [pendingCounts, setPendingCounts] = useState<Record<HamSurfaceId, number>>({});
+  const pendingSurfaceIds = useMemo(() => new Set(Object.keys(pendingCounts)), [pendingCounts]);
   const onActiveChange = props.onActiveChange;
   // Keep live refs so async callbacks don't read stale edges / active id.
   const edgesRef = useRef(props.branchEdges);
@@ -92,14 +100,23 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     [onActiveChange],
   );
 
+  const onOperationError = props.onOperationError;
   const updateSnapshot = useCallback(
     (surfaceId: HamSurfaceId, snapshot: HamSurfaceSnapshot) => {
       setSnapshots((prev) =>
         prev[surfaceId] === snapshot ? prev : { ...prev, [surfaceId]: snapshot },
       );
-      void props.handlers.updateSurfaceSnapshot?.({ surfaceId, snapshot });
+      const run = props.handlers.updateSurfaceSnapshot;
+      if (!run) return;
+      // Route sync throws AND async rejections to onOperationError — a host
+      // persisting snapshots must never produce an unhandled rejection.
+      void Promise.resolve()
+        .then(() => run({ surfaceId, snapshot }))
+        .catch((error: unknown) =>
+          onOperationError?.({ type: "update-snapshot", surfaceId, error }),
+        );
     },
-    [props.handlers],
+    [props.handlers, onOperationError],
   );
 
   const toggleCollapsed = useCallback((surfaceId: HamSurfaceId) => {
@@ -111,20 +128,27 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     });
   }, []);
 
-  const onOperationError = props.onOperationError;
   const withPending = useCallback(
-    async (surfaceId: HamSurfaceId, type: HamCanvasOperationType, run: () => Promise<void>) => {
-      setPending((prev) => new Set(prev).add(surfaceId));
+    async (
+      surfaceId: HamSurfaceId,
+      type: HamCanvasOperationType,
+      run: () => Promise<void>,
+    ): Promise<boolean> => {
+      setPendingCounts((prev) => ({ ...prev, [surfaceId]: (prev[surfaceId] ?? 0) + 1 }));
       try {
         await run();
+        return true;
       } catch (error) {
         // Surface the rejection rather than letting it become an unhandled
         // promise rejection; the host owns recovery.
         onOperationError?.({ type, surfaceId, error });
+        return false;
       } finally {
-        setPending((prev) => {
-          const next = new Set(prev);
-          next.delete(surfaceId);
+        setPendingCounts((prev) => {
+          const remaining = (prev[surfaceId] ?? 0) - 1;
+          const next = { ...prev };
+          if (remaining <= 0) delete next[surfaceId];
+          else next[surfaceId] = remaining;
           return next;
         });
       }
@@ -139,16 +163,31 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       opts?: { insertOrder?: number; afterEdgeId?: string },
     ) => {
       if (!props.handlers.createSiblingSurface) return;
+      // The behavior flag is enforced at the ACTION layer (not only in
+      // rendering), so a gutter affordance, custom slot, or imperative call
+      // can't bypass a host that disabled sibling creation.
+      if (!behavior.enableSiblingBranchCreation) {
+        onOperationError?.({
+          type: "create-sibling",
+          surfaceId: fromSurfaceId,
+          blocked: true,
+          reason: "behavior.enableSiblingBranchCreation is false",
+        });
+        return;
+      }
       // The canvas is the single source of order truth: resolve where the new
       // sibling lands and which existing siblings shift, so every host gets
       // "insert between" correct without re-deriving it.
       const group = siblingEdges(edgesRef.current, fromSurfaceId, fromBlockId);
       const afterEdgeId = opts?.afterEdgeId;
+      // Append must clear the group's MAX order, not its length — sibling
+      // orders are sparse after any delete, and length lands mid-group.
+      const appendOrder = group.length ? Math.max(...group.map((e) => e.order)) + 1 : 0;
       const insertOrder =
         opts?.insertOrder ??
         (afterEdgeId
-          ? (group.find((e) => e.id === afterEdgeId)?.order ?? group.length - 1) + 1
-          : group.length); // default: append
+          ? (group.find((e) => e.id === afterEdgeId)?.order ?? appendOrder - 1) + 1
+          : appendOrder);
       const { shiftedSiblingOrders } = computeSiblingInsert(group, insertOrder);
       await withPending(fromSurfaceId, "create-sibling", async () => {
         const result = await props.handlers.createSiblingSurface!({
@@ -161,15 +200,25 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         if (result?.activate !== false && result?.surface) activate(result.surface.id, null);
       });
     },
-    [props.handlers, withPending, activate],
+    [props.handlers, behavior.enableSiblingBranchCreation, onOperationError, withPending, activate],
   );
 
   const branchFromBlock = useCallback(
     async (event: HamBranchRequestEvent) => {
       // A block that already has a branch child presents an "add sibling"
       // affordance — route it to the sibling path (append) when the host
-      // supports it, so the two affordances hit the handlers the design intends.
+      // supports it, so the two affordances hit the handlers the design
+      // intends. addSibling itself enforces enableSiblingBranchCreation.
       if (event.mode === "add-sibling" && props.handlers.createSiblingSurface) {
+        if (!behavior.enableSiblingBranchCreation) {
+          onOperationError?.({
+            type: "create-sibling",
+            surfaceId: event.surfaceId,
+            blocked: true,
+            reason: "behavior.enableSiblingBranchCreation is false",
+          });
+          return;
+        }
         await addSibling(event.surfaceId, event.blockId);
         return;
       }
@@ -189,18 +238,30 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         }
       });
     },
-    [props.handlers, behavior.enableBranchCreation, withPending, activate, addSibling],
+    [
+      props.handlers,
+      behavior.enableBranchCreation,
+      behavior.enableSiblingBranchCreation,
+      onOperationError,
+      withPending,
+      activate,
+      addSibling,
+    ],
   );
 
   const reorderSiblings = useCallback(
-    async (fromSurfaceId: HamSurfaceId, fromBlockId: HamBlockId, orderedEdgeIds: string[]) => {
-      if (!props.handlers.reorderBranchSiblings) return;
+    async (
+      fromSurfaceId: HamSurfaceId,
+      fromBlockId: HamBlockId,
+      orderedEdgeIds: string[],
+    ): Promise<boolean> => {
+      if (!props.handlers.reorderBranchSiblings) return false;
       // Strict guard (spec §8.3): only same-anchor siblings may be reordered.
-      if (!areSameAnchorSiblings(edgesRef.current, orderedEdgeIds)) return;
+      if (!areSameAnchorSiblings(edgesRef.current, orderedEdgeIds)) return false;
       const orderedSurfaceIds = orderedEdgeIds.map(
         (id) => edgesRef.current.find((e) => e.id === id)!.toSurfaceId,
       );
-      await withPending(fromSurfaceId, "reorder-siblings", async () => {
+      return withPending(fromSurfaceId, "reorder-siblings", async () => {
         await props.handlers.reorderBranchSiblings!({
           fromSurfaceId,
           fromBlockId,

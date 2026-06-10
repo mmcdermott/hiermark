@@ -4,6 +4,7 @@ export type HamTopologyIssueKind =
   | "missing-root"
   | "missing-surface"
   | "duplicate-incoming"
+  | "duplicate-sibling-order"
   | "cycle"
   | "unreachable";
 
@@ -31,6 +32,9 @@ export interface ValidateTopologyInput<SurfaceMeta = unknown, EdgeMeta = unknown
  * - `missing-surface` — an edge references a surface not in `surfaces`.
  * - `duplicate-incoming` — a surface has more than one incoming edge (the
  *   projection keeps only the first; the rest are silently dropped).
+ * - `duplicate-sibling-order` — two same-anchor sibling edges share an
+ *   `order` (display order and insert positions become ambiguous; sparse but
+ *   UNIQUE orders are fine and not reported).
  * - `cycle` — the edges form a loop.
  * - `unreachable` — a non-root surface no edge path reaches from the root.
  *
@@ -91,6 +95,35 @@ export function validateHamTopology<SurfaceMeta = unknown, EdgeMeta = unknown>(
         edgeIds,
         message: `Surface "${surfaceId}" has ${edgeIds.length} incoming edges; only the first is shown.`,
       });
+  }
+
+  // Duplicate sibling orders within one (fromSurface, fromBlock) anchor
+  // group. Keyed with a NUL separator (ids may contain spaces); the surface id
+  // is tracked alongside rather than re-split out of the key.
+  const orderSeen = new Map<
+    string,
+    { fromSurfaceId: HamSurfaceId; byOrder: Map<number, HamBranchEdgeId[]> }
+  >();
+  for (const e of branchEdges) {
+    const anchor = `${e.fromSurfaceId}\0${e.fromBlockId}`;
+    const group = orderSeen.get(anchor) ?? {
+      fromSurfaceId: e.fromSurfaceId,
+      byOrder: new Map<number, HamBranchEdgeId[]>(),
+    };
+    group.byOrder.set(e.order, [...(group.byOrder.get(e.order) ?? []), e.id]);
+    orderSeen.set(anchor, group);
+  }
+  for (const { fromSurfaceId, byOrder } of orderSeen.values()) {
+    for (const [order, edgeIds] of byOrder) {
+      if (edgeIds.length > 1) {
+        issues.push({
+          kind: "duplicate-sibling-order",
+          surfaceId: fromSurfaceId,
+          edgeIds,
+          message: `Sibling edges ${edgeIds.map((id) => `"${id}"`).join(", ")} share order ${order}; display order is ambiguous.`,
+        });
+      }
+    }
   }
 
   // Cycle detection over the surface graph (fromSurface → toSurface).

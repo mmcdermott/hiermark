@@ -363,7 +363,8 @@ export type HamCanvasOperationType =
   | "create-sibling"
   | "reorder-siblings"
   | "delete-surface"
-  | "save-surface";
+  | "save-surface"
+  | "update-snapshot";
 
 /** A failed (or package-blocked) canvas operation, surfaced via `onOperationError`. */
 export interface HamCanvasOperationError {

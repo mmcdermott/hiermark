@@ -186,6 +186,9 @@ export const BlockId = Extension.create<BlockIdOptions>({
     const tr = this.editor.state.tr;
     if (assignBlockIds(this.editor.state.doc, tr, types, this.options.generate)) {
       tr.setMeta("addToHistory", false);
+      // Mark the initial stamp so the host's onChange isn't fired for mount
+      // mechanics (it still refreshes snapshots — ids matter to consumers).
+      tr.setMeta("hamInitialBlockIdStamp", true);
       this.editor.view.dispatch(tr);
     }
   },
