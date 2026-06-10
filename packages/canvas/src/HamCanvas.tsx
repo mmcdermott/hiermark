@@ -39,6 +39,7 @@ import { devWarn } from "./devWarn";
 import { useHamCanvas } from "./useHamCanvas";
 import { HamConnectorsOverlay } from "./connectors/HamConnectorsOverlay";
 import type { HamHoverTarget } from "./connectors/connectors";
+import { siblingEdgeOrder } from "./topology/siblingOrder";
 import type {
   HamAddSiblingButtonProps,
   HamCanvasColumn,
@@ -581,6 +582,29 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  // Canvas-level undo/redo for sibling reorders — the one topology op that's
+  // losslessly reversible through the existing handler (re-apply the prior
+  // order), with no host "restore" capability required. Branch-create / delete
+  // undo would need a host re-create seam, so they're out of scope here.
+  type ReorderHistory = { fromSurfaceId: HamSurfaceId; fromBlockId: string; order: string[] };
+  const undoStack = useRef<ReorderHistory[]>([]);
+  const redoStack = useRef<ReorderHistory[]>([]);
+
+  const applyHistory = (from: "undo" | "redo") => {
+    const src = from === "undo" ? undoStack : redoStack;
+    const dst = from === "undo" ? redoStack : undoStack;
+    const entry = src.current.pop();
+    if (!entry) return false;
+    // Record the inverse on the opposite stack before re-applying.
+    dst.current.push({
+      fromSurfaceId: entry.fromSurfaceId,
+      fromBlockId: entry.fromBlockId,
+      order: siblingEdgeOrder(props.branchEdges, entry.fromSurfaceId, entry.fromBlockId),
+    });
+    void canvas.actions.reorderSiblings(entry.fromSurfaceId, entry.fromBlockId, entry.order);
+    return true;
+  };
+
   const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -595,17 +619,18 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     ) {
       return;
     }
-    const group = edges
-      .filter(
-        (e) =>
-          e.fromSurfaceId === activeEdge.fromSurfaceId && e.fromBlockId === activeEdge.fromBlockId,
-      )
-      .sort((a, b) => a.order - b.order)
-      .map((e) => e.id);
+    const group = siblingEdgeOrder(edges, activeEdge.fromSurfaceId, activeEdge.fromBlockId);
     const from = group.indexOf(String(active.id));
     const to = group.indexOf(String(over.id));
     if (from < 0 || to < 0) return;
     const ordered = arrayMove(group, from, to);
+    // Record the pre-reorder order for undo; a fresh user action invalidates redo.
+    undoStack.current.push({
+      fromSurfaceId: activeEdge.fromSurfaceId,
+      fromBlockId: activeEdge.fromBlockId,
+      order: group,
+    });
+    redoStack.current = [];
     void canvas.actions.reorderSiblings(activeEdge.fromSurfaceId, activeEdge.fromBlockId, ordered);
   };
 
@@ -786,8 +811,9 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   };
 
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (!behavior.enableKeyboardNavigation || !event.altKey) return;
-    // Don't steal Alt+Arrow (word navigation) from a focused editor / input.
+    if (!behavior.enableKeyboardNavigation) return;
+    // Don't steal keys (Alt+Arrow word-nav, Cmd+Z editor-undo) from a focused
+    // editor / input — those own their own undo + navigation.
     const target = event.target as HTMLElement;
     if (
       target.isContentEditable ||
@@ -795,6 +821,20 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     ) {
       return;
     }
+    // Cmd/Ctrl+Z undo / Cmd/Ctrl+Shift+Z (or Ctrl+Y) redo for sibling reorders,
+    // when the focus is on the canvas chrome (not an editor, handled above).
+    if (reorderEnabled && (event.metaKey || event.ctrlKey) && !event.altKey) {
+      const k = event.key.toLowerCase();
+      if (k === "z" && !event.shiftKey) {
+        if (applyHistory("undo")) event.preventDefault();
+        return;
+      }
+      if ((k === "z" && event.shiftKey) || k === "y") {
+        if (applyHistory("redo")) event.preventDefault();
+        return;
+      }
+    }
+    if (!event.altKey) return;
     const dir = (
       {
         ArrowLeft: "left",

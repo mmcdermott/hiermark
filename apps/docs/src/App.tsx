@@ -99,7 +99,7 @@ const SECTIONS: Section[] = [
           reveals its children); and condense the <strong>inactive columns</strong> (Editor → Card →
           Outline → Rail) for a focus / sidebar view. Hover a column to reveal the{" "}
           <strong>+</strong> rail between siblings to insert a branch at that position; drag a card
-          to reorder.
+          to reorder (then <kbd>Cmd/Ctrl+Z</kbd> to undo the reorder).
         </p>
         <CanvasStylesDemo />
       </section>

@@ -242,6 +242,22 @@ describe("canvas A3 — keyboard navigation", () => {
     ).toBeNull();
   });
 
+  it("Cmd+Z with no reorder history is a safe no-op", async () => {
+    const reorderBranchSiblings = vi.fn(() => Promise.resolve([]));
+    const { container } = render(
+      <HamCanvas
+        rootSurfaceId="s_root"
+        surfaces={navSurfaces}
+        branchEdges={navEdges}
+        handlers={{ ...handlers, reorderBranchSiblings }}
+      />,
+    );
+    await waitFor(() => expect(container.querySelector('[data-surface-id="s_a"]')).not.toBeNull());
+    fireEvent.keyDown(canvasEl(container), { key: "z", metaKey: true });
+    // Nothing to undo → the reorder handler is never called, and nothing throws.
+    expect(reorderBranchSiblings).not.toHaveBeenCalled();
+  });
+
   it("Alt+C toggles collapse of the active surface", async () => {
     const { container } = render(
       <HamCanvas

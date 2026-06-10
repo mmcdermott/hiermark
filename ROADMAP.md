@@ -195,9 +195,12 @@ features, in either track.
   overlap into a smear and edges can pass through intermediate cards. Add per-edge fan-out at the
   source, optional orthogonal routing for multi-column spans, and a label anchor on
   `HamConnectorRenderProps`.
-- **Canvas-level undo for topology ops** `[P2 · L]` — delete-subtree / reorder are irreversible
-  without bespoke host plumbing. Provide an optional operation log + inverse-intent hook (reorder
-  and create-sibling already compute the before/after they'd need).
+- **Canvas-level undo for topology ops** `[P2 · L]` — **✅ DONE** (reorder). The canvas keeps an
+  undo/redo stack for **sibling reorders** — the one op losslessly reversible through the existing
+  handler (re-apply the captured order via `siblingEdgeOrder`), no host "restore" capability
+  required. **Cmd/Ctrl+Z** undoes, **Cmd/Ctrl+Shift+Z** (or Ctrl+Y) redoes, when the canvas chrome
+  (not an editor) is focused. _Branch-create / delete undo are out of scope here — they'd need a
+  host re-create seam, since the host owns persistence._
 
 ### A4 · Performance at scale
 
