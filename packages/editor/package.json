@@ -1,6 +1,6 @@
 {
   "name": "@ham/editor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "One collaborative, block-centric markdown surface for HAM (Tiptap 3 / ProseMirror).",
   "license": "MIT",
   "author": {

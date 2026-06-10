@@ -1,6 +1,6 @@
 {
   "name": "@ham/canvas",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A 2D canvas of editable HAM surfaces connected by block-anchored branch edges.",
   "license": "MIT",
   "author": {
