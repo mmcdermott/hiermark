@@ -27,7 +27,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "docs:build": "pnpm build && pnpm -F @ham/docs build",
+    "docs:api": "typedoc",
+    "docs:build": "pnpm build && pnpm docs:api && pnpm -F @ham/docs build",
     "lint:pkg": "pnpm build && pnpm -r --filter \"./packages/*\" exec publint",
     "changeset": "changeset",
     "version": "changeset version",
@@ -43,6 +44,7 @@
     "globals": "^16",
     "prettier": "^3",
     "publint": "^0.3",
+    "typedoc": "^0.28.19",
     "typescript": "^5",
     "typescript-eslint": "^8"
   },

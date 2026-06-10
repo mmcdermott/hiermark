@@ -1,0 +1,14 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["packages/editor/src/index.ts", "packages/canvas/src/index.ts"],
+  "tsconfig": "tsconfig.typedoc.json",
+  "out": "apps/docs/public/api",
+  "name": "HAM API reference",
+  "readme": "none",
+  "hideGenerator": true,
+  "githubPages": false,
+  "excludeExternals": true,
+  "navigationLinks": {
+    "← HAM docs": "../"
+  }
+}

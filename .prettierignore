@@ -5,3 +5,4 @@ coverage
 pnpm-lock.yaml
 *.tsbuildinfo
 apps/docs/dist
+apps/docs/public/api

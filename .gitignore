@@ -28,3 +28,6 @@ apps/docs/dist/
 .env
 .env.local
 .env.*.local
+
+# Generated TypeDoc API reference (built into the docs site)
+apps/docs/public/api/

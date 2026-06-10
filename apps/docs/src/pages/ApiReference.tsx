@@ -165,8 +165,13 @@ export function ApiReference() {
     <section className="page">
       <h2>API reference</h2>
       <p>
-        The headline exports. Every function/component is fully typed; see the source and the{" "}
-        <code>docs/design-spec.md</code> in the repository for the complete contract.
+        The headline exports below are a curated overview. For the{" "}
+        <strong>complete, always-accurate generated reference</strong> — every export, type, and
+        signature — see the{" "}
+        <a href={`${import.meta.env.BASE_URL}api/`} target="_blank" rel="noreferrer">
+          TypeDoc API reference ↗
+        </a>
+        . The full contract also lives in <code>docs/design-spec.md</code> in the repository.
       </p>
       <ApiTable title="Editor —" pkg="@ham/editor" entries={EDITOR_API} />
       <ApiTable title="Canvas —" pkg="@ham/canvas" entries={CANVAS_API} />

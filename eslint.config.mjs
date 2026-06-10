@@ -12,6 +12,7 @@ export default tseslint.config(
       "**/node_modules/**",
       "**/*.tsbuildinfo",
       "apps/docs/dist/**",
+      "apps/docs/public/api/**",
     ],
   },
   js.configs.recommended,

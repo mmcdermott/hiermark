@@ -290,8 +290,11 @@ features, in either track.
 
 ### A8 · Docs & developer experience
 
-- **Generated API reference** `[P1 · L]` — `ApiReference.tsx` hand-lists ~24 entries while the packages
-  export ~80 symbols; wire TypeDoc / api-extractor so the reference can't drift.
+- **Generated API reference** `[P1 · L]` — **✅ DONE.** TypeDoc (`typedoc.json` +
+  `tsconfig.typedoc.json`) generates a full HTML reference for both packages' source into
+  `apps/docs/public/api` (gitignored; built in CI via the `docs:api` script before the Vite
+  build, so it ships at `/api` and can't drift). The hand-written `ApiReference.tsx` stays as a
+  curated overview and links to the generated reference.
 - ~~**"Limitations & known issues" page**~~ `[P1 · S]` — **✅ DONE** (the new "Production notes"
   docs page). Original: — state the current constraints honestly (SSR,
   dark mode, mobile/touch, host-run collab server, host-owned image storage, gutter-annotation
