@@ -147,6 +147,13 @@ body {
   /* Wide enough that demos have real room; prose is capped separately below so
      paragraphs stay readable. */
   max-width: 1400px;
+  /* Width available to a live preview that breaks out of this (max 1400px,
+     left-aligned) column to use the wider track: viewport minus the sidebar
+     (264px) minus this column's left+right padding (112px), leaving a 56px
+     right gutter symmetric with the left padding. Capped so it never gets
+     absurd on ultrawide monitors. Previews overflow this column rightward into
+     the otherwise-empty track space; redefined below the sidebar breakpoint. */
+  --demo-avail: min(1760px, calc(100vw - 264px - 112px));
 }
 /* Keep running text at a comfortable measure even on the wide content column. */
 .lede,
@@ -209,9 +216,10 @@ pre.block code {
 /* Demos --------------------------------------------------------------------- */
 .demo {
   /* Aligns with the prose (left), and sizes to its stage so dragging the
-     stage's bottom-right corner grows the bordered box rightward. */
+     stage's bottom-right corner grows the bordered box rightward — past this
+     column's right edge into the wider track when there's room. */
   width: fit-content;
-  max-width: 100%;
+  max-width: var(--demo-avail);
   margin: 18px 0 8px;
   border: 1px solid var(--doc-border);
   border-radius: 12px;
@@ -348,15 +356,22 @@ pre.block code {
 }
 .demo-stage {
   /* Default size; drag the bottom-right corner to resize in both directions,
-     up to the available viewport width (⛶ Expand gives the full viewport). The
+     up to the available track width (⛶ Expand gives the full viewport). The
      parent `.demo` is fit-content, so growing the stage grows the framed box.
      The default height comes through a CSS variable (set by DemoFrame) so the
      browser-written inline width/height from a corner-drag always win — React
-     never manages (and so never resets) the user's resize. */
-  width: 820px;
+     never manages (and so never resets) the user's resize.
+
+     Default width is `min(900px, --demo-avail)` rather than a fixed 820px: the
+     old fixed default exceeded `--demo-avail` on viewports narrower than
+     ~1300px, so every stage got clamped to the identical max width and the
+     corner-drag did nothing — they looked "locked" together. Now the default
+     never exceeds what's available, and the max lets it expand into the wider
+     track on roomy screens. */
+  width: min(900px, var(--demo-avail));
   height: var(--demo-stage-height, 460px);
   min-width: 320px;
-  max-width: calc(100vw - 264px - 130px);
+  max-width: var(--demo-avail);
   min-height: 320px;
   overflow: auto;
   resize: both;
@@ -470,14 +485,19 @@ pre.block code {
   }
   .content {
     padding: 28px 20px;
+    /* No sidebar at this width and smaller padding (20px each side), so the
+       available width is just the viewport minus the two 20px gutters. */
+    --demo-avail: calc(100vw - 40px);
   }
-  /* No sidebar column at this width, so demos can use the full content width. */
+  /* No sidebar column at this width, so previews use the full content width. */
   .demo {
     width: auto;
   }
   .demo-stage {
     width: auto;
-    max-width: calc(100vw - 40px);
+  }
+  .doc-live {
+    width: auto;
   }
   .cards,
   .demo-collab {
@@ -524,7 +544,11 @@ pre.block code {
   border: 1px solid var(--doc-border);
   border-radius: 12px;
   overflow: hidden;
-  max-width: 880px;
+  /* These inline guide examples aren't resizable, so give them a sensible
+     fixed measure that still breaks out past the prose column when there's
+     room (was a hard 880px, which made them all look locked to one width). */
+  width: min(1100px, var(--demo-avail));
+  max-width: var(--demo-avail);
 }
 .doc-live-head {
   display: flex;
