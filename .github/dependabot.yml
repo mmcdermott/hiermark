@@ -37,6 +37,20 @@ updates:
       # @tiptap/extension-mathematics peers `katex ^0.16.4`; 0.17 violates it.
       - dependency-name: "katex"
         versions: [">=0.17.0"]
+      # Pin the lint/types tooling to its current major until a deliberate
+      # migration (ESLint 10 + react-hooks 7 are breaking; @types/node should
+      # track the Node 22 runtime, not jump to 25). These came in as the
+      # lint-failing batch PR #68 — re-take them on purpose, not via dependabot.
+      - dependency-name: "eslint"
+        versions: [">=10.0.0"]
+      - dependency-name: "@eslint/js"
+        versions: [">=10.0.0"]
+      - dependency-name: "eslint-plugin-react-hooks"
+        versions: [">=6.0.0"]
+      - dependency-name: "@types/node"
+        versions: [">=23.0.0"]
+      - dependency-name: "globals"
+        versions: [">=17.0.0"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
