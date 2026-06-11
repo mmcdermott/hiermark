@@ -105,7 +105,11 @@ export function CanvasStylesDemo() {
   const [siblingStyle, setSiblingStyle] = useState<SiblingStyle>("plus");
   const [groupHeaders, setGroupHeaders] = useState<"on" | "off">("off");
   const [columnScroll, setColumnScroll] = useState<"on" | "off">("off");
-  const [inactive, setInactive] = useState<Inactive>("expanded");
+  // Start with inactive columns as compact cards rather than full-width editors
+  // ("expanded"), so the multi-level tree fits the stage instead of opening
+  // already overflowing horizontally. The "Editor" option still shows the wide,
+  // scroll-to-pan layout on demand.
+  const [inactive, setInactive] = useState<Inactive>("card");
 
   const slots = useMemo<HiermarkCanvasSlots>(() => {
     const Btn = SIBLING_BUTTONS[siblingStyle];

@@ -8,6 +8,7 @@ import { AnnotationsPage } from "./pages/AnnotationsPage";
 import { ApiReference } from "./pages/ApiReference";
 import { ProductionPage } from "./pages/ProductionPage";
 import { EditorDemo } from "./demos/EditorDemo";
+import { BranchPolicyDemo } from "./demos/BranchPolicyDemo";
 import { CanvasDemo } from "./demos/CanvasDemo";
 import { CanvasStylesDemo } from "./demos/CanvasStylesDemo";
 import { FocusSidebarDemo, FlatManuscriptDemo, TopologyMapDemo } from "./demos/StyledExamplesDemo";
@@ -61,6 +62,26 @@ const SECTIONS: Section[] = [
           own surface.
         </p>
         <EditorDemo />
+      </section>
+    ),
+  },
+  {
+    id: "branching",
+    label: "Branching policy",
+    group: "Live demos",
+    render: () => (
+      <section className="page">
+        <h2>Branching policy</h2>
+        <p className="lede">
+          Not every block should be branchable. <code>branchPolicy</code> controls which blocks get
+          a branch button — choose a named preset (<code>&quot;bubble-up&quot;</code>,{" "}
+          <code>&quot;smart&quot;</code>, <code>&quot;headings-only&quot;</code>,{" "}
+          <code>&quot;root-only&quot;</code>, <code>&quot;any-nonempty-block&quot;</code>,{" "}
+          <code>&quot;off&quot;</code>), a declarative <code>HiermarkBranchabilityRules</code>{" "}
+          object (e.g. recursive <em>leaves only</em>), or an arbitrary predicate for{" "}
+          <em>only nodes of a given type</em>. Switch policies below and watch the gutter.
+        </p>
+        <BranchPolicyDemo />
       </section>
     ),
   },

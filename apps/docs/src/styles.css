@@ -417,6 +417,12 @@ pre.block code {
 .demo-editor-wrap {
   padding: 16px 20px;
 }
+/* The branch-policy demo is *about* the gutter buttons, so surface them at rest
+   (default resting opacity is a faint 0.18) — you shouldn't have to hover every
+   block to see which ones a policy makes branchable. */
+.branch-policy-demo .hiermark-branch-button {
+  opacity: 0.6;
+}
 .demo-hint {
   font-size: 13px;
   color: var(--doc-muted);
@@ -525,17 +531,27 @@ pre.block code {
 .theme-map {
   --hiermark-canvas-bg: #0f1722;
   --hiermark-surface-bg: transparent;
-  --hiermark-surface-border: #2a3a4d;
-  --hiermark-text: #d6e2f0;
-  --hiermark-muted: #8aa0b8;
-  --hiermark-accent: #37a0c4;
+  --hiermark-surface-border: #38506b;
+  /* Brighter text + muted for legible contrast on the dark canvas (was
+     #d6e2f0/#8aa0b8, which read as low-contrast grey). */
+  --hiermark-text: #eaf2fb;
+  --hiermark-muted: #acc2da;
+  --hiermark-accent: #58bde0;
   --hiermark-accent-soft: #16344a;
-  color: #d6e2f0;
+  color: #eaf2fb;
 }
 .theme-map .hiermark-surface-header,
 .theme-map .hiermark-outline-link,
 .theme-map .hiermark-editor {
-  color: #d6e2f0;
+  color: #eaf2fb;
+}
+/* A clean monospace for the map's short node labels reads as a technical
+   diagram and is more legible than the inherited UI sans here. */
+.theme-map .hiermark-surface-header,
+.theme-map .hiermark-outline-link,
+.theme-map .hiermark-editor .ProseMirror {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  letter-spacing: -0.01em;
 }
 
 /* Live-editor blocks in the concept docs ------------------------------------ */

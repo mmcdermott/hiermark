@@ -427,8 +427,14 @@
 }
 
 /* Remote collaborator cursors (CollaborationCaret) — the extension sets each
-   user's color inline; these rules only handle layout. ----------------------- */
-.hiermark-editor .collaboration-cursor__caret {
+   user's color inline; these rules only handle layout.
+
+   NB: @tiptap/extension-collaboration-caret (the rename of the old
+   collaboration-cursor extension) emits `collaboration-carets__*` (plural)
+   class names. Targeting the old singular `collaboration-cursor__*` left the
+   caret + label unstyled, so the label <div> fell back to a full-width block —
+   a remote cursor rendered as a whole-line colored bar with the name. ------- */
+.hiermark-editor .collaboration-carets__caret {
   position: relative;
   margin-left: -1px;
   margin-right: -1px;
@@ -437,7 +443,7 @@
   word-break: normal;
   pointer-events: none;
 }
-.hiermark-editor .collaboration-cursor__label {
+.hiermark-editor .collaboration-carets__label {
   position: absolute;
   top: -1.45em;
   left: -1px;
@@ -500,6 +506,11 @@
   justify-content: flex-end;
   gap: 4px;
   pointer-events: none;
+  /* Paint the branch markers ABOVE the canvas connector SVG (which is
+     z-index:1) so the edges drawn from each child chip pass UNDER the markers
+     instead of covering the adjacent ones. Harmless in the standalone editor
+     (no connectors there). */
+  z-index: 2;
 }
 .hiermark-block-gutter-affordances > * {
   pointer-events: auto;
