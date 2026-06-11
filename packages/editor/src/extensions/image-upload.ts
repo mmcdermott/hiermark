@@ -2,11 +2,11 @@ import { Extension } from "@tiptap/core";
 import type { EditorView } from "@tiptap/pm/view";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 
-import type { HamImageUploadHandler, HamUploadedImage } from "../types";
+import type { HiermarkImageUploadHandler, HiermarkUploadedImage } from "../types";
 
 export interface ImageUploadContext {
   /** Host-provided upload: decides where bytes are stored, returns the `src`. */
-  upload: HamImageUploadHandler | null;
+  upload: HiermarkImageUploadHandler | null;
   /** Surface the upload belongs to (passed through to the handler). */
   surfaceId: string;
   /** Reports an upload rejection so the host can toast/log it. */
@@ -17,7 +17,7 @@ export interface ImageUploadOptions {
   getContext: () => ImageUploadContext | null;
 }
 
-export const imageUploadKey = new PluginKey("hamImageUpload");
+export const imageUploadKey = new PluginKey("hiermarkImageUpload");
 
 /** Files whose type is an image (drag-drop / paste / file picker all funnel here). */
 function imageFilesFrom(list: FileList | File[] | null | undefined): File[] {
@@ -39,7 +39,7 @@ async function insertUploads(
   if (!ctx.upload) return;
   let at = pos;
   for (const file of files) {
-    let uploaded: HamUploadedImage | null;
+    let uploaded: HiermarkUploadedImage | null;
     try {
       uploaded = await ctx.upload(file, { surfaceId: ctx.surfaceId });
     } catch (error) {
@@ -67,13 +67,13 @@ async function insertUploads(
 
 /**
  * Routes image bytes from paste, drag-drop, and the programmatic picker through
- * a host {@link HamImageUploadHandler}, so the editor never decides how images
+ * a host {@link HiermarkImageUploadHandler}, so the editor never decides how images
  * are stored — the host returns a `src` (an uploaded URL, an object URL, a
  * base64 data URI, …) and the editor inserts a standard image node (which
  * round-trips to `![alt](src)` markdown).
  */
 export const ImageUpload = Extension.create<ImageUploadOptions>({
-  name: "hamImageUpload",
+  name: "hiermarkImageUpload",
 
   addOptions() {
     return { getContext: () => null };
@@ -120,7 +120,7 @@ export const ImageUpload = Extension.create<ImageUploadOptions>({
  * through the editor's configured handler and insert them at the cursor. Shares
  * the exact path used by paste/drop.
  */
-export function uploadHamImages(
+export function uploadHiermarkImages(
   view: EditorView,
   ctx: ImageUploadContext,
   files: FileList | File[],

@@ -11,17 +11,17 @@ import {
 } from "@floating-ui/react";
 import { useEffect } from "react";
 
-import type { HamAnnotationHit, HamAnnotationType } from "../types";
+import type { HiermarkAnnotationHit, HiermarkAnnotationType } from "../types";
 
 export interface OpenAnnotation {
-  hit: HamAnnotationHit;
+  hit: HiermarkAnnotationHit;
   /** The live annotation element, so the popover tracks scroll/layout shifts. */
   element: HTMLElement;
 }
 
 export interface AnnotationPopoverProps<Ctx = unknown> {
   open: OpenAnnotation | null;
-  type: HamAnnotationType<Ctx> | undefined;
+  type: HiermarkAnnotationType<Ctx> | undefined;
   context: Ctx;
   onClose: () => void;
 }
@@ -67,7 +67,7 @@ export function AnnotationPopover<Ctx = unknown>({
       <div
         ref={refs.setFloating}
         style={floatingStyles}
-        className="ham-annotation-popover"
+        className="hiermark-annotation-popover"
         {...getFloatingProps()}
       >
         <Render hit={open.hit} context={context} close={onClose} />

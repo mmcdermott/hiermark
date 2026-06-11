@@ -1,22 +1,22 @@
 # Phase 5 — Documentation site + GitHub Pages
 
-> **Goal:** an example static site (GitHub Pages) that shows what HAM is and how
+> **Goal:** an example static site (GitHub Pages) that shows what Hiermark is and how
 > to use it, with live interactive demos.
 
 ## What was built
 
 A Vite + React documentation site in `apps/docs`, deployed to
-**[mmcdermott.github.io/ham](https://mmcdermott.github.io/ham/)** via the existing
+**[mmcdermott.github.io/ham](https://mmcdermott.github.io/hiermark/)** via the existing
 `deploy-docs.yml` workflow. It consumes the packages as a real installed consumer
-(through their built `dist`), importing `@ham/editor/styles.css` and
-`@ham/canvas/styles.css`.
+(through their built `dist`), importing `@hiermark/editor/styles.css` and
+`@hiermark/canvas/styles.css`.
 
 **Shell** — a sidebar-navigated, hash-routed single page with three groups:
 Guide, Live demos, Reference.
 
 **Pages**
 
-- **What is HAM?** — the model, the editor/canvas split, why two views of one tree.
+- **What is Hiermark?** — the model, the editor/canvas split, why two views of one tree.
 - **Getting started** — install, single-surface usage, the controlled canvas +
   handlers, and collaboration config, all as copy-pasteable snippets.
 - **API reference** — the headline exports of each package, tagged by kind.
@@ -29,11 +29,11 @@ Guide, Live demos, Reference.
   by an in-memory host (`useDemoCanvas`) that implements the real handler contract.
 - **Decompose a paper** — progressive decomposition from a single thesis paragraph.
 - **Collaboration** — two editors sharing one in-memory Yjs document (a no-server
-  runtime injected via `HamCollaborationConfig.runtime`) converging live.
+  runtime injected via `HiermarkCollaborationConfig.runtime`) converging live.
 
 **`useDemoCanvas`** — a reusable in-memory canvas host (surfaces + edges in state,
 create/sibling/reorder/delete/save handlers) that doubles as a worked example of
-how a host wires HAM up.
+how a host wires Hiermark up.
 
 ## Tests (5 smoke tests; 91 total)
 
@@ -49,7 +49,7 @@ pnpm typecheck           ✓  editor, canvas, docs
 pnpm lint                ✓
 pnpm test                ✓  editor 60, canvas 26, docs 5
 pnpm format:check        ✓
-pnpm -F @ham/docs build  ✓  static site → apps/docs/dist
+pnpm -F @hiermark/docs build  ✓  static site → apps/docs/dist
 ```
 
 ## Deferred (with rationale)

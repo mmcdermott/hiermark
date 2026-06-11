@@ -3,10 +3,10 @@ import type { Fragment, Node as PMNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey, type Transaction } from "@tiptap/pm/state";
 
 import { generateBlockId } from "../id";
-import { DEFAULT_HAM_BLOCK_TYPES } from "../snapshot/blockTreePolicy";
+import { DEFAULT_HIERMARK_BLOCK_TYPES } from "../snapshot/blockTreePolicy";
 
 export interface BlockIdOptions {
-  /** Node types that receive a stable `dataBlockId`. Defaults to the HAM block types. */
+  /** Node types that receive a stable `dataBlockId`. Defaults to the Hiermark block types. */
   types: string[];
   /** Id generator; defaults to `blk_<nanoid>`. */
   generate: () => string;
@@ -172,11 +172,11 @@ function stepMayAffectIds(step: unknown, types: Set<string>): boolean {
  *  - ids are immutable and never remapped after the host persists them.
  */
 export const BlockId = Extension.create<BlockIdOptions>({
-  name: "hamBlockId",
+  name: "hiermarkBlockId",
 
   addOptions() {
     return {
-      types: [...DEFAULT_HAM_BLOCK_TYPES],
+      types: [...DEFAULT_HIERMARK_BLOCK_TYPES],
       generate: generateBlockId,
     };
   },
@@ -188,7 +188,7 @@ export const BlockId = Extension.create<BlockIdOptions>({
       tr.setMeta("addToHistory", false);
       // Mark the initial stamp so the host's onChange isn't fired for mount
       // mechanics (it still refreshes snapshots — ids matter to consumers).
-      tr.setMeta("hamInitialBlockIdStamp", true);
+      tr.setMeta("hiermarkInitialBlockIdStamp", true);
       this.editor.view.dispatch(tr);
     }
   },
@@ -215,7 +215,7 @@ export const BlockId = Extension.create<BlockIdOptions>({
     const generate = this.options.generate;
     return [
       new Plugin({
-        key: new PluginKey("hamBlockId"),
+        key: new PluginKey("hiermarkBlockId"),
         appendTransaction(transactions, _oldState, newState) {
           if (!transactions.some((t) => t.docChanged)) return null;
           // The full-doc dedup walk is only needed when a transaction inserted

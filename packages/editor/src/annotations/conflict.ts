@@ -1,12 +1,12 @@
-import type { HamAnnotationHit, HamAnnotationPlacement } from "../types";
+import type { HiermarkAnnotationHit, HiermarkAnnotationPlacement } from "../types";
 
 export interface HitMeta {
   priority: number;
-  placement: HamAnnotationPlacement;
+  placement: HiermarkAnnotationPlacement;
   opaqueBlock?: boolean;
 }
 
-function rangeLen(h: HamAnnotationHit): number {
+function rangeLen(h: HiermarkAnnotationHit): number {
   return h.from != null && h.to != null ? h.to - h.from : 0;
 }
 
@@ -21,9 +21,9 @@ function rangeLen(h: HamAnnotationHit): number {
  * Pure and order-stable for the same input.
  */
 export function resolveHits(
-  hits: HamAnnotationHit[],
+  hits: HiermarkAnnotationHit[],
   metaOf: (type: string) => HitMeta,
-): HamAnnotationHit[] {
+): HiermarkAnnotationHit[] {
   const sorted = [...hits].sort((a, b) => {
     const ma = metaOf(a.type);
     const mb = metaOf(b.type);
@@ -43,7 +43,7 @@ export function resolveHits(
   }
 
   const acceptedInline = new Map<string, Array<[number, number]>>();
-  const accepted: HamAnnotationHit[] = [];
+  const accepted: HiermarkAnnotationHit[] = [];
 
   for (const h of sorted) {
     const m = metaOf(h.type);

@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import { HamCanvas } from "../src/HamCanvas";
-import type { HamCanvasEditorDefaults, HamCanvasHandle, HamSurface } from "../src/types";
+import { HiermarkCanvas } from "../src/HiermarkCanvas";
+import type { HiermarkCanvasEditorDefaults, HiermarkCanvasHandle, HiermarkSurface } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
   (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
 });
 
-const surface = (id: string, markdown: string): HamSurface => ({
+const surface = (id: string, markdown: string): HiermarkSurface => ({
   id,
   rootBlockId: `${id}_root`,
   content: { kind: "markdown", markdown },
@@ -17,7 +17,7 @@ const surface = (id: string, markdown: string): HamSurface => ({
 describe("read-only canvas (no create handler)", () => {
   it("mounts without createSurfaceFromBlock and shows no branch affordances", async () => {
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root\n\nA paragraph.\n\n## Section\n\nMore.") }}
         branchEdges={[]}
@@ -26,28 +26,28 @@ describe("read-only canvas (no create handler)", () => {
       />,
     );
     await waitFor(() => expect(container.querySelector(".tiptap")).not.toBeNull());
-    expect(container.querySelector(".ham-branch-button")).toBeNull();
+    expect(container.querySelector(".hiermark-branch-button")).toBeNull();
   });
 });
 
 describe("editorDefaults is curated", () => {
   it("rejects canvas-owned props at the type level and passes real defaults through", async () => {
-    const defaults: HamCanvasEditorDefaults = {
+    const defaults: HiermarkCanvasEditorDefaults = {
       ariaLabel: "Custom label",
       bubbleMenu: false,
     };
     // @ts-expect-error — `value` is canvas-owned (content comes from `surfaces`)
-    const bad1: HamCanvasEditorDefaults = { value: { kind: "markdown", markdown: "x" } };
+    const bad1: HiermarkCanvasEditorDefaults = { value: { kind: "markdown", markdown: "x" } };
     // @ts-expect-error — `onChange` is canvas-owned (wired to autosave)
-    const bad2: HamCanvasEditorDefaults = { onChange: () => {} };
+    const bad2: HiermarkCanvasEditorDefaults = { onChange: () => {} };
     // @ts-expect-error — `onReady` is canvas-owned (handle registry)
-    const bad3: HamCanvasEditorDefaults = { onReady: () => {} };
+    const bad3: HiermarkCanvasEditorDefaults = { onReady: () => {} };
     void bad1;
     void bad2;
     void bad3;
 
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root") }}
         branchEdges={[]}
@@ -62,9 +62,9 @@ describe("editorDefaults is curated", () => {
   });
 });
 
-describe("HamCanvasHandle.focusBlock", () => {
+describe("HiermarkCanvasHandle.focusBlock", () => {
   it("moves the caret into the requested block of the active surface", async () => {
-    let handle: HamCanvasHandle | null = null;
+    let handle: HiermarkCanvasHandle | null = null;
     const json = {
       type: "doc",
       content: [
@@ -81,7 +81,7 @@ describe("HamCanvasHandle.focusBlock", () => {
       ],
     };
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{
           s_root: {
@@ -103,7 +103,7 @@ describe("HamCanvasHandle.focusBlock", () => {
     handle!.focusBlock("s_root", "blk_b");
     await waitFor(() => {
       // The caret block gets the active styling via the gutter decoration.
-      const active = container.querySelector(".ham-block-active");
+      const active = container.querySelector(".hiermark-block-active");
       expect(active?.getAttribute("data-block-id")).toBe("blk_b");
     });
   });

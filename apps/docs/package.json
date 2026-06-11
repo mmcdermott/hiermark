@@ -1,8 +1,8 @@
 {
-  "name": "@ham/docs",
+  "name": "@hiermark/docs",
   "version": "0.1.0",
   "private": true,
-  "description": "Documentation site and live playground for the HAM packages.",
+  "description": "Documentation site and live playground for the Hiermark packages.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,8 +13,8 @@
     "test:run": "vitest run"
   },
   "dependencies": {
-    "@ham/canvas": "workspace:^",
-    "@ham/editor": "workspace:^",
+    "@hiermark/canvas": "workspace:^",
+    "@hiermark/editor": "workspace:^",
     "react": "^19",
     "react-dom": "^19",
     "y-protocols": "^1",

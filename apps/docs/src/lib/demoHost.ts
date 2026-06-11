@@ -1,16 +1,16 @@
 import { useRef, useState } from "react";
-import type { HamBranchEdge, HamCanvasHandlers, HamSurface, HamSurfaceId } from "@ham/canvas";
+import type { HiermarkBranchEdge, HiermarkCanvasHandlers, HiermarkSurface, HiermarkSurfaceId } from "@hiermark/canvas";
 
 let counter = 0;
 const uid = (prefix: string) => `${prefix}_${(counter++).toString(36)}`;
 
 export interface DemoCanvasState {
-  surfaces: Record<HamSurfaceId, HamSurface>;
-  branchEdges: HamBranchEdge[];
+  surfaces: Record<HiermarkSurfaceId, HiermarkSurface>;
+  branchEdges: HiermarkBranchEdge[];
 }
 
 export interface DemoCanvas extends DemoCanvasState {
-  handlers: HamCanvasHandlers;
+  handlers: HiermarkCanvasHandlers;
   reset: () => void;
   /**
    * Bumps on every reset — pass as a React `key` to the canvas so its
@@ -23,13 +23,13 @@ export interface DemoCanvas extends DemoCanvasState {
 
 /**
  * A tiny in-memory host for the live canvas demos: it owns surfaces + edges in
- * React state and implements the HAM canvas handlers (create / sibling /
+ * React state and implements the Hiermark canvas handlers (create / sibling /
  * reorder / delete / save). This is exactly the shape a real app provides — the
  * packages call these handlers; the host persists or rejects.
  */
 export function useDemoCanvas(initial: DemoCanvasState): DemoCanvas {
-  const [surfaces, setSurfaces] = useState<Record<HamSurfaceId, HamSurface>>(initial.surfaces);
-  const [branchEdges, setEdges] = useState<HamBranchEdge[]>(initial.branchEdges);
+  const [surfaces, setSurfaces] = useState<Record<HiermarkSurfaceId, HiermarkSurface>>(initial.surfaces);
+  const [branchEdges, setEdges] = useState<HiermarkBranchEdge[]>(initial.branchEdges);
   const edgesRef = useRef(branchEdges);
   edgesRef.current = branchEdges;
 
@@ -40,7 +40,7 @@ export function useDemoCanvas(initial: DemoCanvasState): DemoCanvas {
     opts?: { order?: number; shiftedSiblingOrders?: Record<string, number> },
   ) => {
     const id = uid("s");
-    const surface: HamSurface = {
+    const surface: HiermarkSurface = {
       id,
       rootBlockId: uid("blk"),
       title,
@@ -53,7 +53,7 @@ export function useDemoCanvas(initial: DemoCanvasState): DemoCanvas {
       edgesRef.current.filter(
         (e) => e.fromSurfaceId === fromSurfaceId && e.fromBlockId === fromBlockId,
       ).length;
-    const edge: HamBranchEdge = {
+    const edge: HiermarkBranchEdge = {
       id: uid("e"),
       fromSurfaceId,
       fromBlockId,
@@ -73,7 +73,7 @@ export function useDemoCanvas(initial: DemoCanvasState): DemoCanvas {
     return { surface, edge, activate: true as const };
   };
 
-  const handlers: HamCanvasHandlers = {
+  const handlers: HiermarkCanvasHandlers = {
     createSurfaceFromBlock: async (event) =>
       makeChild(event.sourceSurfaceId, event.sourceBlockId, event.suggestedTitle || "New branch"),
     createSiblingSurface: async (event) =>

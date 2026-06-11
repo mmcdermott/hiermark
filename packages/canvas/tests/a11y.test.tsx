@@ -2,8 +2,8 @@ import { axe } from "vitest-axe";
 import * as axeMatchers from "vitest-axe/matchers";
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import { HamCanvas } from "../src/HamCanvas";
-import type { HamCanvasHandlers, HamSurface } from "../src/types";
+import { HiermarkCanvas } from "../src/HiermarkCanvas";
+import type { HiermarkCanvasHandlers, HiermarkSurface } from "../src/types";
 
 expect.extend(axeMatchers);
 
@@ -17,13 +17,13 @@ beforeAll(() => {
   (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
 });
 
-const surface = (id: string, markdown: string, title?: string): HamSurface => ({
+const surface = (id: string, markdown: string, title?: string): HiermarkSurface => ({
   id,
   rootBlockId: `${id}_root`,
   ...(title ? { title } : {}),
   content: { kind: "markdown", markdown },
 });
-const handlers: HamCanvasHandlers = { createSurfaceFromBlock: vi.fn() };
+const handlers: HiermarkCanvasHandlers = { createSurfaceFromBlock: vi.fn() };
 
 // jsdom can't compute layout, so color-contrast is not assertable here.
 const axeOpts = { rules: { "color-contrast": { enabled: false } } };
@@ -31,7 +31,7 @@ const axeOpts = { rules: { "color-contrast": { enabled: false } } };
 describe("canvas a11y (axe)", () => {
   it("a canvas with a branched tree has no axe violations", async () => {
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{
           s_root: surface("s_root", "# Root\n\n## A\n\n## B", "Root"),
@@ -65,9 +65,9 @@ describe("canvas a11y (axe)", () => {
 
   it("the empty-canvas state has no axe violations", async () => {
     const { container } = render(
-      <HamCanvas rootSurfaceId="missing" surfaces={{}} branchEdges={[]} handlers={handlers} />,
+      <HiermarkCanvas rootSurfaceId="missing" surfaces={{}} branchEdges={[]} handlers={handlers} />,
     );
-    await waitFor(() => expect(container.querySelector(".ham-canvas-empty")).not.toBeNull());
+    await waitFor(() => expect(container.querySelector(".hiermark-canvas-empty")).not.toBeNull());
     const results = await axe(container, axeOpts);
     expect(results).toHaveNoViolations();
   });

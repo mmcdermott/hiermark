@@ -1,4 +1,4 @@
-import type { HamBranchEdge, HamSurfaceId } from "../types";
+import type { HiermarkBranchEdge, HiermarkSurfaceId } from "../types";
 
 /**
  * The edge ids of one sibling group — branches sharing a `(fromSurfaceId,
@@ -6,8 +6,8 @@ import type { HamBranchEdge, HamSurfaceId } from "../types";
  * captures for reorder undo/redo (re-applying a stored order reverts a drag).
  */
 export function siblingEdgeOrder<EdgeMeta = unknown>(
-  edges: HamBranchEdge<EdgeMeta>[],
-  fromSurfaceId: HamSurfaceId,
+  edges: HiermarkBranchEdge<EdgeMeta>[],
+  fromSurfaceId: HiermarkSurfaceId,
   fromBlockId: string,
 ): string[] {
   return edges

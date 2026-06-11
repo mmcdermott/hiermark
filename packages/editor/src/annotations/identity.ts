@@ -1,6 +1,6 @@
 import { normalize } from "../markdown/checklist";
 import { fnv1a64Hex } from "../markdown/hash";
-import type { HamBlockId } from "../types";
+import type { HiermarkBlockId } from "../types";
 
 /**
  * Define annotation identity once, block-anchored, so the live editor and the
@@ -10,7 +10,7 @@ import type { HamBlockId } from "../types";
  */
 export function annotationId(
   type: string,
-  blockId: HamBlockId,
+  blockId: HiermarkBlockId,
   data: unknown,
   from?: number,
 ): string {

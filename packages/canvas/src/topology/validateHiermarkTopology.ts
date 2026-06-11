@@ -1,6 +1,6 @@
-import type { HamBranchEdge, HamBranchEdgeId, HamSurface, HamSurfaceId } from "../types";
+import type { HiermarkBranchEdge, HiermarkBranchEdgeId, HiermarkSurface, HiermarkSurfaceId } from "../types";
 
-export type HamTopologyIssueKind =
+export type HiermarkTopologyIssueKind =
   | "missing-root"
   | "missing-surface"
   | "duplicate-incoming"
@@ -8,23 +8,23 @@ export type HamTopologyIssueKind =
   | "cycle"
   | "unreachable";
 
-export interface HamTopologyIssue {
-  kind: HamTopologyIssueKind;
+export interface HiermarkTopologyIssue {
+  kind: HiermarkTopologyIssueKind;
   /** The surface the issue is about, when applicable. */
-  surfaceId?: HamSurfaceId;
+  surfaceId?: HiermarkSurfaceId;
   /** The edge(s) involved, when applicable. */
-  edgeIds?: HamBranchEdgeId[];
+  edgeIds?: HiermarkBranchEdgeId[];
   message: string;
 }
 
 export interface ValidateTopologyInput<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  rootSurfaceId: HamSurfaceId;
-  surfaces: Record<HamSurfaceId, HamSurface<SurfaceMeta>>;
-  branchEdges: HamBranchEdge<EdgeMeta>[];
+  rootSurfaceId: HiermarkSurfaceId;
+  surfaces: Record<HiermarkSurfaceId, HiermarkSurface<SurfaceMeta>>;
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[];
 }
 
 /**
- * Validate a HAM topology against the tree invariant (spec §2). Pure and
+ * Validate a Hiermark topology against the tree invariant (spec §2). Pure and
  * synchronous, so a host can call it on save / in dev to surface problems the
  * tolerant projection would otherwise hide:
  *
@@ -40,19 +40,19 @@ export interface ValidateTopologyInput<SurfaceMeta = unknown, EdgeMeta = unknown
  *
  * @example A clean tree reports nothing.
  * ```ts
- * validateHamTopology({
+ * validateHiermarkTopology({
  *   rootSurfaceId: "r",
  *   surfaces: { r: { id: "r", rootBlockId: "rb", content: { kind: "markdown", markdown: "" } } },
  *   branchEdges: [],
  * }); // => []
  * ```
  */
-export function validateHamTopology<SurfaceMeta = unknown, EdgeMeta = unknown>(
+export function validateHiermarkTopology<SurfaceMeta = unknown, EdgeMeta = unknown>(
   input: ValidateTopologyInput<SurfaceMeta, EdgeMeta>,
-): HamTopologyIssue[] {
+): HiermarkTopologyIssue[] {
   const { rootSurfaceId, surfaces, branchEdges } = input;
-  const issues: HamTopologyIssue[] = [];
-  const has = (id: HamSurfaceId) => Object.prototype.hasOwnProperty.call(surfaces, id);
+  const issues: HiermarkTopologyIssue[] = [];
+  const has = (id: HiermarkSurfaceId) => Object.prototype.hasOwnProperty.call(surfaces, id);
 
   if (!has(rootSurfaceId)) {
     issues.push({
@@ -81,7 +81,7 @@ export function validateHamTopology<SurfaceMeta = unknown, EdgeMeta = unknown>(
   }
 
   // Duplicate incoming edges (the tree invariant: one parent per surface).
-  const incomingBySurface = new Map<HamSurfaceId, HamBranchEdgeId[]>();
+  const incomingBySurface = new Map<HiermarkSurfaceId, HiermarkBranchEdgeId[]>();
   for (const e of branchEdges) {
     const list = incomingBySurface.get(e.toSurfaceId) ?? [];
     list.push(e.id);
@@ -102,13 +102,13 @@ export function validateHamTopology<SurfaceMeta = unknown, EdgeMeta = unknown>(
   // is tracked alongside rather than re-split out of the key.
   const orderSeen = new Map<
     string,
-    { fromSurfaceId: HamSurfaceId; byOrder: Map<number, HamBranchEdgeId[]> }
+    { fromSurfaceId: HiermarkSurfaceId; byOrder: Map<number, HiermarkBranchEdgeId[]> }
   >();
   for (const e of branchEdges) {
     const anchor = `${e.fromSurfaceId}\0${e.fromBlockId}`;
     const group = orderSeen.get(anchor) ?? {
       fromSurfaceId: e.fromSurfaceId,
-      byOrder: new Map<number, HamBranchEdgeId[]>(),
+      byOrder: new Map<number, HiermarkBranchEdgeId[]>(),
     };
     group.byOrder.set(e.order, [...(group.byOrder.get(e.order) ?? []), e.id]);
     orderSeen.set(anchor, group);
@@ -127,15 +127,15 @@ export function validateHamTopology<SurfaceMeta = unknown, EdgeMeta = unknown>(
   }
 
   // Cycle detection over the surface graph (fromSurface → toSurface).
-  const adjacency = new Map<HamSurfaceId, HamSurfaceId[]>();
+  const adjacency = new Map<HiermarkSurfaceId, HiermarkSurfaceId[]>();
   for (const e of branchEdges) {
     const list = adjacency.get(e.fromSurfaceId) ?? [];
     list.push(e.toSurfaceId);
     adjacency.set(e.fromSurfaceId, list);
   }
-  const state = new Map<HamSurfaceId, 0 | 1 | 2>(); // 0=unseen 1=in-stack 2=done
+  const state = new Map<HiermarkSurfaceId, 0 | 1 | 2>(); // 0=unseen 1=in-stack 2=done
   let cycleFound = false;
-  const visit = (id: HamSurfaceId) => {
+  const visit = (id: HiermarkSurfaceId) => {
     if (cycleFound) return;
     state.set(id, 1);
     for (const next of adjacency.get(id) ?? []) {
@@ -161,7 +161,7 @@ export function validateHamTopology<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   // Reachability from the root (skip if cyclic — traversal already partial).
   if (!cycleFound && has(rootSurfaceId)) {
-    const reachable = new Set<HamSurfaceId>([rootSurfaceId]);
+    const reachable = new Set<HiermarkSurfaceId>([rootSurfaceId]);
     const queue = [rootSurfaceId];
     while (queue.length) {
       const cur = queue.shift()!;

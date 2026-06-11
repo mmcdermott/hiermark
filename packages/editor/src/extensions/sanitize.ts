@@ -145,7 +145,7 @@ function buildSanitizeTr(
  * (stored-XSS). `onCreate` sanitizes the seed; the plugin sanitizes every edit.
  */
 export const Sanitize = Extension.create<SanitizeOptions>({
-  name: "hamSanitize",
+  name: "hiermarkSanitize",
 
   addOptions() {
     return {};
@@ -163,7 +163,7 @@ export const Sanitize = Extension.create<SanitizeOptions>({
     const allowHref = this.options.isAllowedLinkHref ?? isSafeUri;
     return [
       new Plugin({
-        key: new PluginKey("hamSanitize"),
+        key: new PluginKey("hiermarkSanitize"),
         appendTransaction(transactions, _oldState, newState) {
           if (!transactions.some((t) => t.docChanged)) return null;
           const link = newState.schema.marks.link;

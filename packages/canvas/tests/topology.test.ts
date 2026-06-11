@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
-  projectHamColumns,
+  projectHiermarkColumns,
   buildProjectionContext,
   projectColumnsFromContext,
-} from "../src/topology/projectHamColumns";
-import { getHamActivePath } from "../src/topology/getHamActivePath";
+} from "../src/topology/projectHiermarkColumns";
+import { getHiermarkActivePath } from "../src/topology/getHiermarkActivePath";
 import { buildIndices, collectDescendants } from "../src/topology/buildIndices";
 import {
   areSameAnchorSiblings,
@@ -15,17 +15,17 @@ import {
 } from "../src/topology/reorderBranchSiblings";
 import { pickDisplayMode } from "../src/topology/pathState";
 import { resolveLayout } from "../src/defaults";
-import type { HamBranchEdge, HamSurface, HamSurfaceId } from "../src/types";
-import type { HamSurfaceSnapshot } from "@ham/editor";
+import type { HiermarkBranchEdge, HiermarkSurface, HiermarkSurfaceId } from "../src/types";
+import type { HiermarkSurfaceSnapshot } from "@hiermark/editor";
 
-const surface = (id: string, rootBlockId = `${id}_root`): HamSurface => ({
+const surface = (id: string, rootBlockId = `${id}_root`): HiermarkSurface => ({
   id,
   rootBlockId,
   content: { kind: "markdown", markdown: `# ${id}` },
 });
 
-function snapshot(surfaceId: string, blockOrder: string[]): HamSurfaceSnapshot {
-  const blocks: HamSurfaceSnapshot["blocks"] = {};
+function snapshot(surfaceId: string, blockOrder: string[]): HiermarkSurfaceSnapshot {
+  const blocks: HiermarkSurfaceSnapshot["blocks"] = {};
   blockOrder.forEach((id, i) => {
     blocks[id] = {
       id,
@@ -43,22 +43,22 @@ function snapshot(surfaceId: string, blockOrder: string[]): HamSurfaceSnapshot {
 
 // §7.2 worked example: root has blocks A and B; branches off each, plus a second
 // branch from A (a sibling).
-const surfaces: Record<HamSurfaceId, HamSurface> = {
+const surfaces: Record<HiermarkSurfaceId, HiermarkSurface> = {
   s_root: surface("s_root", "blk_root"),
   s_a: surface("s_a"),
   s_a2: surface("s_a2"),
   s_b: surface("s_b"),
 };
-const edges: HamBranchEdge[] = [
+const edges: HiermarkBranchEdge[] = [
   { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
   { id: "e_a2", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a2", order: 1 },
   { id: "e_b", fromSurfaceId: "s_root", fromBlockId: "blk_B", toSurfaceId: "s_b", order: 0 },
 ];
 const snapshots = { s_root: snapshot("s_root", ["blk_root", "blk_A", "blk_B"]) };
 
-describe("projectHamColumns", () => {
+describe("projectHiermarkColumns", () => {
   it("places two branches from two different blocks in the next column", () => {
-    const cols = projectHamColumns({
+    const cols = projectHiermarkColumns({
       rootSurfaceId: "s_root",
       surfaces,
       branchEdges: [edges[0]!, edges[2]!], // A → s_a, B → s_b
@@ -75,7 +75,7 @@ describe("projectHamColumns", () => {
   });
 
   it("orders same-block siblings by edge order, ahead of a later block's branch", () => {
-    const cols = projectHamColumns({
+    const cols = projectHiermarkColumns({
       rootSurfaceId: "s_root",
       surfaces,
       branchEdges: edges, // A→s_a(0), A→s_a2(1), B→s_b(0)
@@ -90,7 +90,7 @@ describe("projectHamColumns", () => {
     const reordered = edges.map((e) =>
       e.id === "e_a" ? { ...e, order: 1 } : e.id === "e_a2" ? { ...e, order: 0 } : e,
     );
-    const cols = projectHamColumns({
+    const cols = projectHiermarkColumns({
       rootSurfaceId: "s_root",
       surfaces,
       branchEdges: reordered,
@@ -101,7 +101,7 @@ describe("projectHamColumns", () => {
   });
 
   it("marks active, ancestor, sibling, and unrelated path states", () => {
-    const cols = projectHamColumns({
+    const cols = projectHiermarkColumns({
       rootSurfaceId: "s_root",
       surfaces,
       branchEdges: edges,
@@ -117,11 +117,11 @@ describe("projectHamColumns", () => {
   });
 
   it("marks descendants of the active surface", () => {
-    const deepEdges: HamBranchEdge[] = [
+    const deepEdges: HiermarkBranchEdge[] = [
       ...edges,
       { id: "e_deep", fromSurfaceId: "s_a", fromBlockId: "blk_x", toSurfaceId: "s_deep", order: 0 },
     ];
-    const cols = projectHamColumns({
+    const cols = projectHiermarkColumns({
       rootSurfaceId: "s_root",
       surfaces: { ...surfaces, s_deep: surface("s_deep") },
       branchEdges: deepEdges,
@@ -133,11 +133,11 @@ describe("projectHamColumns", () => {
   });
 
   it("tolerates a stale anchor (block missing from snapshot) by sorting it last", () => {
-    const staleEdges: HamBranchEdge[] = [
+    const staleEdges: HiermarkBranchEdge[] = [
       { id: "e_stale", fromSurfaceId: "s_root", fromBlockId: "gone", toSurfaceId: "s_a", order: 0 },
       { id: "e_b", fromSurfaceId: "s_root", fromBlockId: "blk_B", toSurfaceId: "s_b", order: 0 },
     ];
-    const cols = projectHamColumns({
+    const cols = projectHiermarkColumns({
       rootSurfaceId: "s_root",
       surfaces,
       branchEdges: staleEdges,
@@ -150,15 +150,15 @@ describe("projectHamColumns", () => {
 
 describe("projection split (buildProjectionContext / projectColumnsFromContext)", () => {
   const input = {
-    rootSurfaceId: "s_root" as HamSurfaceId,
+    rootSurfaceId: "s_root" as HiermarkSurfaceId,
     surfaces,
     branchEdges: edges,
     snapshotsBySurfaceId: snapshots,
-    activeSurfaceId: "s_a" as HamSurfaceId,
+    activeSurfaceId: "s_a" as HiermarkSurfaceId,
   };
 
-  it("composes to exactly the same columns as projectHamColumns", () => {
-    const direct = projectHamColumns(input);
+  it("composes to exactly the same columns as projectHiermarkColumns", () => {
+    const direct = projectHiermarkColumns(input);
     const split = projectColumnsFromContext(buildProjectionContext(input), input);
     expect(split).toEqual(direct);
   });
@@ -213,9 +213,9 @@ describe("pickDisplayMode (collapse preserves active path)", () => {
   });
 });
 
-describe("getHamActivePath", () => {
+describe("getHiermarkActivePath", () => {
   it("walks root→active and records edges + anchors", () => {
-    const path = getHamActivePath({
+    const path = getHiermarkActivePath({
       rootSurfaceId: "s_root",
       activeSurfaceId: "s_a",
       branchEdges: edges,
@@ -226,7 +226,7 @@ describe("getHamActivePath", () => {
   });
 
   it("clamps an orphan active surface to itself", () => {
-    const path = getHamActivePath({
+    const path = getHiermarkActivePath({
       rootSurfaceId: "s_root",
       activeSurfaceId: "orphan",
       branchEdges: edges,
@@ -235,11 +235,11 @@ describe("getHamActivePath", () => {
   });
 
   it("does not loop on cyclic edge data", () => {
-    const cyclic: HamBranchEdge[] = [
+    const cyclic: HiermarkBranchEdge[] = [
       { id: "e1", fromSurfaceId: "x", fromBlockId: "b", toSurfaceId: "y", order: 0 },
       { id: "e2", fromSurfaceId: "y", fromBlockId: "b", toSurfaceId: "x", order: 0 },
     ];
-    const path = getHamActivePath({
+    const path = getHiermarkActivePath({
       rootSurfaceId: "s_root",
       activeSurfaceId: "x",
       branchEdges: cyclic,
@@ -292,7 +292,7 @@ describe("reorder siblings (same-anchor only)", () => {
 
 describe("computeSiblingInsert (positioned add-sibling)", () => {
   // A sibling group of three children at dense orders 0, 1, 2.
-  const group: HamBranchEdge[] = [
+  const group: HiermarkBranchEdge[] = [
     { id: "c1", fromSurfaceId: "s_p", fromBlockId: "blk_B", toSurfaceId: "s1", order: 0 },
     { id: "c2", fromSurfaceId: "s_p", fromBlockId: "blk_B", toSurfaceId: "s2", order: 1 },
     { id: "c3", fromSurfaceId: "s_p", fromBlockId: "blk_B", toSurfaceId: "s3", order: 2 },
@@ -319,7 +319,7 @@ describe("computeSiblingInsert (positioned add-sibling)", () => {
 
   it("the projection places the inserted surface between its siblings", () => {
     // Apply the renumber + the new edge, then project: order must be 1,2,3.
-    const inserted: HamBranchEdge = {
+    const inserted: HiermarkBranchEdge = {
       id: "c_new",
       fromSurfaceId: "s_p",
       fromBlockId: "blk_B",

@@ -16,16 +16,16 @@ describe("fnv1a64Hex", () => {
 
 describe("stable-id grammar", () => {
   it("strips standalone and inline id comments", () => {
-    const md = "<!-- ham:block=blk_1 -->\n# Title <!-- ham:block=blk_2 -->\nbody";
+    const md = "<!-- hiermark:block=blk_1 -->\n# Title <!-- hiermark:block=blk_2 -->\nbody";
     expect(stripStableIds(md)).toBe("# Title\nbody");
   });
   it("reads the id of a given kind", () => {
-    expect(readStableId("text <!-- ham:task=t_9 -->", "task")).toBe("t_9");
-    expect(readStableId("text <!-- ham:task=t_9 -->", "block")).toBeNull();
+    expect(readStableId("text <!-- hiermark:task=t_9 -->", "task")).toBe("t_9");
+    expect(readStableId("text <!-- hiermark:task=t_9 -->", "block")).toBeNull();
   });
   it("injects an inline id, trimming trailing whitespace first", () => {
     expect(injectInlineId("- [ ] do it   ", "task", "t_1")).toBe(
-      "- [ ] do it <!-- ham:task=t_1 -->",
+      "- [ ] do it <!-- hiermark:task=t_1 -->",
     );
   });
   it("assigning an id never changes the content hash (strip-before-hash)", () => {
@@ -58,7 +58,7 @@ describe("parseChecklist", () => {
     expect(taskKey("W\\&B")).toBe(taskKey("W&B"));
   });
   it("reads an existing task id and strips it from text", () => {
-    const items = parseChecklist("- [ ] do it <!-- ham:task=t_1 -->", 3);
+    const items = parseChecklist("- [ ] do it <!-- hiermark:task=t_1 -->", 3);
     expect(items[0]!.text).toBe("do it");
     expect(items[0]!.stableId).toBe("t_1");
     expect(items[0]!.blockPosition).toBe(3);
@@ -67,15 +67,15 @@ describe("parseChecklist", () => {
 
 describe("injectTaskIds", () => {
   it("stamps ids by content key, never inside fences, never overwriting", () => {
-    const md = "- [ ] alpha\n```\n- [ ] alpha\n```\n- [ ] beta <!-- ham:task=keep -->";
+    const md = "- [ ] alpha\n```\n- [ ] alpha\n```\n- [ ] beta <!-- hiermark:task=keep -->";
     const ids = new Map([
       [taskKey("alpha"), "t_a"],
       [taskKey("beta"), "t_b"],
     ]);
     const out = injectTaskIds(md, ids).split("\n");
-    expect(out[0]).toBe("- [ ] alpha <!-- ham:task=t_a -->");
+    expect(out[0]).toBe("- [ ] alpha <!-- hiermark:task=t_a -->");
     expect(out[2]).toBe("- [ ] alpha"); // inside fence, untouched
-    expect(out[4]).toBe("- [ ] beta <!-- ham:task=keep -->"); // existing id wins
+    expect(out[4]).toBe("- [ ] beta <!-- hiermark:task=keep -->"); // existing id wins
   });
 });
 

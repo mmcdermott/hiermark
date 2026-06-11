@@ -1,16 +1,16 @@
 import type {
-  HamAnnotationHit,
-  HamAnnotationRegistry,
-  HamBlockSnapshot,
-  HamSurfaceId,
+  HiermarkAnnotationHit,
+  HiermarkAnnotationRegistry,
+  HiermarkBlockSnapshot,
+  HiermarkSurfaceId,
 } from "../types";
 import { resolveHits, type HitMeta } from "./conflict";
 
 export interface RecognizeInput<Ctx> {
-  registry: HamAnnotationRegistry<Ctx>;
-  surfaceId: HamSurfaceId;
+  registry: HiermarkAnnotationRegistry<Ctx>;
+  surfaceId: HiermarkSurfaceId;
   /** Blocks in document order. */
-  blocks: HamBlockSnapshot[];
+  blocks: HiermarkBlockSnapshot[];
   /** Full text per block (not the truncated preview). */
   textByBlockId: Record<string, string>;
   context: Ctx;
@@ -20,9 +20,9 @@ export interface RecognizeInput<Ctx> {
  * Run every registered recognizer over every block, then apply the conflict
  * policy. Pure and free of ProseMirror — fully unit-testable with plain data.
  */
-export function recognizeAnnotations<Ctx>(input: RecognizeInput<Ctx>): HamAnnotationHit[] {
+export function recognizeAnnotations<Ctx>(input: RecognizeInput<Ctx>): HiermarkAnnotationHit[] {
   const { registry, surfaceId, blocks, textByBlockId, context } = input;
-  const hits: HamAnnotationHit[] = [];
+  const hits: HiermarkAnnotationHit[] = [];
 
   for (const block of blocks) {
     const text = textByBlockId[block.id] ?? block.textPreview ?? "";

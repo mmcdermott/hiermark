@@ -3,15 +3,34 @@ updates:
   - package-ecosystem: npm
     directory: "/"
     schedule:
-      interval: weekly
+      # Monthly (was weekly) to cut PR/alert noise. Security alerts still fire
+      # immediately regardless of this cadence — this only throttles the
+      # routine version-update PRs.
+      interval: monthly
+    open-pull-requests-limit: 5
     groups:
+      # Tiptap ships its many packages in lockstep; keep them in one PR.
       tiptap:
         patterns:
           - "@tiptap/*"
+      # Batch all remaining non-major prod bumps into a single monthly PR.
+      production-minor-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      # All dev-dependency bumps (any level) into one PR.
       dev:
         dependency-type: development
-    open-pull-requests-limit: 8
+    # Major bumps fall outside every group above, so they still arrive as
+    # individual PRs and get reviewed one at a time.
+
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"

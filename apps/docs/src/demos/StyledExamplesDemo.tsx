@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { HamCanvas, type HamCanvasProps, type HamConnectorRenderProps } from "@ham/canvas";
-import { createExampleAnnotationRegistry } from "@ham/editor";
+import { HiermarkCanvas, type HiermarkCanvasProps, type HiermarkConnectorRenderProps } from "@hiermark/canvas";
+import { createExampleAnnotationRegistry } from "@hiermark/editor";
 
 import { DemoFrame } from "./DemoFrame";
 import { useDemoCanvas } from "../lib/demoHost";
 import { annotationContext, galleryCanvas } from "../lib/examples";
 
-type Registry = HamCanvasProps["annotationRegistry"];
+type Registry = HiermarkCanvasProps["annotationRegistry"];
 const useRegistry = () => useMemo(() => createExampleAnnotationRegistry() as Registry, []);
 
 /**
@@ -28,7 +28,7 @@ export function FocusSidebarDemo() {
       onReset={canvas.reset}
       height={460}
     >
-      <HamCanvas
+      <HiermarkCanvas
         key={canvas.resetToken}
         rootSurfaceId="s_root"
         surfaces={canvas.surfaces}
@@ -63,7 +63,7 @@ export function FlatManuscriptDemo() {
       onReset={canvas.reset}
       height={460}
     >
-      <HamCanvas
+      <HiermarkCanvas
         key={canvas.resetToken}
         className="theme-manuscript"
         rootSurfaceId="s_root"
@@ -86,7 +86,7 @@ export function FlatManuscriptDemo() {
 }
 
 /** Bold, themed connector for the topology map. */
-function MapConnector({ path, state }: HamConnectorRenderProps) {
+function MapConnector({ path, state }: HiermarkConnectorRenderProps) {
   const stroke = state === "active" ? "#2bb673" : state === "ancestor" ? "#37a0c4" : "#9aa6b2";
   return (
     <path
@@ -113,7 +113,7 @@ export function TopologyMapDemo() {
       onReset={canvas.reset}
       height={460}
     >
-      <HamCanvas
+      <HiermarkCanvas
         key={canvas.resetToken}
         className="theme-map"
         rootSurfaceId="s_root"

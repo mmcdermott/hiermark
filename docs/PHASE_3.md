@@ -5,11 +5,11 @@
 
 ## What was built
 
-**Two-component sync gate** — `HamEditor` now routes:
+**Two-component sync gate** — `HiermarkEditor` now routes:
 
 - **local mode** (no `collaboration.enabled`) → renders the editor directly, as
   before;
-- **collab mode** → a `CollabHamEditor` gate that owns the `Y.Doc`, opens the
+- **collab mode** → a `CollabHiermarkEditor` gate that owns the `Y.Doc`, opens the
   transport via the runtime, and **delays mounting the editor until the provider
   reports `synced`** (with `LoadingState`/`ErrorState` slots). This is the
   load-bearing pattern: ProseMirror never binds to the `Y.Doc` before the
@@ -19,12 +19,12 @@
   optional `initialSyncTimeoutMs` fallback are all handled.
 
 **`createHocuspocusCollab`** — builds a Hocuspocus-backed runtime
-(`{ ydoc, connect() }`) from `HamCollaborationConfig`; the editor owns the
-`Y.Doc`. A `HamCollaborationConfig.runtime` injection point lets hosts supply a
+(`{ ydoc, connect() }`) from `HiermarkCollaborationConfig`; the editor owns the
+`Y.Doc`. A `HiermarkCollaborationConfig.runtime` injection point lets hosts supply a
 custom transport or tests a no-network double. `flushAndDestroy` drains unsynced
 changes before destroying the provider, with a hard 3s cap.
 
-**Collaboration extensions** — `createHamEditorExtensions({ collab })` adds
+**Collaboration extensions** — `createHiermarkEditorExtensions({ collab })` adds
 `Collaboration` (bound to the `Y.Doc`) and, when the provider exposes awareness,
 `CollaborationCaret`; StarterKit's undo/redo is disabled (Yjs owns history).
 
@@ -54,7 +54,7 @@ pnpm format:check ✓
 
 ## Deferred (with rationale)
 
-- **A bundled Hocuspocus server** — HAM owns only the client; the server stays
+- **A bundled Hocuspocus server** — Hiermark owns only the client; the server stays
   host-owned (spec §15.5). The one durable server-side rule (load/persist raw
   `Uint8Array`, never a `Y.Doc`) is documented on `createHocuspocusCollab`.
 - **Live cursor rendering test** — carets need a provider awareness instance;

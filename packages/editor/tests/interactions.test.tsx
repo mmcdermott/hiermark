@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup, fireEvent } from "@testing-library/react";
 import { computeFold } from "../src/extensions/block-fold";
-import { HamEditor } from "../src/HamEditor";
+import { HiermarkEditor } from "../src/HiermarkEditor";
 import { createExampleAnnotationRegistry } from "../src/annotations/recognizers";
-import type { HamEditorHandle } from "../src/types";
+import type { HiermarkEditorHandle } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
@@ -31,10 +31,10 @@ describe("computeFold", () => {
   });
 });
 
-async function mountEditor(extra: Partial<Parameters<typeof HamEditor>[0]> = {}) {
-  let handle: HamEditorHandle | null = null;
+async function mountEditor(extra: Partial<Parameters<typeof HiermarkEditor>[0]> = {}) {
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown: "# Section A\n\nbody under A\n\n## Sub\n\nmore" }}
@@ -53,13 +53,13 @@ describe("block fold (integration)", () => {
     const { container } = await mountEditor();
     let toggle: HTMLElement | null = null;
     await waitFor(() => {
-      toggle = container.querySelector<HTMLElement>(".ham-fold-toggle");
+      toggle = container.querySelector<HTMLElement>(".hiermark-fold-toggle");
       expect(toggle).not.toBeNull();
     });
-    expect(container.querySelector(".ham-folded")).toBeNull(); // nothing folded yet
+    expect(container.querySelector(".hiermark-folded")).toBeNull(); // nothing folded yet
     fireEvent.click(toggle!);
     await waitFor(() => {
-      expect(container.querySelector(".ham-folded")).not.toBeNull(); // section hidden
+      expect(container.querySelector(".hiermark-folded")).not.toBeNull(); // section hidden
     });
   });
 
@@ -68,9 +68,9 @@ describe("block fold (integration)", () => {
     const snap = getHandle().getSnapshot();
     const heading = Object.values(snap.blocks).find((b) => b.textPreview === "Section A")!;
     getHandle().collapseBlock(heading.id);
-    await waitFor(() => expect(container.querySelector(".ham-folded")).not.toBeNull());
+    await waitFor(() => expect(container.querySelector(".hiermark-folded")).not.toBeNull());
     getHandle().expandBlock(heading.id);
-    await waitFor(() => expect(container.querySelector(".ham-folded")).toBeNull());
+    await waitFor(() => expect(container.querySelector(".hiermark-folded")).toBeNull());
   });
 });
 
@@ -82,7 +82,7 @@ describe("annotation popover", () => {
         markdown: "# Refs\n\nThe paper @vaswani2017 is seminal.",
       },
       annotations: createExampleAnnotationRegistry() as Parameters<
-        typeof HamEditor
+        typeof HiermarkEditor
       >[0]["annotations"],
       annotationContext: { references: { vaswani2017: { title: "Attention", year: 2017 } } },
     });
@@ -96,14 +96,14 @@ describe("annotation popover", () => {
 
     // The popover renders into a portal (document.body), showing the render component.
     await waitFor(() => {
-      const pop = document.querySelector(".ham-annotation-popover");
+      const pop = document.querySelector(".hiermark-annotation-popover");
       expect(pop).not.toBeNull();
       expect(pop!.textContent).toContain("vaswani2017");
     });
 
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => {
-      expect(document.querySelector(".ham-annotation-popover")).toBeNull();
+      expect(document.querySelector(".hiermark-annotation-popover")).toBeNull();
     });
   });
 });

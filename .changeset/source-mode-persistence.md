@@ -1,5 +1,5 @@
 ---
-"@ham/editor": minor
+"@hiermark/editor": minor
 ---
 
 Source mode is no longer an invisible draft buffer. While the raw-markdown

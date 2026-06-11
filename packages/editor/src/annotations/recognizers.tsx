@@ -1,22 +1,22 @@
 import { findCitations } from "../markdown/citations";
 import { findResources } from "../markdown/resources";
-import type { HamAnnotationRegistry, HamAnnotationType } from "../types";
+import type { HiermarkAnnotationRegistry, HiermarkAnnotationType } from "../types";
 import { annotationId } from "./identity";
 
 /**
  * Context shape understood by the bundled example recognizers. The framework
  * never interprets it; each recognizer reads only the keys it owns (spec §5.13).
  */
-export interface HamExampleAnnotationContext {
+export interface HiermarkExampleAnnotationContext {
   tasksByBlockId?: Record<string, unknown>;
   references?: Record<string, { title?: string; year?: number }>;
   people?: Record<string, { name?: string }>;
 }
 
-type Ctx = HamExampleAnnotationContext;
+type Ctx = HiermarkExampleAnnotationContext;
 
 /** A checklist item, rendered as a block chip carrying its sidecar task record. */
-export function createTaskAnnotation(): HamAnnotationType<Ctx> {
+export function createTaskAnnotation(): HiermarkAnnotationType<Ctx> {
   return {
     name: "task",
     priority: 100,
@@ -33,12 +33,12 @@ export function createTaskAnnotation(): HamAnnotationType<Ctx> {
         },
       ];
     },
-    render: ({ hit }) => <span className="ham-annotation-chip ham-task-chip">✓ {hit.label}</span>,
+    render: ({ hit }) => <span className="hiermark-annotation-chip hiermark-task-chip">✓ {hit.label}</span>,
   };
 }
 
 /** `@key` citation pill, resolved against `context.references`. */
-export function createCitationAnnotation(): HamAnnotationType<Ctx> {
+export function createCitationAnnotation(): HiermarkAnnotationType<Ctx> {
   return {
     name: "citation",
     priority: 100,
@@ -59,9 +59,9 @@ export function createCitationAnnotation(): HamAnnotationType<Ctx> {
       }));
     },
     inlineClass: (hit) =>
-      (hit.data as { known?: boolean })?.known ? "ham-citation-known" : "ham-citation-unknown",
+      (hit.data as { known?: boolean })?.known ? "hiermark-citation-known" : "hiermark-citation-unknown",
     render: ({ hit }) => (
-      <span className="ham-annotation-chip ham-citation-chip">@{hit.label}</span>
+      <span className="hiermark-annotation-chip hiermark-citation-chip">@{hit.label}</span>
     ),
     // Type `@` to search the project's references and insert `@key`.
     suggest: {
@@ -89,7 +89,7 @@ export function createCitationAnnotation(): HamAnnotationType<Ctx> {
  * priority than citations, so the conflict resolver keeps the mention over a
  * citation for the same range when the token is a known person.
  */
-export function createMentionAnnotation(): HamAnnotationType<Ctx> {
+export function createMentionAnnotation(): HiermarkAnnotationType<Ctx> {
   return {
     name: "mention",
     priority: 110,
@@ -108,9 +108,9 @@ export function createMentionAnnotation(): HamAnnotationType<Ctx> {
           data: context.people?.[c.key] ?? null,
         }));
     },
-    inlineClass: () => "ham-mention",
+    inlineClass: () => "hiermark-mention",
     render: ({ hit }) => (
-      <span className="ham-annotation-chip ham-mention-chip">
+      <span className="hiermark-annotation-chip hiermark-mention-chip">
         @{(hit.data as { name?: string })?.name ?? hit.label}
       </span>
     ),
@@ -135,7 +135,7 @@ export function createMentionAnnotation(): HamAnnotationType<Ctx> {
 }
 
 /** URLs, classified by kind (arxiv/github/doi/pdf/youtube/url). */
-export function createUrlAnnotation(): HamAnnotationType<Ctx> {
+export function createUrlAnnotation(): HiermarkAnnotationType<Ctx> {
   return {
     name: "url",
     priority: 50,
@@ -151,10 +151,10 @@ export function createUrlAnnotation(): HamAnnotationType<Ctx> {
         data: { url: r.url, kind: r.kind },
       }));
     },
-    inlineClass: (hit) => `ham-url ham-url-${(hit.data as { kind?: string })?.kind ?? "url"}`,
+    inlineClass: (hit) => `hiermark-url hiermark-url-${(hit.data as { kind?: string })?.kind ?? "url"}`,
     render: ({ hit }) => (
       <a
-        className="ham-annotation-chip ham-url-chip"
+        className="hiermark-annotation-chip hiermark-url-chip"
         href={hit.label}
         target="_blank"
         rel="noreferrer"
@@ -166,7 +166,7 @@ export function createUrlAnnotation(): HamAnnotationType<Ctx> {
 }
 
 /** The bundled example registry: tasks, mentions, citations, and URLs. */
-export function createExampleAnnotationRegistry(): HamAnnotationRegistry<Ctx> {
+export function createExampleAnnotationRegistry(): HiermarkAnnotationRegistry<Ctx> {
   return {
     types: [
       createTaskAnnotation(),

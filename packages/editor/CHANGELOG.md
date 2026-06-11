@@ -1,4 +1,4 @@
-# @ham/editor
+# @hiermark/editor
 
 ## 0.2.0
 
@@ -22,30 +22,30 @@
 - d76bcf7: Add an image alt-text / title editor. Clicking any image opens a popover
   (`ImageEditor` extension + `ImagePopover`) to edit its alt text
   (accessibility-critical) and title, written back to the node attrs and to
-  `![alt](src "title")` markdown. Wired by default in `HamEditor`.
+  `![alt](src "title")` markdown. Wired by default in `HiermarkEditor`.
 - 6f24247: Toward v1.0: editor gains click-to-edit math, inline link editing, code-block
   soft-wrap, IME guards, an XSS sanitizer, source-mode id preservation, and
   collaboration retry/status callbacks; canvas gains a bubble-up branch policy,
   compact-card sizing, two-way hover connectors, scroll-to-reveal, SurfaceBody /
   EmptyCanvas slots, reduced-motion, and ARIA tree semantics. Both packages now
   ship dual ESM + CJS builds with `publishConfig`/provenance.
-- b96afc4: Add a pure `@ham/editor/markdown` subpath export for server-side consumers
+- b96afc4: Add a pure `@hiermark/editor/markdown` subpath export for server-side consumers
   (issue #50). The markdown grammar helpers — `stripStableIds`, `readStableId`,
   `injectInlineId`, `inferContainmentFromMarkdown`, `parseChecklist`,
   `extractCitationKeys`, `extractResourceLinks`, `fnv1a64Hex`, and friends — are
   import-pure (no React, Tiptap, or DOM), so a host app's save-time reconciler,
   collab worker, or git-sync CLI can now `import { parseChecklist } from
-"@ham/editor/markdown"` without dragging the browser editor into its module
-  graph. The package root (`@ham/editor`) re-exports the same module, so the
+"@hiermark/editor/markdown"` without dragging the browser editor into its module
+  graph. The package root (`@hiermark/editor`) re-exports the same module, so the
   client editor and the server share one grammar implementation — avoiding the
   definition drift that would otherwise be a silent data-loss bug. No runtime or
   API change to existing root-barrel imports.
 
 ### Patch Changes
 
-- 357328b: Packaging fixes: `@ham/editor`'s exports map no longer carries redundant
+- 357328b: Packaging fixes: `@hiermark/editor`'s exports map no longer carries redundant
   top-level `types` keys that resolved ESM-flavored declarations under the
   `require` condition (CJS TypeScript consumers now get `index.d.cts`), and
-  `@ham/canvas` declares its `@ham/editor` peer as an explicit `>=0.1.0 <1.0.0`
+  `@hiermark/canvas` declares its `@hiermark/editor` peer as an explicit `>=0.1.0 <1.0.0`
   range instead of `workspace:^` (which made changesets major-bump the canvas on
   every editor minor).

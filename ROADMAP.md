@@ -1,19 +1,19 @@
-# HAM Roadmap
+# Hiermark Roadmap
 
-This is the forward-looking work plan for the HAM monorepo — the two generic React
-packages (`@ham/editor`, `@ham/canvas`) and, beyond them, the research-lab-manager
+This is the forward-looking work plan for the Hiermark monorepo — the two generic React
+packages (`@hiermark/editor`, `@hiermark/canvas`) and, beyond them, the research-lab-manager
 product that consumes them.
 
 ## Where things stand
 
-- **`@ham/editor`** — a Tiptap 3 markdown surface with stable block ids, tree
+- **`@hiermark/editor`** — a Tiptap 3 markdown surface with stable block ids, tree
   snapshots, a branch gutter (with a **bubble-up** affordance policy + an `"off"` switch),
   a generic annotation layer (citations / mentions / URLs / tasks + an `@`-type-ahead),
   inline + display KaTeX math (markdown-aligned `$…$`/`$$…$$` input rules + **click-to-edit
   LaTeX**), syntax-highlighted code blocks (lowlight) with a copy button + language picker,
   image upload via a host handler, Yjs/Hocuspocus collaboration with visible remote cursors,
   and a raw-markdown source mode.
-- **`@ham/canvas`** — a 2D canvas of surfaces linked by per-block branch edges:
+- **`@hiermark/canvas`** — a 2D canvas of surfaces linked by per-block branch edges:
   depth-banded projection (split into a snapshot-free context + a cheap ordering pass),
   active-path display modes (compact cards collapse to content; rail = header-only), SVG
   connectors (decoupled re-subscription vs. re-measure; hover shows parent+child; anchored to
@@ -71,8 +71,8 @@ shipped" note above). What follows is the _remaining_ verified backlog from
 the audit, in priority order.
 
 - **Decide the npm scope, then enable publishing** `[P0-decision · S]` — the
-  `@ham` npm scope is unclaimed/unverified and only the maintainer can claim
-  it (npmjs.com/org/create) or choose a rename (~63 files reference `@ham/`).
+  `@hiermark` npm scope is unclaimed/unverified and only the maintainer can claim
+  it (npmjs.com/org/create) or choose a rename (~63 files reference `@hiermark/`).
   Then add an `NPM_TOKEN` secret and flip `release.yml` from
   `publish: pnpm changeset tag` back to `publish: pnpm release`. Until then,
   releases are git tags + GitHub Releases (working, proven at v0.2.0).
@@ -104,8 +104,8 @@ the audit, in priority order.
   geometry, real drag, caret visibility, KaTeX/lowlight rendering, or the
   docs-site resize behaviors fixed this session. A handful of browser flows
   against the built docs site would pin them.
-- **God-file decomposition** `[P2 · L]` — `HamEditor.tsx` (~1,050 lines) and
-  `HamCanvas.tsx` (~1,150) concentrate mode-switching/collab-gate/popovers and
+- **God-file decomposition** `[P2 · L]` — `HiermarkEditor.tsx` (~1,050 lines) and
+  `HiermarkCanvas.tsx` (~1,150) concentrate mode-switching/collab-gate/popovers and
   autosave/undo/keyboard-nav respectively, held together by render-phase ref
   mirrors. Extract cohesive modules (source-mode controller, autosave queue,
   keyboard nav) — behavior-preserving, after the current fix wave settles.
@@ -116,19 +116,19 @@ the audit, in priority order.
   checks.
 - **Duplicate topology helpers** `[P3 · M]` — sibling/descendant/parenthood
   logic exists in `siblingOrder.ts`, `reorderBranchSiblings.ts`,
-  `useHamCanvas.removeSurface`, and `HamCanvas.groupColumn`; consolidate onto
+  `useHiermarkCanvas.removeSurface`, and `HiermarkCanvas.groupColumn`; consolidate onto
   `buildIndices`.
 - **Source-textarea ergonomics** `[P3 · S]` — Tab inserts no indentation
   (moves focus) and the box doesn't grow with content.
 - **CSS hygiene** `[P3 · S]` — a few dead tokens and magic widths flagged by
   the audit (popover dark-theme tokens are fixed).
 
-## Track A — Library hardening (toward `@ham/*` v1.0)
+## Track A — Library hardening (toward `@hiermark/*` v1.0)
 
 ### A1 · Collaboration robustness
 
 - ~~**Sync-failure recovery: bounded retry + connecting state + status callbacks**~~
-  `[P1 · M]` — **✅ DONE.** `CollabHamEditor` now retries a failed `connect()` with
+  `[P1 · M]` — **✅ DONE.** `CollabHiermarkEditor` now retries a failed `connect()` with
   exponential backoff (1s/2s/4s, `maxRetries` default 3), exposes `onStatusChange`
   (connecting → connected → synced / timedout / error), `onError(Error)`, and `onRetry(n)`,
   and renders a **Retry** affordance (plus a `retry` arg to the `ErrorState` slot). _(Rank 7.)_
@@ -153,7 +153,7 @@ the audit, in priority order.
 - **Image alt-text / title editor** `[P1 · M]` — **✅ DONE.** `ImageEditor` extension +
   `ImagePopover`: clicking any image opens a Floating-UI popover to edit its alt text
   (accessibility-critical) and title, written straight back to the node attrs (and so to
-  `![alt](src "title")` markdown). Wired by default in `HamEditor`; the cursor hints images
+  `![alt](src "title")` markdown). Wired by default in `HiermarkEditor`; the cursor hints images
   are interactive. _Resize handles / caption still want the block Figure node below._
 - ~~**Link mark + inline link editor**~~ `[P1 · M]` — **✅ DONE.** `LinkEditor` extension +
   `LinkPopover`: clicking a link (or `Mod-k` over a selection) opens a Floating-UI popover to
@@ -163,13 +163,13 @@ the audit, in priority order.
   `tests/markdown-roundtrip.test.tsx` pins `markdown → editor → getMarkdown` fidelity across the
   supported set: headings, strong/em/`code`/strikethrough, links, images, bullet/ordered/**task**
   lists (incl. nesting), blockquotes, fenced code **with language**, GFM **tables** (cells are
-  padded to column width — still valid GFM), and inline/block **math** (HAM single-`$`). All
+  padded to column width — still valid GFM), and inline/block **math** (Hiermark single-`$`). All
   survive. _Known out-of-scope (no schema node / marked extension, so they drop or flatten):
   footnotes `[^1]`, definition lists, and raw-HTML blocks — documented on the Markdown docs page.
   Adding those nodes is a separate opt-in._
 - **Block-id markdown export (git-sync identity)** `[P2 · M]` — `getMarkdown()` emits plain
   markdown with no block-id comments (only task ids are injected). Add an opt-in export mode
-  that injects `<!-- ham:block=<id> -->` per block so a persisted file carries identity for a
+  that injects `<!-- hiermark:block=<id> -->` per block so a persisted file carries identity for a
   true git round-trip. _(Shares machinery with the P0 source-mode fix; unblocks Track B
   git-sync.)_
 - **Code block polish** `[P2 · S–M]` — _partly done:_ the language picker now derives from the
@@ -181,7 +181,7 @@ the audit, in priority order.
   Add block-level (chip/gutter) placement keyed to the block id for atom blocks.
 - **Paste sanitization** `[P2 · M]` — only image files are intercepted on paste; HTML from
   Word/Docs/web flows through unsanitized. Add a `transformPasted` step that strips foreign
-  styles, normalizes to the HAM schema, and optionally interprets pasted markdown.
+  styles, normalizes to the Hiermark schema, and optionally interprets pasted markdown.
 - **IME composition + source-textarea ergonomics** `[P2 · M]` — no `isComposing` guards exist,
   so the annotation type-ahead and task input rules can misfire mid-composition for CJK/IME
   users; the source-mode textarea also steals Tab. Add composition guards and Tab-to-indent.
@@ -202,7 +202,7 @@ the audit, in priority order.
 
 - ~~**`SurfaceBody` renderer slot**~~ `[P2 · M]` — **✅ DONE** (replaces an inactive card's body;
   the active surface keeps its editor). Original note: the inactive-surface body was hardcoded
-  (`HamCanvas.tsx:291` expanded→editor / outline→OutlineBody / else→preview) with no slot, so a
+  (`HiermarkCanvas.tsx:291` expanded→editor / outline→OutlineBody / else→preview) with no slot, so a
   host wanting a richer inactive card (thumbnail, metadata, charts) must reimplement
   `SurfaceFrame` and its activation wiring. Add an optional `SurfaceBody` slot mirroring the
   existing slot pattern. _(Rank 15 remainder.)_
@@ -224,7 +224,7 @@ the audit, in priority order.
   local roots, with a cycle-only fallback so nothing is dropped) into trailing `detached: true`
   columns; the canvas renders a "Not linked to root" divider before them, so orphaned data is
   never silently invisible. _Duplicate-incoming-edge warning still open (the projection visits
-  each surface once; `validateHamTopology` already detects the case for hosts that call it)._
+  each surface once; `validateHiermarkTopology` already detects the case for hosts that call it)._
 - **Harden drag-reorder** `[P2 · M]` — _partly done (2026-06):_ undo/redo bookkeeping now
   commits only when the host handler succeeds, `reorderSiblings` reports success, and the
   success/failure path is tested. Still open: drag-path tests (incl. the keyboard sensor),
@@ -235,7 +235,7 @@ the audit, in priority order.
 - **Connector routing: overlap avoidance + labels** `[P2 · L]` — many edges from one block
   overlap into a smear and edges can pass through intermediate cards. Add per-edge fan-out at the
   source, optional orthogonal routing for multi-column spans, and a label anchor on
-  `HamConnectorRenderProps`.
+  `HiermarkConnectorRenderProps`.
 - **Canvas-level undo for topology ops** `[P2 · L]` — **✅ DONE** (reorder). The canvas keeps an
   undo/redo stack for **sibling reorders** — the one op losslessly reversible through the existing
   handler (re-apply the captured order via `siblingEdgeOrder`), no host "restore" capability
@@ -263,7 +263,7 @@ the audit, in priority order.
 
 ### A5 · Package extension points (surfaced by consumer needs)
 
-- **Pure markdown subpath (`@ham/editor/markdown`)** `[P1 · S]` — **✅ DONE** (issue #50). A host's
+- **Pure markdown subpath (`@hiermark/editor/markdown`)** `[P1 · S]` — **✅ DONE** (issue #50). A host's
   server reconciler / collab worker / git-sync CLI must run the editor's grammar + stable-id/hash
   helpers — definition drift there is a data-loss bug — but importing them from the package root
   pulled the whole React/Tiptap stack into a Node graph. The `markdown/*` files are already
@@ -280,8 +280,8 @@ the audit, in priority order.
   this.)_
 - **Whole-surface "decompose" edge + Levels layout mode** `[P3 · M]` — the HSM decompose action
   branches from the _whole_ document (a `fromBlockId`-null edge) and wants a depth-level-grouped
-  layout; `HamBranchEdge` requires `fromBlockId` and the layout is fixed left-to-right. Decide
-  whether the flagship HSM view reuses `@ham/canvas` (needs these small additions) or is a parallel
+  layout; `HiermarkBranchEdge` requires `fromBlockId` and the layout is fixed left-to-right. Decide
+  whether the flagship HSM view reuses `@hiermark/canvas` (needs these small additions) or is a parallel
   renderer reusing only the topology helpers.
 
 ### A6 · Testing & quality
@@ -389,11 +389,11 @@ them via data + handlers. Items are in dependency order; the reference implement
 
 ### Foundations (P0)
 
-- **App shell (web + API) mounting `HamCanvas` with real handlers** `[P0 · L]` — the spine: render
-  `<HamCanvas>` against server-loaded state and wire `createSurfaceFromBlock` / `createSiblingSurface` /
+- **App shell (web + API) mounting `HiermarkCanvas` with real handlers** `[P0 · L]` — the spine: render
+  `<HiermarkCanvas>` against server-loaded state and wire `createSurfaceFromBlock` / `createSiblingSurface` /
   `reorderBranchSiblings` / `deleteSurface` / `saveSurface` to API routes (reference: a Next.js app).
 - **Persistence: surfaces + polymorphic branch-edge graph + block reconciler** `[P0 · XL]` — the host DB
-  and the `saveSurface(HamEditorSavePayload)` reconciler. Port the Prisma model (Document/Surface with
+  and the `saveSurface(HiermarkEditorSavePayload)` reconciler. Port the Prisma model (Document/Surface with
   `rootBlockId` + `yjsState`; a single polymorphic Edge table; Block with `@@unique([documentId,
 clientBlockId])`), consuming the editor's exported markdown helpers (`stripStableIds`,
   `inferContainmentFromMarkdown`, `parseChecklist`, `extractResourceLinks`). Define **one** "parenthood"
@@ -424,7 +424,7 @@ clientBlockId])`), consuming the editor's exported markdown helpers (`stripStabl
 ### Extended capabilities (P2–P3)
 
 - **Cross-surface search** `[P2 · M]` — index the canonical markdown the reconciler produces + task/citation
-  projections; jump to `(surfaceId, blockId)` via `HamCanvasHandle.focusBlock`.
+  projections; jump to `(surfaceId, blockId)` via `HiermarkCanvasHandle.focusBlock`.
 - **Git-sync round-trip import/export** `[P2 · L]` — export to markdown files with embedded stable ids, edit in
   a checkout, re-import without losing identity. _(Forcing function for, and dependent on, the A2 block-id
   export.)_

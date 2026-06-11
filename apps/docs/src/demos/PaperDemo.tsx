@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HamCanvas } from "@ham/canvas";
+import { HiermarkCanvas } from "@hiermark/canvas";
 
 import { DemoFrame } from "./DemoFrame";
 import { useDemoCanvas } from "../lib/demoHost";
@@ -24,7 +24,7 @@ export function PaperDemo() {
         </label>
       }
     >
-      <HamCanvas
+      <HiermarkCanvas
         key={canvas.resetToken}
         rootSurfaceId="s_paper"
         surfaces={canvas.surfaces}

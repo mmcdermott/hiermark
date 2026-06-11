@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
 import * as Y from "yjs";
-import { HamEditor } from "../src/HamEditor";
+import { HiermarkEditor } from "../src/HiermarkEditor";
 import { flushAndDestroy } from "../src/collab/hocuspocus";
 import type {
-  HamCollaborationProvider,
-  HamCollaborationRuntime,
-  HamCollaborationStatus,
-  HamEditorHandle,
+  HiermarkCollaborationProvider,
+  HiermarkCollaborationRuntime,
+  HiermarkCollaborationStatus,
+  HiermarkEditorHandle,
 } from "../src/types";
 
 afterEach(() => cleanup());
@@ -19,14 +19,14 @@ describe("collaboration robustness", () => {
   it("retries a failed connect with backoff, then connects + syncs", async () => {
     const ydoc = new Y.Doc();
     let attempts = 0;
-    const provider: HamCollaborationProvider = {
+    const provider: HiermarkCollaborationProvider = {
       synced: true,
       hasUnsyncedChanges: false,
       on() {},
       off() {},
       destroy() {},
     };
-    const runtime: HamCollaborationRuntime = {
+    const runtime: HiermarkCollaborationRuntime = {
       ydoc,
       connect: async () => {
         attempts += 1;
@@ -34,11 +34,11 @@ describe("collaboration robustness", () => {
         return provider;
       },
     };
-    const statuses: HamCollaborationStatus[] = [];
+    const statuses: HiermarkCollaborationStatus[] = [];
     const retries: number[] = [];
-    let handle: HamEditorHandle | null = null;
+    let handle: HiermarkEditorHandle | null = null;
     render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="c"
         rootBlockId="blk_c"
         value={{ kind: "markdown", markdown: "" }}
@@ -67,7 +67,7 @@ describe("collaboration robustness", () => {
     const ydoc = new Y.Doc();
     let unsyncedHandler: ((e: { number: number }) => void) | null = null;
     let pending = true;
-    const provider: HamCollaborationProvider = {
+    const provider: HiermarkCollaborationProvider = {
       synced: true,
       get hasUnsyncedChanges() {
         return pending;
@@ -78,12 +78,12 @@ describe("collaboration robustness", () => {
       off() {},
       destroy() {},
     };
-    const runtime: HamCollaborationRuntime = { ydoc, connect: async () => provider };
+    const runtime: HiermarkCollaborationRuntime = { ydoc, connect: async () => provider };
     const unsynced: number[] = [];
     let flushResult: unknown = null;
-    let handle: HamEditorHandle | null = null;
+    let handle: HiermarkEditorHandle | null = null;
     const { unmount } = render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="c"
         rootBlockId="blk_c"
         value={{ kind: "markdown", markdown: "" }}
@@ -115,7 +115,7 @@ describe("collaboration robustness", () => {
 describe("flushAndDestroy", () => {
   it("resolves flushed:true and destroys immediately when nothing is pending", async () => {
     let destroyed = false;
-    const p: HamCollaborationProvider = {
+    const p: HiermarkCollaborationProvider = {
       synced: true,
       hasUnsyncedChanges: false,
       on() {},
@@ -131,7 +131,7 @@ describe("flushAndDestroy", () => {
   it("waits for pending changes to drain before destroying", async () => {
     let handler: ((e: { number: number }) => void) | null = null;
     let destroyed = false;
-    const p: HamCollaborationProvider = {
+    const p: HiermarkCollaborationProvider = {
       synced: true,
       hasUnsyncedChanges: true,
       on(event, h) {

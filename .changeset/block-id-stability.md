@@ -1,5 +1,5 @@
 ---
-"@ham/editor": patch
+"@hiermark/editor": patch
 ---
 
 Block ids now stay anchored to the block they identified when duplicates or

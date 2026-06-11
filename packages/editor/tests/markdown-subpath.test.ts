@@ -6,7 +6,7 @@ import * as subpath from "../src/markdown";
 import * as root from "../src/index";
 
 /**
- * Guards the `@ham/editor/markdown` subpath (GitHub issue #50): a host server's
+ * Guards the `@hiermark/editor/markdown` subpath (GitHub issue #50): a host server's
  * reconciler imports these pure helpers without dragging in React/Tiptap. Three
  * invariants are protected here:
  *   1. the subpath barrel exports every pure helper (and they actually work),
@@ -37,7 +37,7 @@ const EXPECTED = [
   "detectResourceKind",
 ] as const;
 
-describe("@ham/editor/markdown subpath", () => {
+describe("@hiermark/editor/markdown subpath", () => {
   it("exports every pure helper as a function", () => {
     for (const name of EXPECTED) {
       expect(typeof (subpath as Record<string, unknown>)[name], name).toBe("function");
@@ -46,7 +46,7 @@ describe("@ham/editor/markdown subpath", () => {
 
   it("the helpers actually work without any editor context", () => {
     expect(subpath.fnv1a64Hex("hello")).toMatch(/^[0-9a-f]{16}$/);
-    expect(subpath.stripStableIds("# Title <!-- ham:block=blk_1 -->")).toBe("# Title");
+    expect(subpath.stripStableIds("# Title <!-- hiermark:block=blk_1 -->")).toBe("# Title");
     expect(subpath.detectResourceKind("https://arxiv.org/abs/2401.00001")).toBe("arxiv");
     expect(subpath.inferContainmentFromMarkdown(["# A", "## B"])).toEqual([null, 0]);
   });

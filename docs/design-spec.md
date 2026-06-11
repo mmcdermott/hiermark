@@ -1,18 +1,18 @@
-# Hierarchical, Annotatable Markdown (HAM) — Standalone Package Design Specification
+# Hiermark — Standalone Package Design Specification
 
 **Date:** 2026-06-07  
-**Audience:** implementers building HAM as a standalone installable package set before integrating it into a larger research/project-management web app.  
+**Audience:** implementers building Hiermark as a standalone installable package set before integrating it into a larger research/project-management web app.  
 **Status:** proposed v1 architecture.
 
 ---
 
 ## 0. Executive summary
 
-HAM should be extracted and developed as a focused, standalone package system. The right v1 shape is **two installable packages**:
+Hiermark should be extracted and developed as a focused, standalone package system. The right v1 shape is **two installable packages**:
 
 ```text
-@ham/editor   # one editable markdown/block-tree surface
-@ham/canvas   # 2D grid/canvas of many editable surfaces
+@hiermark/editor   # one editable markdown/block-tree surface
+@hiermark/canvas   # 2D grid/canvas of many editable surfaces
 ```
 
 Internally, each package should have small, explicit modules for block identity, annotations, block snapshots, topology projection, layout, focus, and operation payloads. Those modules do **not** need to be separate npm packages in v1.
@@ -20,8 +20,8 @@ Internally, each package should have small, explicit modules for block identity,
 The key architectural distinction is:
 
 ```text
-@ham/editor owns the intra-surface block tree.
-@ham/canvas owns the inter-surface 2D topology.
+@hiermark/editor owns the intra-surface block tree.
+@hiermark/canvas owns the inter-surface 2D topology.
 ```
 
 A **surface** is the canvas unit: an editable markdown/block tree rooted at a stable root block. A surface may be displayed as a card, document, outline item, compact rail entry, or expanded editor panel. A **column** may contain multiple surfaces. If two different blocks in a surface are branched, their children become two different surfaces in the next column, not necessarily two blocks inside one child document.
@@ -54,7 +54,7 @@ The current codebase’s direction is substantially right: Tiptap, Yjs/Hocuspocu
 
 ### 1.1 Goals
 
-HAM v1 should provide a reusable package for applications that need:
+Hiermark v1 should provide a reusable package for applications that need:
 
 1. **Block-centric markdown editing**
    - Rich markdown editing with paragraphs, headings, lists, checklists, links, code, math, tables, and references.
@@ -92,12 +92,12 @@ HAM v1 should provide a reusable package for applications that need:
    - Canvas topology changes can be persisted independently from content edits.
 
 7. **Package-local development**
-   - HAM should have a playground and fixtures independent of the larger app.
+   - Hiermark should have a playground and fixtures independent of the larger app.
    - LLM coding agents should be able to work on one constrained behavior at a time with tests.
 
 ### 1.2 Non-goals for v1
 
-HAM v1 should explicitly avoid:
+Hiermark v1 should explicitly avoid:
 
 1. **Span anchors**
    - Branch anchors are block IDs only. No character offsets, text spans, or range anchoring in v1.
@@ -117,7 +117,7 @@ HAM v1 should explicitly avoid:
    - The package uses Tiptap’s Markdown extension for editor import/export. It should not expose a pluggable parser interface in v1.
 
 6. **Server ownership**
-   - HAM does not include an application server, database schema, auth model, task database, bibliography database, or project model.
+   - Hiermark does not include an application server, database schema, auth model, task database, bibliography database, or project model.
 
 7. **Complex block reparenting in the canvas**
    - The canvas may expose future affordances for reparenting block groups, but canonical intra-surface block mutations must be performed by the editor.
@@ -131,20 +131,20 @@ HAM v1 should explicitly avoid:
 A **surface** is an editable block tree displayed somewhere on the canvas. It is the unit that most users will perceive as a “document,” “card,” “subdocument,” or “section,” but the generic package should call it a surface to avoid overloading document semantics.
 
 ```ts
-export type HamSurfaceId = string;
-export type HamBlockId = string;
+export type HiermarkSurfaceId = string;
+export type HiermarkBlockId = string;
 
-export interface HamSurface<Meta = unknown> {
-  id: HamSurfaceId;
-  rootBlockId: HamBlockId;
+export interface HiermarkSurface<Meta = unknown> {
+  id: HiermarkSurfaceId;
+  rootBlockId: HiermarkBlockId;
   title?: string;
   meta?: Meta;
-  content: HamEditorContent;
+  content: HiermarkEditorContent;
   readonly?: boolean;
 }
 ```
 
-A host app may map surfaces to database documents, root blocks, notes, cards, or files. HAM does not care.
+A host app may map surfaces to database documents, root blocks, notes, cards, or files. Hiermark does not care.
 
 ### 2.2 Block
 
@@ -164,14 +164,14 @@ Examples:
 - image/figure reference
 - custom callout
 
-Every block that can be highlighted, collapsed, annotated, or branched from must have a stable `HamBlockId`.
+Every block that can be highlighted, collapsed, annotated, or branched from must have a stable `HiermarkBlockId`.
 
 ```ts
-export interface HamBlockSnapshot {
-  id: HamBlockId;
+export interface HiermarkBlockSnapshot {
+  id: HiermarkBlockId;
   type: string;
-  parentId: HamBlockId | null;
-  childIds: HamBlockId[];
+  parentId: HiermarkBlockId | null;
+  childIds: HiermarkBlockId[];
   order: number;
   depth: number;
   textPreview: string;
@@ -180,11 +180,11 @@ export interface HamBlockSnapshot {
   attrs?: Record<string, unknown>;
 }
 
-export interface HamSurfaceSnapshot {
-  surfaceId: HamSurfaceId;
-  rootBlockId: HamBlockId;
-  blocks: Record<HamBlockId, HamBlockSnapshot>;
-  blockOrder: HamBlockId[]; // preorder traversal
+export interface HiermarkSurfaceSnapshot {
+  surfaceId: HiermarkSurfaceId;
+  rootBlockId: HiermarkBlockId;
+  blocks: Record<HiermarkBlockId, HiermarkBlockSnapshot>;
+  blockOrder: HiermarkBlockId[]; // preorder traversal
   revision?: string | number;
 }
 ```
@@ -196,13 +196,13 @@ The editor owns this tree because editing operations create, split, merge, delet
 A **branch edge** connects a source block in one surface to a target surface, usually displayed one column to the right.
 
 ```ts
-export type HamBranchEdgeId = string;
+export type HiermarkBranchEdgeId = string;
 
-export interface HamBranchEdge<Meta = unknown> {
-  id: HamBranchEdgeId;
-  fromSurfaceId: HamSurfaceId;
-  fromBlockId: HamBlockId;
-  toSurfaceId: HamSurfaceId;
+export interface HiermarkBranchEdge<Meta = unknown> {
+  id: HiermarkBranchEdgeId;
+  fromSurfaceId: HiermarkSurfaceId;
+  fromBlockId: HiermarkBlockId;
+  toSurfaceId: HiermarkSurfaceId;
   order: number; // sibling order among branches from the same source block
   meta?: Meta;
 }
@@ -217,16 +217,16 @@ A **column** is a visual depth band in the canvas. A column can contain multiple
 The root column usually has one surface. A rightward column can contain many surfaces generated by branches from one or more blocks in the preceding column.
 
 ```ts
-export interface HamCanvasColumn<SurfaceMeta = unknown, EdgeMeta = unknown> {
+export interface HiermarkCanvasColumn<SurfaceMeta = unknown, EdgeMeta = unknown> {
   depth: number;
-  items: HamCanvasItem<SurfaceMeta, EdgeMeta>[];
+  items: HiermarkCanvasItem<SurfaceMeta, EdgeMeta>[];
 }
 
-export interface HamCanvasItem<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  surface: HamSurface<SurfaceMeta>;
-  incomingEdge?: HamBranchEdge<EdgeMeta>;
-  parentSurfaceId?: HamSurfaceId;
-  anchorBlockId?: HamBlockId;
+export interface HiermarkCanvasItem<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  surface: HiermarkSurface<SurfaceMeta>;
+  incomingEdge?: HiermarkBranchEdge<EdgeMeta>;
+  parentSurfaceId?: HiermarkSurfaceId;
+  anchorBlockId?: HiermarkBlockId;
   pathState: "active" | "ancestor" | "descendant" | "sibling" | "unrelated";
   displayMode: "expanded" | "card" | "outline" | "rail" | "hidden";
 }
@@ -237,14 +237,14 @@ export interface HamCanvasItem<SurfaceMeta = unknown, EdgeMeta = unknown> {
 Canvas topology is the graph of surfaces and branch edges.
 
 ```ts
-export interface HamCanvasState<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  rootSurfaceId: HamSurfaceId;
-  surfaces: Record<HamSurfaceId, HamSurface<SurfaceMeta>>;
-  branchEdges: HamBranchEdge<EdgeMeta>[];
-  activeSurfaceId: HamSurfaceId;
-  activeBlockId?: HamBlockId | null;
-  collapsedSurfaceIds?: Set<HamSurfaceId>;
-  collapsedBlockIdsBySurface?: Record<HamSurfaceId, Set<HamBlockId>>;
+export interface HiermarkCanvasState<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  rootSurfaceId: HiermarkSurfaceId;
+  surfaces: Record<HiermarkSurfaceId, HiermarkSurface<SurfaceMeta>>;
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[];
+  activeSurfaceId: HiermarkSurfaceId;
+  activeBlockId?: HiermarkBlockId | null;
+  collapsedSurfaceIds?: Set<HiermarkSurfaceId>;
+  collapsedBlockIdsBySurface?: Record<HiermarkSurfaceId, Set<HiermarkBlockId>>;
 }
 ```
 
@@ -255,13 +255,13 @@ The canvas owns this topology. The editor does not.
 The active path is the branch-edge lineage from the root surface to the active surface, plus optionally the active block.
 
 ```ts
-export interface HamActivePath {
-  rootSurfaceId: HamSurfaceId;
-  activeSurfaceId: HamSurfaceId;
-  activeBlockId?: HamBlockId | null;
-  surfaceIds: HamSurfaceId[];
-  edgeIds: HamBranchEdgeId[];
-  anchorBlockIds: HamBlockId[];
+export interface HiermarkActivePath {
+  rootSurfaceId: HiermarkSurfaceId;
+  activeSurfaceId: HiermarkSurfaceId;
+  activeBlockId?: HiermarkBlockId | null;
+  surfaceIds: HiermarkSurfaceId[];
+  edgeIds: HiermarkBranchEdgeId[];
+  anchorBlockIds: HiermarkBlockId[];
 }
 ```
 
@@ -280,7 +280,7 @@ The active path drives:
 
 ### 3.1 Editor owns intra-surface content and block tree
 
-`@ham/editor` owns:
+`@hiermark/editor` owns:
 
 - Tiptap editor construction.
 - Markdown import/export.
@@ -294,7 +294,7 @@ The active path drives:
 - Branch gutter affordances inside the editor.
 - Surface-local collaborative editing.
 
-`@ham/editor` does **not** own:
+`@hiermark/editor` does **not** own:
 
 - multi-surface layout;
 - branch topology;
@@ -307,7 +307,7 @@ The active path drives:
 
 ### 3.2 Canvas owns inter-surface topology and layout
 
-`@ham/canvas` owns:
+`@hiermark/canvas` owns:
 
 - surfaces by ID;
 - branch edges by source block;
@@ -318,9 +318,9 @@ The active path drives:
 - sibling surface reorder interactions;
 - branch creation UI orchestration;
 - keyboard navigation across surfaces and columns;
-- passing per-surface branch children and highlight props into `@ham/editor`.
+- passing per-surface branch children and highlight props into `@hiermark/editor`.
 
-`@ham/canvas` does **not** own:
+`@hiermark/canvas` does **not** own:
 
 - markdown parsing;
 - ProseMirror transactions;
@@ -343,7 +343,7 @@ The host application owns:
 - import/export workflows;
 - project/submission/lab/workspace objects.
 
-HAM calls host handlers. The host persists or rejects the operation.
+Hiermark calls host handlers. The host persists or rejects the operation.
 
 ---
 
@@ -351,7 +351,7 @@ HAM calls host handlers. The host persists or rejects the operation.
 
 ### 4.1 Required runtime dependencies
 
-#### `@ham/editor`
+#### `@hiermark/editor`
 
 ```json
 {
@@ -388,7 +388,7 @@ Notes:
 - Use **Floating UI** for annotation cards, branch menus, and context popovers.
 - Use **KaTeX** through Tiptap’s math extension for LaTeX rendering.
 
-#### `@ham/canvas`
+#### `@hiermark/canvas`
 
 ```json
 {
@@ -403,7 +403,7 @@ Notes:
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19",
-    "@ham/editor": "workspace:* || ^0"
+    "@hiermark/editor": "workspace:* || ^0"
   }
 }
 ```
@@ -436,7 +436,7 @@ Use:
 Recommended repo structure:
 
 ```text
-ham/
+hiermark/
   package.json
   pnpm-workspace.yaml
   packages/
@@ -485,35 +485,35 @@ Exports should be explicit:
 
 ---
 
-## 5. Package: `@ham/editor`
+## 5. Package: `@hiermark/editor`
 
 ### 5.1 Purpose
 
-`@ham/editor` renders and edits one surface: one collaborative, block-centric markdown document rooted at a stable block.
+`@hiermark/editor` renders and edits one surface: one collaborative, block-centric markdown document rooted at a stable block.
 
 It should feel like a document editor, but expose enough block-level structure for the canvas to branch from blocks and highlight relationships.
 
 ### 5.2 Public exports
 
 ```ts
-export { HamEditor } from "./HamEditor";
-export { createHamEditorExtensions } from "./extensions/createHamEditorExtensions";
-export { getHamSurfaceSnapshot } from "./snapshot/getHamSurfaceSnapshot";
+export { HiermarkEditor } from "./HiermarkEditor";
+export { createHiermarkEditorExtensions } from "./extensions/createHiermarkEditorExtensions";
+export { getHiermarkSurfaceSnapshot } from "./snapshot/getHiermarkSurfaceSnapshot";
 export { createHocuspocusCollab } from "./collab/hocuspocus";
 
 export type {
-  HamEditorProps,
-  HamEditorContent,
-  HamBlockId,
-  HamSurfaceId,
-  HamBlockSnapshot,
-  HamSurfaceSnapshot,
-  HamBlockEvent,
-  HamAnnotationType,
-  HamAnnotationHit,
-  HamAnnotationRegistry,
-  HamBranchChildSummary,
-  HamEditorHandle,
+  HiermarkEditorProps,
+  HiermarkEditorContent,
+  HiermarkBlockId,
+  HiermarkSurfaceId,
+  HiermarkBlockSnapshot,
+  HiermarkSurfaceSnapshot,
+  HiermarkBlockEvent,
+  HiermarkAnnotationType,
+  HiermarkAnnotationHit,
+  HiermarkAnnotationRegistry,
+  HiermarkBranchChildSummary,
+  HiermarkEditorHandle,
 } from "./types";
 ```
 
@@ -522,7 +522,7 @@ export type {
 Use Tiptap JSON as the preferred in-memory content format and Markdown as an import/export format.
 
 ```ts
-export type HamEditorContent =
+export type HiermarkEditorContent =
   | { kind: "tiptap-json"; json: unknown }
   | { kind: "markdown"; markdown: string };
 ```
@@ -542,43 +542,43 @@ interface PersistedSurface {
   title: string;
   tiptapJson: unknown; // preferred canonical rich editor state
   markdown: string; // derived/export state, updated on save
-  blockSnapshot: HamSurfaceSnapshot;
+  blockSnapshot: HiermarkSurfaceSnapshot;
   yjsState?: Uint8Array; // if collaborative editing is enabled
 }
 ```
 
-### 5.4 `HamEditorProps`
+### 5.4 `HiermarkEditorProps`
 
 ```ts
-export interface HamEditorProps<AnnotationData = unknown> {
-  surfaceId: HamSurfaceId;
-  rootBlockId?: HamBlockId;
+export interface HiermarkEditorProps<AnnotationData = unknown> {
+  surfaceId: HiermarkSurfaceId;
+  rootBlockId?: HiermarkBlockId;
 
-  value: HamEditorContent;
+  value: HiermarkEditorContent;
   editable?: boolean;
-  autofocus?: boolean | "start" | "end" | HamBlockId;
+  autofocus?: boolean | "start" | "end" | HiermarkBlockId;
 
-  highlightedBlockIds?: Iterable<HamBlockId>;
-  activeBlockId?: HamBlockId | null;
-  collapsedBlockIds?: Iterable<HamBlockId>;
+  highlightedBlockIds?: Iterable<HiermarkBlockId>;
+  activeBlockId?: HiermarkBlockId | null;
+  collapsedBlockIds?: Iterable<HiermarkBlockId>;
 
-  branchChildren?: Record<HamBlockId, HamBranchChildSummary[]>;
-  branchPolicy?: HamBranchPolicy;
+  branchChildren?: Record<HiermarkBlockId, HiermarkBranchChildSummary[]>;
+  branchPolicy?: HiermarkBranchPolicy;
 
-  annotations?: HamAnnotationRegistry<AnnotationData>;
+  annotations?: HiermarkAnnotationRegistry<AnnotationData>;
   annotationContext?: AnnotationData;
 
-  collaboration?: HamCollaborationConfig;
+  collaboration?: HiermarkCollaborationConfig;
 
-  slots?: HamEditorSlots;
+  slots?: HiermarkEditorSlots;
 
-  onReady?: (handle: HamEditorHandle) => void;
-  onChange?: (event: HamEditorChangeEvent) => void;
-  onSnapshotChange?: (snapshot: HamSurfaceSnapshot) => void;
-  onBlockEvents?: (events: HamBlockEvent[]) => void;
-  onBranchRequest?: (event: HamBranchRequestEvent) => void;
-  onOpenBranchChild?: (event: HamOpenBranchChildEvent) => void;
-  onActiveBlockChange?: (blockId: HamBlockId | null) => void;
+  onReady?: (handle: HiermarkEditorHandle) => void;
+  onChange?: (event: HiermarkEditorChangeEvent) => void;
+  onSnapshotChange?: (snapshot: HiermarkSurfaceSnapshot) => void;
+  onBlockEvents?: (events: HiermarkBlockEvent[]) => void;
+  onBranchRequest?: (event: HiermarkBranchRequestEvent) => void;
+  onOpenBranchChild?: (event: HiermarkOpenBranchChildEvent) => void;
+  onActiveBlockChange?: (blockId: HiermarkBlockId | null) => void;
 }
 ```
 
@@ -587,9 +587,9 @@ export interface HamEditorProps<AnnotationData = unknown> {
 The canvas passes branch children into the editor so the editor can render per-block indicators.
 
 ```ts
-export interface HamBranchChildSummary {
-  edgeId: HamBranchEdgeId;
-  surfaceId: HamSurfaceId;
+export interface HiermarkBranchChildSummary {
+  edgeId: HiermarkBranchEdgeId;
+  surfaceId: HiermarkSurfaceId;
   title?: string;
   order: number;
   active?: boolean;
@@ -601,13 +601,13 @@ export interface HamBranchChildSummary {
 The editor emits a branch request when the user clicks the branch affordance on a block.
 
 ```ts
-export interface HamBranchRequestEvent {
-  surfaceId: HamSurfaceId;
-  blockId: HamBlockId;
-  blockSnapshot: HamBlockSnapshot;
-  surfaceSnapshot: HamSurfaceSnapshot;
+export interface HiermarkBranchRequestEvent {
+  surfaceId: HiermarkSurfaceId;
+  blockId: HiermarkBlockId;
+  blockSnapshot: HiermarkBlockSnapshot;
+  surfaceSnapshot: HiermarkSurfaceSnapshot;
   textPreview: string;
-  save: () => Promise<HamEditorSavePayload>;
+  save: () => Promise<HiermarkEditorSavePayload>;
   nativeEvent?: Event;
 }
 ```
@@ -617,13 +617,13 @@ Important: the editor should capture the block snapshot synchronously before any
 ### 5.7 Save payload
 
 ```ts
-export interface HamEditorSavePayload {
-  surfaceId: HamSurfaceId;
+export interface HiermarkEditorSavePayload {
+  surfaceId: HiermarkSurfaceId;
   content: {
     tiptapJson: unknown;
     markdown: string;
   };
-  snapshot: HamSurfaceSnapshot;
+  snapshot: HiermarkSurfaceSnapshot;
   revision?: string | number;
 }
 ```
@@ -633,16 +633,16 @@ export interface HamEditorSavePayload {
 The canvas may need imperative operations for focus and scroll. Keep this narrow.
 
 ```ts
-export interface HamEditorHandle {
-  surfaceId: HamSurfaceId;
-  focusBlock(blockId: HamBlockId, opts?: { scroll?: boolean }): void;
-  scrollBlockIntoView(blockId: HamBlockId, opts?: ScrollIntoViewOptions): void;
-  getSnapshot(): HamSurfaceSnapshot;
+export interface HiermarkEditorHandle {
+  surfaceId: HiermarkSurfaceId;
+  focusBlock(blockId: HiermarkBlockId, opts?: { scroll?: boolean }): void;
+  scrollBlockIntoView(blockId: HiermarkBlockId, opts?: ScrollIntoViewOptions): void;
+  getSnapshot(): HiermarkSurfaceSnapshot;
   getMarkdown(): string;
   getJSON(): unknown;
-  save(): Promise<HamEditorSavePayload>;
-  collapseBlock(blockId: HamBlockId): void;
-  expandBlock(blockId: HamBlockId): void;
+  save(): Promise<HiermarkEditorSavePayload>;
+  collapseBlock(blockId: HiermarkBlockId): void;
+  expandBlock(blockId: HiermarkBlockId): void;
 }
 ```
 
@@ -683,7 +683,7 @@ The current codebase zips exported markdown blocks with top-level editor IDs. Th
 Snapshot algorithm:
 
 1. Traverse the ProseMirror document.
-2. Visit every node whose Tiptap type is registered as a HAM block node.
+2. Visit every node whose Tiptap type is registered as a Hiermark block node.
 3. Ensure it has a stable `dataBlockId`.
 4. Compute parent/child relationships from the ProseMirror tree and/or semantic heading/list nesting policy.
 5. Emit preorder `blockOrder`.
@@ -716,11 +716,11 @@ This avoids needing a custom ProseMirror schema where headings physically contai
 ### 5.12 Branch policy
 
 ```ts
-export type HamBranchPolicy =
+export type HiermarkBranchPolicy =
   | "any-nonempty-block"
   | "headings-only"
   | "root-only"
-  | ((block: HamBlockSnapshot, snapshot: HamSurfaceSnapshot) => boolean);
+  | ((block: HiermarkBlockSnapshot, snapshot: HiermarkSurfaceSnapshot) => boolean);
 ```
 
 Default: `any-nonempty-block`.
@@ -730,29 +730,29 @@ Default: `any-nonempty-block`.
 The annotation layer should be thin and stable.
 
 ```ts
-export interface HamAnnotationRegistry<Ctx = unknown> {
-  types: HamAnnotationType<Ctx>[];
+export interface HiermarkAnnotationRegistry<Ctx = unknown> {
+  types: HiermarkAnnotationType<Ctx>[];
 }
 
-export interface HamAnnotationType<Ctx = unknown> {
+export interface HiermarkAnnotationType<Ctx = unknown> {
   name: string;
   priority?: number;
-  recognize: HamAnnotationRecognizer<Ctx>;
-  render: React.ComponentType<HamAnnotationRenderProps<Ctx>>;
+  recognize: HiermarkAnnotationRecognizer<Ctx>;
+  render: React.ComponentType<HiermarkAnnotationRenderProps<Ctx>>;
   placement: "inline" | "block-chip" | "gutter" | "popover" | "decoration";
 }
 
-export type HamAnnotationRecognizer<Ctx = unknown> = (args: {
-  surfaceId: HamSurfaceId;
-  block: HamBlockSnapshot;
+export type HiermarkAnnotationRecognizer<Ctx = unknown> = (args: {
+  surfaceId: HiermarkSurfaceId;
+  block: HiermarkBlockSnapshot;
   text: string;
   context: Ctx;
-}) => HamAnnotationHit[];
+}) => HiermarkAnnotationHit[];
 
-export interface HamAnnotationHit {
+export interface HiermarkAnnotationHit {
   id: string;
   type: string;
-  blockId: HamBlockId;
+  blockId: HiermarkBlockId;
   from?: number;
   to?: number;
   label?: string;
@@ -770,7 +770,7 @@ Conflict policy:
 Example: task annotation
 
 ```ts
-const taskAnnotation: HamAnnotationType<TaskContext> = {
+const taskAnnotation: HiermarkAnnotationType<TaskContext> = {
   name: "task",
   priority: 100,
   placement: "block-chip",
@@ -793,7 +793,7 @@ const taskAnnotation: HamAnnotationType<TaskContext> = {
 ### 5.14 Collaboration config
 
 ```ts
-export interface HamCollaborationConfig {
+export interface HiermarkCollaborationConfig {
   enabled: boolean;
   documentName: string; // usually surface ID or stable collab doc ID
   provider: "hocuspocus";
@@ -812,7 +812,7 @@ export interface HamCollaborationConfig {
 The package may also export a lower-level helper:
 
 ```ts
-createHocuspocusCollab(config): HamCollaborationRuntime
+createHocuspocusCollab(config): HiermarkCollaborationRuntime
 ```
 
 The editor should gate mounting/seeding carefully:
@@ -830,14 +830,14 @@ The current codebase already implements this pattern and should preserve it.
 Use slots rather than hardcoded UI.
 
 ```ts
-export interface HamEditorSlots {
-  BlockBranchButton?: React.ComponentType<HamBlockSlotProps>;
-  BranchChildChip?: React.ComponentType<HamBranchChildChipProps>;
-  BlockGutter?: React.ComponentType<HamBlockGutterProps>;
-  AnnotationPopover?: React.ComponentType<HamAnnotationPopoverProps>;
-  EmptyState?: React.ComponentType<{ surfaceId: HamSurfaceId }>;
-  LoadingState?: React.ComponentType<{ surfaceId: HamSurfaceId }>;
-  ErrorState?: React.ComponentType<{ surfaceId: HamSurfaceId; error: Error }>;
+export interface HiermarkEditorSlots {
+  BlockBranchButton?: React.ComponentType<HiermarkBlockSlotProps>;
+  BranchChildChip?: React.ComponentType<HiermarkBranchChildChipProps>;
+  BlockGutter?: React.ComponentType<HiermarkBlockGutterProps>;
+  AnnotationPopover?: React.ComponentType<HiermarkAnnotationPopoverProps>;
+  EmptyState?: React.ComponentType<{ surfaceId: HiermarkSurfaceId }>;
+  LoadingState?: React.ComponentType<{ surfaceId: HiermarkSurfaceId }>;
+  ErrorState?: React.ComponentType<{ surfaceId: HiermarkSurfaceId; error: Error }>;
 }
 ```
 
@@ -845,64 +845,64 @@ Provide defaults so the package works out of the box.
 
 ---
 
-## 6. Package: `@ham/canvas`
+## 6. Package: `@hiermark/canvas`
 
 ### 6.1 Purpose
 
-`@ham/canvas` renders and manages a 2D grid of surfaces. It uses `@ham/editor` to render/edit each expanded surface, but it owns inter-surface layout and topology.
+`@hiermark/canvas` renders and manages a 2D grid of surfaces. It uses `@hiermark/editor` to render/edit each expanded surface, but it owns inter-surface layout and topology.
 
 ### 6.2 Public exports
 
 ```ts
-export { HamCanvas } from "./HamCanvas";
-export { useHamCanvas } from "./useHamCanvas";
-export { projectHamColumns } from "./topology/projectHamColumns";
-export { getHamActivePath } from "./topology/getHamActivePath";
+export { HiermarkCanvas } from "./HiermarkCanvas";
+export { useHiermarkCanvas } from "./useHiermarkCanvas";
+export { projectHiermarkColumns } from "./topology/projectHiermarkColumns";
+export { getHiermarkActivePath } from "./topology/getHiermarkActivePath";
 export { reorderBranchSiblings } from "./topology/reorderBranchSiblings";
 
 export type {
-  HamCanvasProps,
-  HamCanvasState,
-  HamSurface,
-  HamBranchEdge,
-  HamCanvasColumn,
-  HamCanvasItem,
-  HamCanvasOperation,
-  HamCanvasHandlers,
-  HamCanvasHandle,
-  HamCanvasLayoutConfig,
+  HiermarkCanvasProps,
+  HiermarkCanvasState,
+  HiermarkSurface,
+  HiermarkBranchEdge,
+  HiermarkCanvasColumn,
+  HiermarkCanvasItem,
+  HiermarkCanvasOperation,
+  HiermarkCanvasHandlers,
+  HiermarkCanvasHandle,
+  HiermarkCanvasLayoutConfig,
 } from "./types";
 ```
 
-### 6.3 `HamCanvasProps`
+### 6.3 `HiermarkCanvasProps`
 
 ```ts
-export interface HamCanvasProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  rootSurfaceId: HamSurfaceId;
-  surfaces: Record<HamSurfaceId, HamSurface<SurfaceMeta>>;
-  branchEdges: HamBranchEdge<EdgeMeta>[];
+export interface HiermarkCanvasProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  rootSurfaceId: HiermarkSurfaceId;
+  surfaces: Record<HiermarkSurfaceId, HiermarkSurface<SurfaceMeta>>;
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[];
 
-  activeSurfaceId?: HamSurfaceId;
-  activeBlockId?: HamBlockId | null;
+  activeSurfaceId?: HiermarkSurfaceId;
+  activeBlockId?: HiermarkBlockId | null;
 
-  layout?: Partial<HamCanvasLayoutConfig>;
-  behavior?: Partial<HamCanvasBehaviorConfig>;
-  slots?: HamCanvasSlots<SurfaceMeta, EdgeMeta>;
+  layout?: Partial<HiermarkCanvasLayoutConfig>;
+  behavior?: Partial<HiermarkCanvasBehaviorConfig>;
+  slots?: HiermarkCanvasSlots<SurfaceMeta, EdgeMeta>;
 
-  editorDefaults?: Partial<HamEditorProps>;
-  annotationRegistry?: HamAnnotationRegistry;
+  editorDefaults?: Partial<HiermarkEditorProps>;
+  annotationRegistry?: HiermarkAnnotationRegistry;
 
-  handlers: HamCanvasHandlers<SurfaceMeta, EdgeMeta>;
+  handlers: HiermarkCanvasHandlers<SurfaceMeta, EdgeMeta>;
 
-  onReady?: (handle: HamCanvasHandle) => void;
-  onActiveChange?: (active: { surfaceId: HamSurfaceId; blockId?: HamBlockId | null }) => void;
+  onReady?: (handle: HiermarkCanvasHandle) => void;
+  onActiveChange?: (active: { surfaceId: HiermarkSurfaceId; blockId?: HiermarkBlockId | null }) => void;
 }
 ```
 
 ### 6.4 Layout config
 
 ```ts
-export interface HamCanvasLayoutConfig {
+export interface HiermarkCanvasLayoutConfig {
   orientation: "left-to-right";
   columnWidth: number;
   expandedColumnWidth: number;
@@ -923,7 +923,7 @@ export interface HamCanvasLayoutConfig {
 Default:
 
 ```ts
-const defaultLayout: HamCanvasLayoutConfig = {
+const defaultLayout: HiermarkCanvasLayoutConfig = {
   orientation: "left-to-right",
   columnWidth: 520,
   expandedColumnWidth: 720,
@@ -943,13 +943,13 @@ const defaultLayout: HamCanvasLayoutConfig = {
 ### 6.5 Behavior config
 
 ```ts
-export interface HamCanvasBehaviorConfig {
+export interface HiermarkCanvasBehaviorConfig {
   enableSurfaceReorder: boolean;
   enableBranchCreation: boolean;
   enableSiblingBranchCreation: boolean;
   enableSurfaceDeletion: boolean;
   enableKeyboardNavigation: boolean;
-  branchPolicy: HamBranchPolicy;
+  branchPolicy: HiermarkBranchPolicy;
   deleteSurfacePolicy: "prevent-if-has-children" | "delete-subtree" | "detach-children";
   pendingOperationMode: "optimistic" | "pessimistic";
 }
@@ -958,7 +958,7 @@ export interface HamCanvasBehaviorConfig {
 Recommended v1 defaults:
 
 ```ts
-const defaultBehavior: HamCanvasBehaviorConfig = {
+const defaultBehavior: HiermarkCanvasBehaviorConfig = {
   enableSurfaceReorder: true,
   enableBranchCreation: true,
   enableSiblingBranchCreation: true,
@@ -975,24 +975,24 @@ Use pessimistic topology updates by default. Content editing can be local/optimi
 ### 6.6 Canvas handlers
 
 ```ts
-export interface HamCanvasHandlers<SurfaceMeta = unknown, EdgeMeta = unknown> {
+export interface HiermarkCanvasHandlers<SurfaceMeta = unknown, EdgeMeta = unknown> {
   createSurfaceFromBlock(
-    event: HamCreateSurfaceFromBlockEvent,
-  ): Promise<HamCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
+    event: HiermarkCreateSurfaceFromBlockEvent,
+  ): Promise<HiermarkCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
 
   createSiblingSurface?(
-    event: HamCreateSiblingSurfaceEvent,
-  ): Promise<HamCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
+    event: HiermarkCreateSiblingSurfaceEvent,
+  ): Promise<HiermarkCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
 
-  reorderBranchSiblings?(event: HamReorderBranchSiblingsEvent): Promise<HamBranchEdge<EdgeMeta>[]>;
+  reorderBranchSiblings?(event: HiermarkReorderBranchSiblingsEvent): Promise<HiermarkBranchEdge<EdgeMeta>[]>;
 
-  deleteSurface?(event: HamDeleteSurfaceEvent): Promise<void>;
+  deleteSurface?(event: HiermarkDeleteSurfaceEvent): Promise<void>;
 
-  saveSurface?(event: HamEditorSavePayload): Promise<void>;
+  saveSurface?(event: HiermarkEditorSavePayload): Promise<void>;
 
   updateSurfaceSnapshot?(event: {
-    surfaceId: HamSurfaceId;
-    snapshot: HamSurfaceSnapshot;
+    surfaceId: HiermarkSurfaceId;
+    snapshot: HiermarkSurfaceSnapshot;
   }): void | Promise<void>;
 }
 ```
@@ -1000,19 +1000,19 @@ export interface HamCanvasHandlers<SurfaceMeta = unknown, EdgeMeta = unknown> {
 ### 6.7 Create branch event
 
 ```ts
-export interface HamCreateSurfaceFromBlockEvent {
-  sourceSurfaceId: HamSurfaceId;
-  sourceBlockId: HamBlockId;
-  sourceBlockSnapshot: HamBlockSnapshot;
-  sourceSurfaceSnapshot: HamSurfaceSnapshot;
+export interface HiermarkCreateSurfaceFromBlockEvent {
+  sourceSurfaceId: HiermarkSurfaceId;
+  sourceBlockId: HiermarkBlockId;
+  sourceBlockSnapshot: HiermarkBlockSnapshot;
+  sourceSurfaceSnapshot: HiermarkSurfaceSnapshot;
   suggestedTitle?: string;
-  insertAfterEdgeId?: HamBranchEdgeId;
-  saveSourceSurface: () => Promise<HamEditorSavePayload>;
+  insertAfterEdgeId?: HiermarkBranchEdgeId;
+  saveSourceSurface: () => Promise<HiermarkEditorSavePayload>;
 }
 
-export interface HamCreateSurfaceResult<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  surface: HamSurface<SurfaceMeta>;
-  edge: HamBranchEdge<EdgeMeta>;
+export interface HiermarkCreateSurfaceResult<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  surface: HiermarkSurface<SurfaceMeta>;
+  edge: HiermarkBranchEdge<EdgeMeta>;
   activate?: boolean;
 }
 ```
@@ -1024,21 +1024,21 @@ The canvas should call `saveSourceSurface()` before or during branch creation so
 Sibling reorder is only valid among edges with the same `fromSurfaceId` and `fromBlockId`.
 
 ```ts
-export interface HamReorderBranchSiblingsEvent {
-  fromSurfaceId: HamSurfaceId;
-  fromBlockId: HamBlockId;
-  orderedEdgeIds: HamBranchEdgeId[];
-  orderedSurfaceIds: HamSurfaceId[];
+export interface HiermarkReorderBranchSiblingsEvent {
+  fromSurfaceId: HiermarkSurfaceId;
+  fromBlockId: HiermarkBlockId;
+  orderedEdgeIds: HiermarkBranchEdgeId[];
+  orderedSurfaceIds: HiermarkSurfaceId[];
 }
 ```
 
 ### 6.9 Delete surface event
 
 ```ts
-export interface HamDeleteSurfaceEvent {
-  surfaceId: HamSurfaceId;
-  incomingEdgeId?: HamBranchEdgeId;
-  descendantSurfaceIds: HamSurfaceId[];
+export interface HiermarkDeleteSurfaceEvent {
+  surfaceId: HiermarkSurfaceId;
+  incomingEdgeId?: HiermarkBranchEdgeId;
+  descendantSurfaceIds: HiermarkSurfaceId[];
   policy: "prevent-if-has-children" | "delete-subtree" | "detach-children";
 }
 ```
@@ -1052,14 +1052,14 @@ The canvas should project columns from surfaces, edges, active path, and editor 
 Required inputs:
 
 ```ts
-export interface HamProjectionInput<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  rootSurfaceId: HamSurfaceId;
-  surfaces: Record<HamSurfaceId, HamSurface<SurfaceMeta>>;
-  branchEdges: HamBranchEdge<EdgeMeta>[];
-  snapshotsBySurfaceId: Record<HamSurfaceId, HamSurfaceSnapshot | undefined>;
-  activeSurfaceId: HamSurfaceId;
-  activeBlockId?: HamBlockId | null;
-  collapsedSurfaceIds?: Set<HamSurfaceId>;
+export interface HiermarkProjectionInput<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  rootSurfaceId: HiermarkSurfaceId;
+  surfaces: Record<HiermarkSurfaceId, HiermarkSurface<SurfaceMeta>>;
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[];
+  snapshotsBySurfaceId: Record<HiermarkSurfaceId, HiermarkSurfaceSnapshot | undefined>;
+  activeSurfaceId: HiermarkSurfaceId;
+  activeBlockId?: HiermarkBlockId | null;
+  collapsedSurfaceIds?: Set<HiermarkSurfaceId>;
 }
 ```
 
@@ -1076,9 +1076,9 @@ Projection rules:
 Pseudocode:
 
 ```ts
-function projectHamColumns(input: HamProjectionInput): HamCanvasColumn[] {
-  const columns: HamCanvasColumn[] = [];
-  const visited = new Set<HamSurfaceId>();
+function projectHiermarkColumns(input: HiermarkProjectionInput): HiermarkCanvasColumn[] {
+  const columns: HiermarkCanvasColumn[] = [];
+  const visited = new Set<HiermarkSurfaceId>();
 
   let current = [input.rootSurfaceId];
   let depth = 0;
@@ -1087,7 +1087,7 @@ function projectHamColumns(input: HamProjectionInput): HamCanvasColumn[] {
     const items = current.map((surfaceId) => buildCanvasItem(surfaceId, depth));
     columns.push({ depth, items });
 
-    const next: HamSurfaceId[] = [];
+    const next: HiermarkSurfaceId[] = [];
     for (const surfaceId of current) {
       const snapshot = input.snapshotsBySurfaceId[surfaceId];
       const blockOrder = snapshot?.blockOrder ?? [];
@@ -1118,24 +1118,24 @@ function projectHamColumns(input: HamProjectionInput): HamCanvasColumn[] {
 
 ### 6.11 Rendering surfaces
 
-The canvas should default to rendering `HamEditor` for expanded/active surfaces and compact previews for inactive surfaces, but all renderers should be replaceable.
+The canvas should default to rendering `HiermarkEditor` for expanded/active surfaces and compact previews for inactive surfaces, but all renderers should be replaceable.
 
 ```ts
-export interface HamCanvasSlots<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  SurfaceFrame?: React.ComponentType<HamSurfaceFrameProps<SurfaceMeta, EdgeMeta>>;
-  SurfaceHeader?: React.ComponentType<HamSurfaceHeaderProps<SurfaceMeta, EdgeMeta>>;
-  SurfacePreview?: React.ComponentType<HamSurfacePreviewProps<SurfaceMeta, EdgeMeta>>;
-  ColumnHeader?: React.ComponentType<HamColumnHeaderProps>;
-  BranchConnector?: React.ComponentType<HamBranchConnectorProps<EdgeMeta>>;
+export interface HiermarkCanvasSlots<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  SurfaceFrame?: React.ComponentType<HiermarkSurfaceFrameProps<SurfaceMeta, EdgeMeta>>;
+  SurfaceHeader?: React.ComponentType<HiermarkSurfaceHeaderProps<SurfaceMeta, EdgeMeta>>;
+  SurfacePreview?: React.ComponentType<HiermarkSurfacePreviewProps<SurfaceMeta, EdgeMeta>>;
+  ColumnHeader?: React.ComponentType<HiermarkColumnHeaderProps>;
+  BranchConnector?: React.ComponentType<HiermarkBranchConnectorProps<EdgeMeta>>;
   EmptyColumn?: React.ComponentType<{ depth: number }>;
-  CreateBranchDialog?: React.ComponentType<HamCreateBranchDialogProps>;
+  CreateBranchDialog?: React.ComponentType<HiermarkCreateBranchDialogProps>;
 }
 ```
 
 Default frame modes:
 
 ```ts
-export type HamSurfaceDisplayMode =
+export type HiermarkSurfaceDisplayMode =
   | "expanded-editor"
   | "card-preview"
   | "outline-preview"
@@ -1145,13 +1145,13 @@ export type HamSurfaceDisplayMode =
 ### 6.12 Canvas handle
 
 ```ts
-export interface HamCanvasHandle {
-  focusSurface(surfaceId: HamSurfaceId): void;
-  focusBlock(surfaceId: HamSurfaceId, blockId: HamBlockId): void;
-  scrollSurfaceIntoView(surfaceId: HamSurfaceId): void;
-  scrollBlockIntoView(surfaceId: HamSurfaceId, blockId: HamBlockId): void;
-  getActivePath(): HamActivePath;
-  getColumns(): HamCanvasColumn[];
+export interface HiermarkCanvasHandle {
+  focusSurface(surfaceId: HiermarkSurfaceId): void;
+  focusBlock(surfaceId: HiermarkSurfaceId, blockId: HiermarkBlockId): void;
+  scrollSurfaceIntoView(surfaceId: HiermarkSurfaceId): void;
+  scrollBlockIntoView(surfaceId: HiermarkSurfaceId, blockId: HiermarkBlockId): void;
+  getActivePath(): HiermarkActivePath;
+  getColumns(): HiermarkCanvasColumn[];
 }
 ```
 
@@ -1162,16 +1162,16 @@ export interface HamCanvasHandle {
 ### 7.1 Minimal local canvas
 
 ```tsx
-import { HamCanvas } from "@ham/canvas";
-import "@ham/canvas/styles.css";
-import "@ham/editor/styles.css";
+import { HiermarkCanvas } from "@hiermark/canvas";
+import "@hiermark/canvas/styles.css";
+import "@hiermark/editor/styles.css";
 
 export function Demo() {
   const [surfaces, setSurfaces] = useState(initialSurfaces);
   const [edges, setEdges] = useState(initialEdges);
 
   return (
-    <HamCanvas
+    <HiermarkCanvas
       rootSurfaceId="surface_root"
       surfaces={surfaces}
       branchEdges={edges}
@@ -1264,7 +1264,7 @@ Column 1
 ### 7.3 Collaborative surface
 
 ```tsx
-<HamEditor
+<HiermarkEditor
   surfaceId="surface_123"
   value={{ kind: "markdown", markdown: initialMarkdown }}
   collaboration={{
@@ -1287,7 +1287,7 @@ const annotations = {
   types: [taskAnnotation, citationAnnotation, urlResourceAnnotation, mentionAnnotation],
 };
 
-<HamCanvas
+<HiermarkCanvas
   rootSurfaceId={rootSurfaceId}
   surfaces={surfaces}
   branchEdges={edges}
@@ -1300,7 +1300,7 @@ const annotations = {
 ### 7.5 Custom surface frame
 
 ```tsx
-<HamCanvas
+<HiermarkCanvas
   {...props}
   slots={{
     SurfaceFrame({ item, children, mode }) {
@@ -1423,37 +1423,37 @@ Use dnd-kit’s accessibility support for sortable interactions, but write packa
 
 ## 10. Styling and theming
 
-HAM should ship default CSS with CSS variables, not Tailwind-specific classes.
+Hiermark should ship default CSS with CSS variables, not Tailwind-specific classes.
 
 ```css
 :root {
-  --ham-bg: #ffffff;
-  --ham-surface-bg: #ffffff;
-  --ham-surface-border: #d8d8df;
-  --ham-text: #16161a;
-  --ham-muted: #6f6f7a;
-  --ham-accent: #6f5cff;
-  --ham-danger: #c73b3b;
-  --ham-radius: 12px;
-  --ham-column-gap: 24px;
-  --ham-surface-gap: 16px;
+  --hiermark-bg: #ffffff;
+  --hiermark-surface-bg: #ffffff;
+  --hiermark-surface-border: #d8d8df;
+  --hiermark-text: #16161a;
+  --hiermark-muted: #6f6f7a;
+  --hiermark-accent: #6f5cff;
+  --hiermark-danger: #c73b3b;
+  --hiermark-radius: 12px;
+  --hiermark-column-gap: 24px;
+  --hiermark-surface-gap: 16px;
 }
 ```
 
 Expose class names with a stable prefix:
 
 ```text
-.ham-canvas
-.ham-column
-.ham-surface
-.ham-surface-active
-.ham-editor
-.ham-block
-.ham-block-active
-.ham-block-ancestor
-.ham-branch-button
-.ham-branch-child-chip
-.ham-annotation-chip
+.hiermark-canvas
+.hiermark-column
+.hiermark-surface
+.hiermark-surface-active
+.hiermark-editor
+.hiermark-block
+.hiermark-block-active
+.hiermark-block-ancestor
+.hiermark-branch-button
+.hiermark-branch-child-chip
+.hiermark-annotation-chip
 ```
 
 Applications can override styles without forking components.
@@ -1467,7 +1467,7 @@ Applications can override styles without forking components.
 Deliverables:
 
 - pnpm workspace.
-- `@ham/editor` and `@ham/canvas` packages.
+- `@hiermark/editor` and `@hiermark/canvas` packages.
 - Vite playground.
 - Vitest setup.
 - Shared fixture files.
@@ -1556,7 +1556,7 @@ Tests:
 
 Deliverables:
 
-- Adapter layer in the host app mapping database documents/blocks/edges to HAM surfaces/edges.
+- Adapter layer in the host app mapping database documents/blocks/edges to Hiermark surfaces/edges.
 - Migration away from app-local `LevelsLayout`/`OverviewCard` logic.
 - Server routes accept block-only branch anchors.
 - Remove span-anchor code from the branch path.
@@ -1565,7 +1565,7 @@ Deliverables:
 
 ## 12. Migration notes for the current codebase
 
-These notes are not part of HAM’s generic API, but they describe how the current implementation should evolve.
+These notes are not part of Hiermark’s generic API, but they describe how the current implementation should evolve.
 
 ### 12.1 Keep the current stack direction
 
@@ -1593,13 +1593,13 @@ Change:
 Current packages can map roughly as:
 
 ```text
-@rlm/editor          -> @ham/editor
-@rlm/markdown-engine -> internal modules in @ham/editor
-@rlm/doc-grid        -> @ham/canvas
-@rlm/doc-tree        -> internal topology modules in @ham/canvas
+@rlm/editor          -> @hiermark/editor
+@rlm/markdown-engine -> internal modules in @hiermark/editor
+@rlm/doc-grid        -> @hiermark/canvas
+@rlm/doc-tree        -> internal topology modules in @hiermark/canvas
 ```
 
-`@rlm/hsm-format` should stay separate. It is a domain-specific hierarchical-summary format, not generic HAM infrastructure.
+`@rlm/hsm-format` should stay separate. It is a domain-specific hierarchical-summary format, not generic Hiermark infrastructure.
 
 ### 12.3 Replace document tree with surface topology
 
@@ -1617,10 +1617,10 @@ interface DocNode {
 Recommended shape:
 
 ```ts
-interface HamCanvasState {
+interface HiermarkCanvasState {
   rootSurfaceId: string;
-  surfaces: Record<string, HamSurface>;
-  branchEdges: HamBranchEdge[];
+  surfaces: Record<string, HiermarkSurface>;
+  branchEdges: HiermarkBranchEdge[];
 }
 ```
 
@@ -1639,7 +1639,7 @@ POST /branch
 }
 ```
 
-The host app may still store legacy span data, but HAM v1 should not expose it.
+The host app may still store legacy span data, but Hiermark v1 should not expose it.
 
 ### 12.5 Move app-specific entity implementations out
 
@@ -1761,7 +1761,7 @@ Create JSON fixtures that drive both unit tests and playground stories.
 
 ## 14. Acceptance criteria for v1
 
-HAM v1 is ready to fold back into the larger app when all of the following are true:
+Hiermark v1 is ready to fold back into the larger app when all of the following are true:
 
 1. A Vite playground can create, edit, branch, reorder, collapse, and delete surfaces without the larger app.
 2. A column can display multiple surfaces produced by branching from different blocks in the previous column.
@@ -1806,7 +1806,7 @@ The canvas should import editor types and provide first-class integration. It do
 
 Recommendation: **no for v1.**
 
-Put Hocuspocus client integration in `@ham/editor`. The server remains app-owned. Split a server package only if multiple apps need the same Hocuspocus server/auth/persistence implementation.
+Put Hocuspocus client integration in `@hiermark/editor`. The server remains app-owned. Split a server package only if multiple apps need the same Hocuspocus server/auth/persistence implementation.
 
 ---
 

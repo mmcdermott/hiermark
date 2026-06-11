@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeAll, afterEach, vi } from "vitest";
 import { render, waitFor, cleanup, fireEvent } from "@testing-library/react";
 import type { Editor } from "@tiptap/core";
-import { HamEditor } from "../src/HamEditor";
-import type { HamEditorHandle, HamImageUploadHandler } from "../src/types";
+import { HiermarkEditor } from "../src/HiermarkEditor";
+import type { HiermarkEditorHandle, HiermarkImageUploadHandler } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
   (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
 });
 
-async function mount(markdown: string, extra: Partial<Parameters<typeof HamEditor>[0]> = {}) {
-  let handle: HamEditorHandle | null = null;
+async function mount(markdown: string, extra: Partial<Parameters<typeof HiermarkEditor>[0]> = {}) {
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown }}
@@ -32,12 +32,12 @@ describe("code blocks (lowlight + chrome)", () => {
   it("syntax-highlights a fenced block and keeps the language on round-trip", async () => {
     const { container, getHandle } = await mount(PY);
     await waitFor(() => {
-      expect(container.querySelector(".ham-code-block code [class^='hljs-']")).not.toBeNull();
+      expect(container.querySelector(".hiermark-code-block code [class^='hljs-']")).not.toBeNull();
     });
     // The language picker reflects the fence language and the wrapper carries the
     // block id (so the canvas connectors can still anchor a code block).
-    expect((container.querySelector(".ham-code-lang") as HTMLSelectElement).value).toBe("python");
-    expect(container.querySelector(".ham-code-block")?.getAttribute("data-block-id")).toMatch(
+    expect((container.querySelector(".hiermark-code-lang") as HTMLSelectElement).value).toBe("python");
+    expect(container.querySelector(".hiermark-code-block")?.getAttribute("data-block-id")).toMatch(
       /^blk_/,
     );
     expect(getHandle().getMarkdown()).toContain("```python");
@@ -48,7 +48,7 @@ describe("code blocks (lowlight + chrome)", () => {
     Object.assign(navigator, { clipboard: { writeText } });
     const { container } = await mount(PY);
     const btn = await waitFor(() => {
-      const el = container.querySelector<HTMLButtonElement>(".ham-code-copy");
+      const el = container.querySelector<HTMLButtonElement>(".hiermark-code-copy");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -61,7 +61,7 @@ describe("code blocks (lowlight + chrome)", () => {
   it("changing the language picker rewrites the fence", async () => {
     const { container, getHandle } = await mount(PY);
     const select = await waitFor(() => {
-      const el = container.querySelector<HTMLSelectElement>(".ham-code-lang");
+      const el = container.querySelector<HTMLSelectElement>(".hiermark-code-lang");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -79,7 +79,7 @@ describe("images / figures", () => {
   });
 
   it("uploadImages() routes files through the host handler and inserts the result", async () => {
-    const upload: HamImageUploadHandler = vi.fn(async (file) => ({
+    const upload: HiermarkImageUploadHandler = vi.fn(async (file) => ({
       src: `stored://bucket/${file.name}`,
       alt: "figure 1",
     }));
@@ -97,7 +97,7 @@ describe("images / figures", () => {
 
   it("reports an upload rejection through onImageUploadError and inserts nothing", async () => {
     const error = new Error("413 too large");
-    const upload: HamImageUploadHandler = vi.fn(async () => {
+    const upload: HiermarkImageUploadHandler = vi.fn(async () => {
       throw error;
     });
     const onImageUploadError = vi.fn();

@@ -11,5 +11,5 @@ export function devWarn(key: string, message: string): void {
   if (seen.has(key)) return;
   seen.add(key);
   // eslint-disable-next-line no-console
-  console.warn(`[@ham/editor] ${message}`);
+  console.warn(`[@hiermark/editor] ${message}`);
 }

@@ -1,22 +1,22 @@
-# @ham/canvas
+# @hiermark/canvas
 
-A 2D **canvas of linked markdown surfaces** for HAM — editable
-[`@ham/editor`](https://www.npmjs.com/package/@ham/editor) surfaces laid out in
+A 2D **canvas of linked markdown surfaces** for Hiermark — editable
+[`@hiermark/editor`](https://www.npmjs.com/package/@hiermark/editor) surfaces laid out in
 depth-banded columns and connected by per-block branch edges (levels left → right,
 sections top → down).
 
 ```bash
-pnpm add @ham/canvas @ham/editor react react-dom
+pnpm add @hiermark/canvas @hiermark/editor react react-dom
 ```
 
 > **ESM + CJS.** Ships dual builds; React 19 is a peer dependency.
 
 ```tsx
-import { HamCanvas } from "@ham/canvas";
-import "@ham/editor/styles.css";
-import "@ham/canvas/styles.css";
+import { HiermarkCanvas } from "@hiermark/canvas";
+import "@hiermark/editor/styles.css";
+import "@hiermark/canvas/styles.css";
 
-<HamCanvas
+<HiermarkCanvas
   rootSurfaceId="s_root"
   surfaces={surfaces} // your data
   branchEdges={branchEdges} // your data
@@ -38,6 +38,6 @@ import "@ham/canvas/styles.css";
 - **Accessible** — ARIA tree semantics, a live status region, and reduced-motion
   support.
 
-The headless `useHamCanvas` hook exposes the same orchestration if you want to
-build your own renderer. See the [live docs](https://mmcdermott.github.io/ham/).
+The headless `useHiermarkCanvas` hook exposes the same orchestration if you want to
+build your own renderer. See the [live docs](https://mmcdermott.github.io/hiermark/).
 Released under the MIT license.

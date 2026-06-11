@@ -18,7 +18,7 @@ describe("headingDepthOf", () => {
     expect(headingDepthOf("####### too deep")).toBeNull();
   });
   it("recognizes id-stamped and indented headings", () => {
-    expect(headingDepthOf("## B <!-- ham:block=blk_x -->")).toBe(2);
+    expect(headingDepthOf("## B <!-- hiermark:block=blk_x -->")).toBe(2);
     expect(headingDepthOf("   # A")).toBe(1);
   });
 });

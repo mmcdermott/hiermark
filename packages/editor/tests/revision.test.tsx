@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import { HamEditor } from "../src/HamEditor";
-import type { HamEditorContent, HamEditorHandle } from "../src/types";
+import { HiermarkEditor } from "../src/HiermarkEditor";
+import type { HiermarkEditorContent, HiermarkEditorHandle } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
@@ -10,9 +10,9 @@ beforeAll(() => {
 
 describe("revision swap (controlled value)", () => {
   it("re-applies value when revision changes, preserving matching block ids", async () => {
-    let handle: HamEditorHandle | null = null;
-    const view = (value: HamEditorContent, revision: number) => (
-      <HamEditor
+    let handle: HiermarkEditorHandle | null = null;
+    const view = (value: HiermarkEditorContent, revision: number) => (
+      <HiermarkEditor
         surfaceId="s1"
         rootBlockId="blk_root"
         value={value}

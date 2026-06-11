@@ -1,5 +1,5 @@
 ---
-"@ham/editor": minor
+"@hiermark/editor": minor
 ---
 
 URI sanitizer hardening: the link/image policy is now a normalization-first

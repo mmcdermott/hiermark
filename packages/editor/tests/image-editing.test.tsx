@@ -16,7 +16,7 @@ describe("ImagePopover", () => {
     const onApply = vi.fn();
     const onClose = vi.fn();
     render(<ImagePopover open={imageTarget("")} onApply={onApply} onClose={onClose} />);
-    const input = document.querySelector<HTMLInputElement>(".ham-link-input")!;
+    const input = document.querySelector<HTMLInputElement>(".hiermark-link-input")!;
     fireEvent.change(input, { target: { value: "A red circle" } });
     fireEvent.keyDown(input, { key: "Enter" });
     expect(onApply).toHaveBeenCalledWith(3, { alt: "A red circle", title: "" });
@@ -31,7 +31,7 @@ describe("ImagePopover", () => {
         onClose={() => {}}
       />,
     );
-    const inputs = document.querySelectorAll<HTMLInputElement>(".ham-link-input");
+    const inputs = document.querySelectorAll<HTMLInputElement>(".hiermark-link-input");
     expect(inputs[0]!.value).toBe("old alt");
     expect(inputs[1]!.value).toBe("old title");
   });
@@ -40,7 +40,7 @@ describe("ImagePopover", () => {
     const onApply = vi.fn();
     const onClose = vi.fn();
     render(<ImagePopover open={imageTarget("alt")} onApply={onApply} onClose={onClose} />);
-    const input = document.querySelector<HTMLInputElement>(".ham-link-input")!;
+    const input = document.querySelector<HTMLInputElement>(".hiermark-link-input")!;
     fireEvent.keyDown(input, { key: "Escape" });
     expect(onClose).toHaveBeenCalled();
     expect(onApply).not.toHaveBeenCalled();
@@ -48,6 +48,6 @@ describe("ImagePopover", () => {
 
   it("renders nothing when closed", () => {
     render(<ImagePopover open={null} onApply={() => {}} onClose={() => {}} />);
-    expect(document.querySelector(".ham-image-popover")).toBeNull();
+    expect(document.querySelector(".hiermark-image-popover")).toBeNull();
   });
 });

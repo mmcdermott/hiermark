@@ -1,7 +1,7 @@
 {
-  "name": "@ham/canvas",
+  "name": "@hiermark/canvas",
   "version": "0.2.0",
-  "description": "A 2D canvas of editable HAM surfaces connected by block-anchored branch edges.",
+  "description": "A 2D canvas of editable Hiermark surfaces connected by block-anchored branch edges.",
   "license": "MIT",
   "author": {
     "name": "Matthew McDermott",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mmcdermott/ham.git",
+    "url": "git+https://github.com/mmcdermott/hiermark.git",
     "directory": "packages/canvas"
   },
   "type": "module",
@@ -56,12 +56,12 @@
     "@dnd-kit/utilities": "^3"
   },
   "peerDependencies": {
-    "@ham/editor": ">=0.1.0 <1.0.0",
+    "@hiermark/editor": ">=0.1.0 <1.0.0",
     "react": "^19",
     "react-dom": "^19"
   },
   "devDependencies": {
-    "@ham/editor": "workspace:^",
+    "@hiermark/editor": "workspace:^",
     "@testing-library/dom": "^10",
     "@testing-library/jest-dom": "^6",
     "@testing-library/react": "^16",

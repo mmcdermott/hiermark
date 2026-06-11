@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { validateHamTopology } from "../src/topology/validateHamTopology";
-import type { HamBranchEdge, HamSurface } from "../src/types";
+import { validateHiermarkTopology } from "../src/topology/validateHiermarkTopology";
+import type { HiermarkBranchEdge, HiermarkSurface } from "../src/types";
 
-const s = (id: string): HamSurface => ({
+const s = (id: string): HiermarkSurface => ({
   id,
   rootBlockId: `${id}_root`,
   content: { kind: "markdown", markdown: `# ${id}` },
 });
-const e = (id: string, from: string, to: string, order = 0): HamBranchEdge => ({
+const e = (id: string, from: string, to: string, order = 0): HiermarkBranchEdge => ({
   id,
   fromSurfaceId: from,
   fromBlockId: "blk",
@@ -15,9 +15,9 @@ const e = (id: string, from: string, to: string, order = 0): HamBranchEdge => ({
   order,
 });
 
-describe("validateHamTopology", () => {
+describe("validateHiermarkTopology", () => {
   it("reports nothing for a clean tree", () => {
-    const issues = validateHamTopology({
+    const issues = validateHiermarkTopology({
       rootSurfaceId: "r",
       surfaces: { r: s("r"), a: s("a"), b: s("b") },
       branchEdges: [e("e_a", "r", "a"), e("e_b", "a", "b")],
@@ -26,12 +26,12 @@ describe("validateHamTopology", () => {
   });
 
   it("flags a missing root", () => {
-    const issues = validateHamTopology({ rootSurfaceId: "r", surfaces: {}, branchEdges: [] });
+    const issues = validateHiermarkTopology({ rootSurfaceId: "r", surfaces: {}, branchEdges: [] });
     expect(issues.map((i) => i.kind)).toContain("missing-root");
   });
 
   it("flags edges to/from unknown surfaces", () => {
-    const issues = validateHamTopology({
+    const issues = validateHiermarkTopology({
       rootSurfaceId: "r",
       surfaces: { r: s("r") },
       branchEdges: [e("e_x", "r", "ghost")],
@@ -43,7 +43,7 @@ describe("validateHamTopology", () => {
   });
 
   it("flags a surface with duplicate incoming edges", () => {
-    const issues = validateHamTopology({
+    const issues = validateHiermarkTopology({
       rootSurfaceId: "r",
       surfaces: { r: s("r"), a: s("a"), b: s("b") },
       branchEdges: [e("e1", "r", "b"), e("e2", "a", "b"), e("e_a", "r", "a")],
@@ -54,7 +54,7 @@ describe("validateHamTopology", () => {
   });
 
   it("detects a cycle", () => {
-    const issues = validateHamTopology({
+    const issues = validateHiermarkTopology({
       rootSurfaceId: "r",
       surfaces: { r: s("r"), a: s("a"), b: s("b") },
       branchEdges: [e("e_a", "r", "a"), e("ab", "a", "b"), e("ba", "b", "a")],
@@ -63,7 +63,7 @@ describe("validateHamTopology", () => {
   });
 
   it("flags a surface unreachable from the root", () => {
-    const issues = validateHamTopology({
+    const issues = validateHiermarkTopology({
       rootSurfaceId: "r",
       surfaces: { r: s("r"), island: s("island") },
       branchEdges: [],

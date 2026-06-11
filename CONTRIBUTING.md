@@ -1,7 +1,7 @@
-# Contributing to HAM
+# Contributing to Hiermark
 
-Thanks for helping! HAM is a pnpm monorepo with two publishable packages
-(`@ham/editor`, `@ham/canvas`) and a docs/playground app (`apps/docs`).
+Thanks for helping! Hiermark is a pnpm monorepo with two publishable packages
+(`@hiermark/editor`, `@hiermark/canvas`) and a docs/playground app (`apps/docs`).
 
 ## Setup
 
@@ -30,7 +30,7 @@ pnpm lint:pkg     # publint over the built packages
 
 ## Changesets (for releases)
 
-Any change to `@ham/editor` / `@ham/canvas` needs a changeset:
+Any change to `@hiermark/editor` / `@hiermark/canvas` needs a changeset:
 
 ```bash
 pnpm changeset     # pick the packages + bump type, write a summary
@@ -40,7 +40,7 @@ Commit the generated `.changeset/*.md` with your PR. On merge to `main` the
 release workflow opens a **Version Packages** PR; merging that tags the new
 versions and creates GitHub Releases (npm publishing is off until the npm
 scope is claimed and an `NPM_TOKEN` secret is added — see
-`.github/workflows/release.yml`). `@ham/docs` is never published.
+`.github/workflows/release.yml`). `@hiermark/docs` is never published.
 
 ## PRs
 

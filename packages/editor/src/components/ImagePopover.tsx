@@ -62,13 +62,13 @@ export function ImagePopover({ open, onApply, onClose, onRequestEditorFocus }: I
       <div
         ref={refs.setFloating}
         style={floatingStyles}
-        className="ham-link-popover ham-image-popover"
+        className="hiermark-link-popover hiermark-image-popover"
         {...getFloatingProps()}
       >
-        <label className="ham-image-field">
+        <label className="hiermark-image-field">
           <span>Alt text</span>
           <input
-            className="ham-link-input"
+            className="hiermark-link-input"
             aria-label="Image alt text"
             placeholder="Describe the image…"
             autoFocus
@@ -87,10 +87,10 @@ export function ImagePopover({ open, onApply, onClose, onRequestEditorFocus }: I
             }}
           />
         </label>
-        <label className="ham-image-field">
+        <label className="hiermark-image-field">
           <span>Title</span>
           <input
-            className="ham-link-input"
+            className="hiermark-link-input"
             aria-label="Image title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -102,10 +102,10 @@ export function ImagePopover({ open, onApply, onClose, onRequestEditorFocus }: I
             }}
           />
         </label>
-        <div className="ham-link-actions">
+        <div className="hiermark-link-actions">
           <button
             type="button"
-            className="ham-link-btn"
+            className="hiermark-link-btn"
             onMouseDown={(e) => e.preventDefault()}
             onClick={apply}
           >

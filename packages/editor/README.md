@@ -1,21 +1,21 @@
-# @ham/editor
+# @hiermark/editor
 
-One collaborative, block-centric **markdown surface** for HAM — a Tiptap 3 /
+One collaborative, block-centric **markdown surface** for Hiermark — a Tiptap 3 /
 ProseMirror editor with stable block ids, tree snapshots, a generic annotation
 layer, math, syntax-highlighted code, image upload, links, and a raw-markdown
-source mode. Pairs with [`@ham/canvas`](https://www.npmjs.com/package/@ham/canvas).
+source mode. Pairs with [`@hiermark/canvas`](https://www.npmjs.com/package/@hiermark/canvas).
 
 ```bash
-pnpm add @ham/editor react react-dom
+pnpm add @hiermark/editor react react-dom
 ```
 
 > **ESM + CJS.** Ships dual builds; React 19 is a peer dependency.
 
 ```tsx
-import { HamEditor } from "@ham/editor";
-import "@ham/editor/styles.css";
+import { HiermarkEditor } from "@hiermark/editor";
+import "@hiermark/editor/styles.css";
 
-<HamEditor
+<HiermarkEditor
   surfaceId="s1"
   rootBlockId="blk_root"
   value={{ kind: "markdown", markdown: "# Hello\n\nStart writing…" }}
@@ -41,7 +41,7 @@ import "@ham/editor/styles.css";
   bounded reconnect, and lifecycle callbacks.
 - **Theming** — every visual is a CSS variable you can override.
 
-## Server-side markdown helpers (`@ham/editor/markdown`)
+## Server-side markdown helpers (`@hiermark/editor/markdown`)
 
 The grammar that powers stable ids, containment, checklists, citations, and
 resource links is **pure** — no React, no Tiptap, no DOM. A host app's server
@@ -60,11 +60,11 @@ import {
   parseChecklist,
   extractResourceLinks,
   fnv1a64Hex,
-} from "@ham/editor/markdown";
+} from "@hiermark/editor/markdown";
 ```
 
-The same symbols remain available from the package root (`@ham/editor`) for the
+The same symbols remain available from the package root (`@hiermark/editor`) for the
 client; the root simply re-exports this module.
 
-See the [live docs](https://mmcdermott.github.io/ham/) for runnable examples and
+See the [live docs](https://mmcdermott.github.io/hiermark/) for runnable examples and
 the full API. Released under the MIT license.

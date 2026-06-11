@@ -3,7 +3,7 @@ import { copyFileSync, existsSync } from "node:fs";
 
 export default defineConfig({
   // Named entries → `dist/index.*` and `dist/markdown.*`. The `markdown` entry is the
-  // pure, React-free subpath (`@ham/editor/markdown`) for server-side reconcilers.
+  // pure, React-free subpath (`@hiermark/editor/markdown`) for server-side reconcilers.
   entry: { index: "src/index.ts", markdown: "src/markdown/index.ts" },
   format: ["esm", "cjs"],
   dts: true,

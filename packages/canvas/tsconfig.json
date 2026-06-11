@@ -4,7 +4,7 @@
     "noEmit": true,
     "types": ["vitest/globals", "node"],
     "paths": {
-      "@ham/editor": ["../editor/src/index.ts"]
+      "@hiermark/editor": ["../editor/src/index.ts"]
     }
   },
   "include": ["src", "tests", "tsup.config.ts", "vitest.config.ts"]

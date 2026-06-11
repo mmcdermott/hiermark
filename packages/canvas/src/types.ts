@@ -1,27 +1,27 @@
 import type {
-  HamAnnotationRegistry,
-  HamBlockId,
-  HamBlockSnapshot,
-  HamBranchEdgeId,
-  HamBranchPolicy,
-  HamBranchRequestEvent,
-  HamEditorContent,
-  HamEditorProps,
-  HamEditorSavePayload,
-  HamSurfaceId,
-  HamSurfaceSnapshot,
-} from "@ham/editor";
+  HiermarkAnnotationRegistry,
+  HiermarkBlockId,
+  HiermarkBlockSnapshot,
+  HiermarkBranchEdgeId,
+  HiermarkBranchPolicy,
+  HiermarkBranchRequestEvent,
+  HiermarkEditorContent,
+  HiermarkEditorProps,
+  HiermarkEditorSavePayload,
+  HiermarkSurfaceId,
+  HiermarkSurfaceSnapshot,
+} from "@hiermark/editor";
 import type { ComponentType, ReactNode } from "react";
 
 export type {
-  HamSurfaceId,
-  HamBlockId,
-  HamBranchEdgeId,
-  HamSurfaceSnapshot,
-  HamBlockSnapshot,
-  HamBranchPolicy,
-  HamEditorContent,
-  HamEditorSavePayload,
+  HiermarkSurfaceId,
+  HiermarkBlockId,
+  HiermarkBranchEdgeId,
+  HiermarkSurfaceSnapshot,
+  HiermarkBlockSnapshot,
+  HiermarkBranchPolicy,
+  HiermarkEditorContent,
+  HiermarkEditorSavePayload,
 };
 
 // ---------------------------------------------------------------------------
@@ -29,21 +29,21 @@ export type {
 // ---------------------------------------------------------------------------
 
 /** An editable block tree displayed on the canvas. */
-export interface HamSurface<Meta = unknown> {
-  id: HamSurfaceId;
-  rootBlockId: HamBlockId;
+export interface HiermarkSurface<Meta = unknown> {
+  id: HiermarkSurfaceId;
+  rootBlockId: HiermarkBlockId;
   title?: string;
   meta?: Meta;
-  content: HamEditorContent;
+  content: HiermarkEditorContent;
   readonly?: boolean;
 }
 
 /** Connects a source block in one surface to a target surface (one column right). */
-export interface HamBranchEdge<Meta = unknown> {
-  id: HamBranchEdgeId;
-  fromSurfaceId: HamSurfaceId;
-  fromBlockId: HamBlockId;
-  toSurfaceId: HamSurfaceId;
+export interface HiermarkBranchEdge<Meta = unknown> {
+  id: HiermarkBranchEdgeId;
+  fromSurfaceId: HiermarkSurfaceId;
+  fromBlockId: HiermarkBlockId;
+  toSurfaceId: HiermarkSurfaceId;
   /** Sibling order among branches from the same source block. */
   order: number;
   meta?: Meta;
@@ -53,22 +53,22 @@ export interface HamBranchEdge<Meta = unknown> {
 // Projection output (spec §2.4)
 // ---------------------------------------------------------------------------
 
-export type HamPathState = "active" | "ancestor" | "descendant" | "sibling" | "unrelated";
+export type HiermarkPathState = "active" | "ancestor" | "descendant" | "sibling" | "unrelated";
 
-export type HamSurfaceDisplayMode = "expanded" | "card" | "outline" | "rail" | "hidden";
+export type HiermarkSurfaceDisplayMode = "expanded" | "card" | "outline" | "rail" | "hidden";
 
-export interface HamCanvasItem<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  surface: HamSurface<SurfaceMeta>;
-  incomingEdge?: HamBranchEdge<EdgeMeta>;
-  parentSurfaceId?: HamSurfaceId;
-  anchorBlockId?: HamBlockId;
-  pathState: HamPathState;
-  displayMode: HamSurfaceDisplayMode;
+export interface HiermarkCanvasItem<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  surface: HiermarkSurface<SurfaceMeta>;
+  incomingEdge?: HiermarkBranchEdge<EdgeMeta>;
+  parentSurfaceId?: HiermarkSurfaceId;
+  anchorBlockId?: HiermarkBlockId;
+  pathState: HiermarkPathState;
+  displayMode: HiermarkSurfaceDisplayMode;
 }
 
-export interface HamCanvasColumn<SurfaceMeta = unknown, EdgeMeta = unknown> {
+export interface HiermarkCanvasColumn<SurfaceMeta = unknown, EdgeMeta = unknown> {
   depth: number;
-  items: HamCanvasItem<SurfaceMeta, EdgeMeta>[];
+  items: HiermarkCanvasItem<SurfaceMeta, EdgeMeta>[];
   /**
    * True for trailing columns holding surfaces with no edge path from the root
    * (orphans / detached subtrees). They are projected so the data is never
@@ -78,31 +78,31 @@ export interface HamCanvasColumn<SurfaceMeta = unknown, EdgeMeta = unknown> {
 }
 
 /** The branch-edge lineage from the root surface to the active surface (spec §2.6). */
-export interface HamActivePath {
-  rootSurfaceId: HamSurfaceId;
-  activeSurfaceId: HamSurfaceId;
-  activeBlockId?: HamBlockId | null;
-  surfaceIds: HamSurfaceId[];
-  edgeIds: HamBranchEdgeId[];
-  anchorBlockIds: HamBlockId[];
+export interface HiermarkActivePath {
+  rootSurfaceId: HiermarkSurfaceId;
+  activeSurfaceId: HiermarkSurfaceId;
+  activeBlockId?: HiermarkBlockId | null;
+  surfaceIds: HiermarkSurfaceId[];
+  edgeIds: HiermarkBranchEdgeId[];
+  anchorBlockIds: HiermarkBlockId[];
 }
 
-export interface HamProjectionInput<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  rootSurfaceId: HamSurfaceId;
-  surfaces: Record<HamSurfaceId, HamSurface<SurfaceMeta>>;
-  branchEdges: HamBranchEdge<EdgeMeta>[];
-  snapshotsBySurfaceId: Record<HamSurfaceId, HamSurfaceSnapshot | undefined>;
-  activeSurfaceId: HamSurfaceId;
-  activeBlockId?: HamBlockId | null;
-  collapsedSurfaceIds?: Set<HamSurfaceId>;
-  layout?: HamCanvasLayoutConfig;
+export interface HiermarkProjectionInput<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  rootSurfaceId: HiermarkSurfaceId;
+  surfaces: Record<HiermarkSurfaceId, HiermarkSurface<SurfaceMeta>>;
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[];
+  snapshotsBySurfaceId: Record<HiermarkSurfaceId, HiermarkSurfaceSnapshot | undefined>;
+  activeSurfaceId: HiermarkSurfaceId;
+  activeBlockId?: HiermarkBlockId | null;
+  collapsedSurfaceIds?: Set<HiermarkSurfaceId>;
+  layout?: HiermarkCanvasLayoutConfig;
 }
 
 // ---------------------------------------------------------------------------
 // Layout + behavior config (spec §6.4, §6.5)
 // ---------------------------------------------------------------------------
 
-export interface HamCanvasLayoutConfig {
+export interface HiermarkCanvasLayoutConfig {
   orientation: "left-to-right";
   columnWidth: number;
   expandedColumnWidth: number;
@@ -146,47 +146,47 @@ export interface HamCanvasLayoutConfig {
   /**
    * Render a small provenance header above each sibling group naming the parent
    * surface / anchor block the group branches from. Default false. Customize via
-   * {@link HamCanvasSlots.GroupHeader}.
+   * {@link HiermarkCanvasSlots.GroupHeader}.
    */
   showGroupHeaders: boolean;
 }
 
-export type HamDeleteSurfacePolicy =
+export type HiermarkDeleteSurfacePolicy =
   | "prevent-if-has-children"
   | "delete-subtree"
   | "detach-children";
 
-export interface HamCanvasBehaviorConfig {
+export interface HiermarkCanvasBehaviorConfig {
   enableSurfaceReorder: boolean;
   enableBranchCreation: boolean;
   enableSiblingBranchCreation: boolean;
   enableSurfaceDeletion: boolean;
   enableKeyboardNavigation: boolean;
-  branchPolicy: HamBranchPolicy;
-  deleteSurfacePolicy: HamDeleteSurfacePolicy;
+  branchPolicy: HiermarkBranchPolicy;
+  deleteSurfacePolicy: HiermarkDeleteSurfacePolicy;
 }
 
 // ---------------------------------------------------------------------------
 // Handlers + operation events (spec §6.6–6.9)
 // ---------------------------------------------------------------------------
 
-export interface HamCreateSurfaceFromBlockEvent {
-  sourceSurfaceId: HamSurfaceId;
-  sourceBlockId: HamBlockId;
-  sourceBlockSnapshot: HamBlockSnapshot;
-  sourceSurfaceSnapshot: HamSurfaceSnapshot;
+export interface HiermarkCreateSurfaceFromBlockEvent {
+  sourceSurfaceId: HiermarkSurfaceId;
+  sourceBlockId: HiermarkBlockId;
+  sourceBlockSnapshot: HiermarkBlockSnapshot;
+  sourceSurfaceSnapshot: HiermarkSurfaceSnapshot;
   suggestedTitle?: string;
-  saveSourceSurface: () => Promise<HamEditorSavePayload>;
+  saveSourceSurface: () => Promise<HiermarkEditorSavePayload>;
 }
 
-export interface HamCreateSiblingSurfaceEvent {
-  fromSurfaceId: HamSurfaceId;
-  fromBlockId: HamBlockId;
-  insertAfterEdgeId?: HamBranchEdgeId;
+export interface HiermarkCreateSiblingSurfaceEvent {
+  fromSurfaceId: HiermarkSurfaceId;
+  fromBlockId: HiermarkBlockId;
+  insertAfterEdgeId?: HiermarkBranchEdgeId;
   /**
    * The 0-based order the canvas computed for the new edge. The host SHOULD
    * assign this to the new branch edge and shift existing siblings up (see
-   * {@link HamCreateSiblingSurfaceEvent.shiftedSiblingOrders}). If omitted
+   * {@link HiermarkCreateSiblingSurfaceEvent.shiftedSiblingOrders}). If omitted
    * (legacy hosts), append at the end.
    */
   order?: number;
@@ -194,48 +194,48 @@ export interface HamCreateSiblingSurfaceEvent {
    * Pre-computed new orders for the existing siblings displaced by the insert,
    * keyed by edge id — so the host persists the renumber without re-deriving it.
    */
-  shiftedSiblingOrders?: Record<HamBranchEdgeId, number>;
+  shiftedSiblingOrders?: Record<HiermarkBranchEdgeId, number>;
   suggestedTitle?: string;
 }
 
-export interface HamCreateSurfaceResult<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  surface: HamSurface<SurfaceMeta>;
-  edge: HamBranchEdge<EdgeMeta>;
+export interface HiermarkCreateSurfaceResult<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  surface: HiermarkSurface<SurfaceMeta>;
+  edge: HiermarkBranchEdge<EdgeMeta>;
   activate?: boolean;
 }
 
-export interface HamReorderBranchSiblingsEvent {
-  fromSurfaceId: HamSurfaceId;
-  fromBlockId: HamBlockId;
-  orderedEdgeIds: HamBranchEdgeId[];
-  orderedSurfaceIds: HamSurfaceId[];
+export interface HiermarkReorderBranchSiblingsEvent {
+  fromSurfaceId: HiermarkSurfaceId;
+  fromBlockId: HiermarkBlockId;
+  orderedEdgeIds: HiermarkBranchEdgeId[];
+  orderedSurfaceIds: HiermarkSurfaceId[];
 }
 
-export interface HamDeleteSurfaceEvent {
-  surfaceId: HamSurfaceId;
-  incomingEdgeId?: HamBranchEdgeId;
-  descendantSurfaceIds: HamSurfaceId[];
-  policy: HamDeleteSurfacePolicy;
+export interface HiermarkDeleteSurfaceEvent {
+  surfaceId: HiermarkSurfaceId;
+  incomingEdgeId?: HiermarkBranchEdgeId;
+  descendantSurfaceIds: HiermarkSurfaceId[];
+  policy: HiermarkDeleteSurfacePolicy;
 }
 
-export interface HamCanvasHandlers<SurfaceMeta = unknown, EdgeMeta = unknown> {
+export interface HiermarkCanvasHandlers<SurfaceMeta = unknown, EdgeMeta = unknown> {
   /**
    * Create a new surface branched from a block. Optional so read-only /
    * preview canvases need no dummy handler — without it (or with
    * `behavior.enableBranchCreation: false`) branch affordances are hidden.
    */
   createSurfaceFromBlock?(
-    event: HamCreateSurfaceFromBlockEvent,
-  ): Promise<HamCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
+    event: HiermarkCreateSurfaceFromBlockEvent,
+  ): Promise<HiermarkCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
   createSiblingSurface?(
-    event: HamCreateSiblingSurfaceEvent,
-  ): Promise<HamCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
-  reorderBranchSiblings?(event: HamReorderBranchSiblingsEvent): Promise<HamBranchEdge<EdgeMeta>[]>;
-  deleteSurface?(event: HamDeleteSurfaceEvent): Promise<void>;
-  saveSurface?(event: HamEditorSavePayload): Promise<void>;
+    event: HiermarkCreateSiblingSurfaceEvent,
+  ): Promise<HiermarkCreateSurfaceResult<SurfaceMeta, EdgeMeta>>;
+  reorderBranchSiblings?(event: HiermarkReorderBranchSiblingsEvent): Promise<HiermarkBranchEdge<EdgeMeta>[]>;
+  deleteSurface?(event: HiermarkDeleteSurfaceEvent): Promise<void>;
+  saveSurface?(event: HiermarkEditorSavePayload): Promise<void>;
   updateSurfaceSnapshot?(event: {
-    surfaceId: HamSurfaceId;
-    snapshot: HamSurfaceSnapshot;
+    surfaceId: HiermarkSurfaceId;
+    snapshot: HiermarkSurfaceSnapshot;
   }): void | Promise<void>;
 }
 
@@ -243,21 +243,21 @@ export interface HamCanvasHandlers<SurfaceMeta = unknown, EdgeMeta = unknown> {
 // Slots (spec §6.11)
 // ---------------------------------------------------------------------------
 
-export interface HamSurfaceFrameProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  item: HamCanvasItem<SurfaceMeta, EdgeMeta>;
-  mode: HamSurfaceDisplayMode;
+export interface HiermarkSurfaceFrameProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  item: HiermarkCanvasItem<SurfaceMeta, EdgeMeta>;
+  mode: HiermarkSurfaceDisplayMode;
   children: ReactNode;
 }
 
-export interface HamSurfaceHeaderProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  item: HamCanvasItem<SurfaceMeta, EdgeMeta>;
+export interface HiermarkSurfaceHeaderProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  item: HiermarkCanvasItem<SurfaceMeta, EdgeMeta>;
   onActivate: () => void;
   onDelete?: () => void;
   onAddSibling?: () => void;
 }
 
-export interface HamSurfacePreviewProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  item: HamCanvasItem<SurfaceMeta, EdgeMeta>;
+export interface HiermarkSurfacePreviewProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  item: HiermarkCanvasItem<SurfaceMeta, EdgeMeta>;
   onActivate: () => void;
 }
 
@@ -268,27 +268,27 @@ export interface HamSurfacePreviewProps<SurfaceMeta = unknown, EdgeMeta = unknow
  * its editor. `defaultBody` is what the canvas would otherwise render, so a slot
  * can wrap or fall back to it.
  */
-export interface HamSurfaceBodyProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  item: HamCanvasItem<SurfaceMeta, EdgeMeta>;
-  mode: HamSurfaceDisplayMode;
-  snapshot?: HamSurfaceSnapshot;
+export interface HiermarkSurfaceBodyProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  item: HiermarkCanvasItem<SurfaceMeta, EdgeMeta>;
+  mode: HiermarkSurfaceDisplayMode;
+  snapshot?: HiermarkSurfaceSnapshot;
   onActivate: () => void;
   defaultBody: ReactNode;
 }
 
-export interface HamColumnHeaderProps {
+export interface HiermarkColumnHeaderProps {
   depth: number;
   count: number;
 }
 
 /** Provenance header above a sibling group: where this set of surfaces branches from. */
-export interface HamGroupHeaderProps<SurfaceMeta = unknown> {
+export interface HiermarkGroupHeaderProps<SurfaceMeta = unknown> {
   /** Surface that owns the anchor block this group branches from. */
-  parentSurfaceId: HamSurfaceId;
+  parentSurfaceId: HiermarkSurfaceId;
   /** The parent surface, if it's in the current projection. */
-  parentSurface?: HamSurface<SurfaceMeta>;
+  parentSurface?: HiermarkSurface<SurfaceMeta>;
   /** The anchor block id in the parent surface. */
-  anchorBlockId: HamBlockId;
+  anchorBlockId: HiermarkBlockId;
   /** A short text preview of the anchor block, if a snapshot is available. */
   anchorPreview?: string;
   /** Number of sibling surfaces in the group. */
@@ -298,25 +298,25 @@ export interface HamGroupHeaderProps<SurfaceMeta = unknown> {
 }
 
 /** How prominently a connector is drawn, derived from the active path. */
-export type HamConnectorState = "active" | "ancestor" | "muted";
+export type HiermarkConnectorState = "active" | "ancestor" | "muted";
 
-export interface HamConnectorRenderProps<EdgeMeta = unknown> {
-  edge: HamBranchEdge<EdgeMeta>;
+export interface HiermarkConnectorRenderProps<EdgeMeta = unknown> {
+  edge: HiermarkBranchEdge<EdgeMeta>;
   /** Cubic-bezier path string in canvas-content coordinates. */
   path: string;
   from: { x: number; y: number };
   to: { x: number; y: number };
-  state: HamConnectorState;
+  state: HiermarkConnectorState;
 }
 
 /** Props passed to a custom add-sibling affordance (spec §6.5, §6.11). */
-export interface HamAddSiblingButtonProps {
+export interface HiermarkAddSiblingButtonProps {
   /** Surface that owns the anchor block the new branch attaches to. */
-  fromSurfaceId: HamSurfaceId;
+  fromSurfaceId: HiermarkSurfaceId;
   /** Anchor block the new sibling branches from. */
-  fromBlockId: HamBlockId;
+  fromBlockId: HiermarkBlockId;
   /** Existing sibling edge this insertion lands after (undefined = prepend). */
-  afterEdgeId?: HamBranchEdgeId;
+  afterEdgeId?: HiermarkBranchEdgeId;
   /** Resolved order the new sibling will occupy among its siblings. */
   insertOrder: number;
   /** Number of existing siblings in the group (for "insert" vs "append" affordances). */
@@ -327,44 +327,44 @@ export interface HamAddSiblingButtonProps {
   onAddSibling: () => void;
 }
 
-export interface HamCanvasSlots<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  SurfaceFrame?: ComponentType<HamSurfaceFrameProps<SurfaceMeta, EdgeMeta>>;
-  SurfaceHeader?: ComponentType<HamSurfaceHeaderProps<SurfaceMeta, EdgeMeta>>;
-  SurfacePreview?: ComponentType<HamSurfacePreviewProps<SurfaceMeta, EdgeMeta>>;
-  /** Replace the body of an inactive surface card (see {@link HamSurfaceBodyProps}). */
-  SurfaceBody?: ComponentType<HamSurfaceBodyProps<SurfaceMeta, EdgeMeta>>;
-  ColumnHeader?: ComponentType<HamColumnHeaderProps>;
+export interface HiermarkCanvasSlots<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  SurfaceFrame?: ComponentType<HiermarkSurfaceFrameProps<SurfaceMeta, EdgeMeta>>;
+  SurfaceHeader?: ComponentType<HiermarkSurfaceHeaderProps<SurfaceMeta, EdgeMeta>>;
+  SurfacePreview?: ComponentType<HiermarkSurfacePreviewProps<SurfaceMeta, EdgeMeta>>;
+  /** Replace the body of an inactive surface card (see {@link HiermarkSurfaceBodyProps}). */
+  SurfaceBody?: ComponentType<HiermarkSurfaceBodyProps<SurfaceMeta, EdgeMeta>>;
+  ColumnHeader?: ComponentType<HiermarkColumnHeaderProps>;
   EmptyColumn?: ComponentType<{ depth: number }>;
   /** Rendered when the canvas has no surfaces to show (e.g. a missing root). */
-  EmptyCanvas?: ComponentType<{ rootSurfaceId: HamSurfaceId }>;
+  EmptyCanvas?: ComponentType<{ rootSurfaceId: HiermarkSurfaceId }>;
   /** Provenance header above each sibling group (when `layout.showGroupHeaders`). */
-  GroupHeader?: ComponentType<HamGroupHeaderProps<SurfaceMeta>>;
+  GroupHeader?: ComponentType<HiermarkGroupHeaderProps<SurfaceMeta>>;
   /** Override per-edge connector rendering (must return an SVG element). */
-  Connector?: ComponentType<HamConnectorRenderProps<EdgeMeta>>;
+  Connector?: ComponentType<HiermarkConnectorRenderProps<EdgeMeta>>;
   /** Override the positioned add-sibling affordance in a column's sibling rail. */
-  AddSiblingButton?: ComponentType<HamAddSiblingButtonProps>;
+  AddSiblingButton?: ComponentType<HiermarkAddSiblingButtonProps>;
 }
 
 // ---------------------------------------------------------------------------
 // Component props + handle (spec §6.3, §6.12)
 // ---------------------------------------------------------------------------
 
-export interface HamCanvasHandle {
+export interface HiermarkCanvasHandle {
   /** Activate a surface (and scroll it into view). */
-  focusSurface(surfaceId: HamSurfaceId): void;
+  focusSurface(surfaceId: HiermarkSurfaceId): void;
   /**
    * Activate a surface, scroll it into view, and move the caret INTO the
    * given block (once that surface's editor has mounted).
    */
-  focusBlock(surfaceId: HamSurfaceId, blockId: HamBlockId): void;
-  scrollSurfaceIntoView(surfaceId: HamSurfaceId): void;
+  focusBlock(surfaceId: HiermarkSurfaceId, blockId: HiermarkBlockId): void;
+  scrollSurfaceIntoView(surfaceId: HiermarkSurfaceId): void;
   /** Scroll a surface's child surfaces into view in the next column. */
-  revealChildren(surfaceId: HamSurfaceId): void;
-  getActivePath(): HamActivePath;
-  getColumns(): HamCanvasColumn[];
+  revealChildren(surfaceId: HiermarkSurfaceId): void;
+  getActivePath(): HiermarkActivePath;
+  getColumns(): HiermarkCanvasColumn[];
 }
 
-export type HamCanvasOperationType =
+export type HiermarkCanvasOperationType =
   | "create-branch"
   | "create-sibling"
   | "reorder-siblings"
@@ -373,9 +373,9 @@ export type HamCanvasOperationType =
   | "update-snapshot";
 
 /** A failed (or package-blocked) canvas operation, surfaced via `onOperationError`. */
-export interface HamCanvasOperationError {
-  type: HamCanvasOperationType;
-  surfaceId?: HamSurfaceId;
+export interface HiermarkCanvasOperationError {
+  type: HiermarkCanvasOperationType;
+  surfaceId?: HiermarkSurfaceId;
   /** The rejection from the host handler, if any. */
   error?: unknown;
   /**
@@ -389,14 +389,14 @@ export interface HamCanvasOperationError {
 
 /**
  * Editor props a host may default for every canvas-mounted editor. This is
- * {@link HamEditorProps} minus the canvas-OWNED wiring (content, identity,
+ * {@link HiermarkEditorProps} minus the canvas-OWNED wiring (content, identity,
  * branch/save/snapshot callbacks…): those were silently overridden before,
  * which read as the host's callbacks being dropped. Extend the Omit list when
  * the canvas takes ownership of a new editor prop.
  */
-export type HamCanvasEditorDefaults = Partial<
+export type HiermarkCanvasEditorDefaults = Partial<
   Omit<
-    HamEditorProps,
+    HiermarkEditorProps,
     | "surfaceId"
     | "rootBlockId"
     | "value"
@@ -417,33 +417,33 @@ export type HamCanvasEditorDefaults = Partial<
   >
 >;
 
-export interface HamCanvasProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  rootSurfaceId: HamSurfaceId;
-  surfaces: Record<HamSurfaceId, HamSurface<SurfaceMeta>>;
-  branchEdges: HamBranchEdge<EdgeMeta>[];
+export interface HiermarkCanvasProps<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  rootSurfaceId: HiermarkSurfaceId;
+  surfaces: Record<HiermarkSurfaceId, HiermarkSurface<SurfaceMeta>>;
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[];
 
-  activeSurfaceId?: HamSurfaceId;
-  activeBlockId?: HamBlockId | null;
+  activeSurfaceId?: HiermarkSurfaceId;
+  activeBlockId?: HiermarkBlockId | null;
 
-  layout?: Partial<HamCanvasLayoutConfig>;
-  behavior?: Partial<HamCanvasBehaviorConfig>;
-  slots?: HamCanvasSlots<SurfaceMeta, EdgeMeta>;
+  layout?: Partial<HiermarkCanvasLayoutConfig>;
+  behavior?: Partial<HiermarkCanvasBehaviorConfig>;
+  slots?: HiermarkCanvasSlots<SurfaceMeta, EdgeMeta>;
 
-  editorDefaults?: HamCanvasEditorDefaults;
-  annotationRegistry?: HamAnnotationRegistry;
+  editorDefaults?: HiermarkCanvasEditorDefaults;
+  annotationRegistry?: HiermarkAnnotationRegistry;
   annotationContext?: unknown;
 
-  handlers: HamCanvasHandlers<SurfaceMeta, EdgeMeta>;
+  handlers: HiermarkCanvasHandlers<SurfaceMeta, EdgeMeta>;
   className?: string;
 
-  onReady?: (handle: HamCanvasHandle) => void;
-  onActiveChange?: (active: { surfaceId: HamSurfaceId; blockId?: HamBlockId | null }) => void;
+  onReady?: (handle: HiermarkCanvasHandle) => void;
+  onActiveChange?: (active: { surfaceId: HiermarkSurfaceId; blockId?: HiermarkBlockId | null }) => void;
   /**
    * Called when a topology/save operation is rejected by a host handler, or
    * refused package-side (e.g. a delete blocked by `deleteSurfacePolicy`).
    * Without it, handler rejections are swallowed.
    */
-  onOperationError?: (error: HamCanvasOperationError) => void;
+  onOperationError?: (error: HiermarkCanvasOperationError) => void;
 }
 
-export type { HamBranchRequestEvent };
+export type { HiermarkBranchRequestEvent };

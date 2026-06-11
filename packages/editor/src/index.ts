@@ -1,24 +1,24 @@
-// @ham/editor — one collaborative, block-centric markdown surface.
+// @hiermark/editor — one collaborative, block-centric markdown surface.
 
-export const HAM_EDITOR_VERSION = "0.1.0";
+export const HIERMARK_EDITOR_VERSION = "0.1.0";
 
 // Component
-export { HamEditor } from "./HamEditor";
+export { HiermarkEditor } from "./HiermarkEditor";
 
 // Extensions
-export { createHamEditorExtensions } from "./extensions/createHamEditorExtensions";
+export { createHiermarkEditorExtensions } from "./extensions/createHiermarkEditorExtensions";
 export type {
-  HamEditorExtensionOptions,
-  HamCollabBinding,
-} from "./extensions/createHamEditorExtensions";
+  HiermarkEditorExtensionOptions,
+  HiermarkCollabBinding,
+} from "./extensions/createHiermarkEditorExtensions";
 
 // Collaboration
 export { createHocuspocusCollab, flushAndDestroy } from "./collab/hocuspocus";
 export { BlockId } from "./extensions/block-id";
 export type { BlockIdOptions } from "./extensions/block-id";
-export { HamCodeBlock, hamLowlight } from "./extensions/code-block";
-export { HamInlineMath, HamBlockMath } from "./extensions/math";
-export type { HamMathClick, HamMathOptions } from "./extensions/math";
+export { HiermarkCodeBlock, hiermarkLowlight } from "./extensions/code-block";
+export { HiermarkInlineMath, HiermarkBlockMath } from "./extensions/math";
+export type { HiermarkMathClick, HiermarkMathOptions } from "./extensions/math";
 export { Sanitize, isSafeUri, isSafeImageSrc } from "./extensions/sanitize";
 export type { SanitizeOptions } from "./extensions/sanitize";
 export { LinkEditor, linkEditorKey } from "./extensions/link-editor";
@@ -27,7 +27,7 @@ export type {
   LinkEditorContext,
   LinkEditTarget,
 } from "./extensions/link-editor";
-export { ImageUpload, uploadHamImages, imageUploadKey } from "./extensions/image-upload";
+export { ImageUpload, uploadHiermarkImages, imageUploadKey } from "./extensions/image-upload";
 export type { ImageUploadContext, ImageUploadOptions } from "./extensions/image-upload";
 export { ImageEditor, imageEditorKey } from "./extensions/image-editor";
 export type {
@@ -59,18 +59,18 @@ export type {
 export { generateBlockId, isBlockId } from "./id";
 
 // Snapshot
-export { getHamSurfaceSnapshot, surfaceSnapshotFromDoc } from "./snapshot/getHamSurfaceSnapshot";
-export type { SurfaceSnapshotOptions } from "./snapshot/getHamSurfaceSnapshot";
+export { getHiermarkSurfaceSnapshot, surfaceSnapshotFromDoc } from "./snapshot/getHiermarkSurfaceSnapshot";
+export type { SurfaceSnapshotOptions } from "./snapshot/getHiermarkSurfaceSnapshot";
 export { projectBlockTree, previewOf } from "./snapshot/projectBlockTree";
 export type { BlockNodeMeta, ProjectBlockTreeOptions } from "./snapshot/projectBlockTree";
 export {
-  DEFAULT_HAM_BLOCK_TYPES,
+  DEFAULT_HIERMARK_BLOCK_TYPES,
   isBranchable,
   resolveBranchMode,
   computeBranchPointSet,
   branchModeFromSet,
   SMART_RULES,
-  isHamBlockNode,
+  isHiermarkBlockNode,
   isEmptyBlockNode,
 } from "./snapshot/blockTreePolicy";
 export type { BranchabilityContext } from "./snapshot/blockTreePolicy";
@@ -79,7 +79,7 @@ export type { BlockIdentity, BlockIdRestore } from "./snapshot/blockIdentity";
 
 // Markdown helpers (import/export & server-reconciliation path).
 // Single-sourced from the pure `./markdown` barrel, which is also published as the
-// `@ham/editor/markdown` subpath so servers can import these without the React stack
+// `@hiermark/editor/markdown` subpath so servers can import these without the React stack
 // (see GitHub issue #50). Re-exporting from there keeps the root and subpath in sync.
 export * from "./markdown";
 
@@ -110,7 +110,7 @@ export {
   createCitationAnnotation,
   createMentionAnnotation,
   createUrlAnnotation,
-  type HamExampleAnnotationContext,
+  type HiermarkExampleAnnotationContext,
 } from "./annotations/recognizers";
 
 // Public types

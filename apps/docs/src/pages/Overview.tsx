@@ -1,9 +1,9 @@
 export function Overview() {
   return (
     <section className="page">
-      <h2>What is HAM?</h2>
+      <h2>What is Hiermark?</h2>
       <p className="lede">
-        HAM (<strong>Hierarchical, Annotatable Markdown</strong>) is two React + TypeScript packages
+        <strong>Hiermark</strong> is two React + TypeScript packages
         for building a <strong>2D canvas of linked, editable markdown surfaces</strong>. Any block
         inside a surface — a paragraph, heading, or checklist item — can be <em>branched</em> into a
         child surface that elaborates it. Child surfaces lay out in the next column to the right,
@@ -13,7 +13,7 @@ export function Overview() {
       <div className="cards">
         <div className="card">
           <h3>
-            <code>@ham/editor</code>
+            <code>@hiermark/editor</code>
           </h3>
           <p>
             One collaborative, block-centric markdown surface, built on Tiptap 3 / ProseMirror.
@@ -23,7 +23,7 @@ export function Overview() {
         </div>
         <div className="card">
           <h3>
-            <code>@ham/canvas</code>
+            <code>@hiermark/canvas</code>
           </h3>
           <p>
             A 2D canvas of surfaces connected by block-anchored branch edges. Column projection,
@@ -35,8 +35,8 @@ export function Overview() {
 
       <h3>The key architectural split</h3>
       <pre className="block">
-        <code>{`@ham/editor owns the intra-surface block tree.
-@ham/canvas owns the inter-surface 2D topology.`}</code>
+        <code>{`@hiermark/editor owns the intra-surface block tree.
+@hiermark/canvas owns the inter-surface 2D topology.`}</code>
       </pre>
       <p>
         A <strong>surface</strong> is the canvas unit: an editable block tree rooted at a stable

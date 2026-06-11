@@ -4,7 +4,7 @@ import type { EditorState } from "@tiptap/pm/state";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { findSuggestionMatch } from "@tiptap/suggestion";
 
-import type { HamAnnotationRegistry, HamAnnotationSuggestion } from "../types";
+import type { HiermarkAnnotationRegistry, HiermarkAnnotationSuggestion } from "../types";
 
 /** The live state of the annotation type-ahead, pushed to React for rendering. */
 export interface AnnotationSuggestState {
@@ -13,7 +13,7 @@ export interface AnnotationSuggestState {
   query: string;
   /** Document range covering the trigger + query (what an insert replaces). */
   range: { from: number; to: number } | null;
-  items: HamAnnotationSuggestion[];
+  items: HiermarkAnnotationSuggestion[];
 }
 
 const EMPTY: AnnotationSuggestState = {
@@ -25,7 +25,7 @@ const EMPTY: AnnotationSuggestState = {
 };
 
 export interface AnnotationSuggestContext<Ctx = unknown> {
-  registry: HamAnnotationRegistry<Ctx>;
+  registry: HiermarkAnnotationRegistry<Ctx>;
   context: Ctx;
   /** Max candidates shown (default 8). */
   maxItems?: number;
@@ -39,7 +39,7 @@ export interface AnnotationSuggestOptions {
   getContext: () => AnnotationSuggestContext | null;
 }
 
-export const annotationSuggestKey = new PluginKey<PluginState>("hamAnnotationSuggest");
+export const annotationSuggestKey = new PluginKey<PluginState>("hiermarkAnnotationSuggest");
 
 interface PluginState {
   suggest: AnnotationSuggestState;
@@ -52,11 +52,11 @@ interface SearchCache {
   trigger: string | null;
   query: string | null;
   context: unknown;
-  items: HamAnnotationSuggestion[];
+  items: HiermarkAnnotationSuggestion[];
 }
 
 /** Distinct trigger chars across the registry's suggest-capable types. */
-function triggerChars(registry: HamAnnotationRegistry): string[] {
+function triggerChars(registry: HiermarkAnnotationRegistry): string[] {
   const set = new Set<string>();
   for (const t of registry.types) if (t.suggest) set.add(t.suggest.trigger);
   return [...set];
@@ -68,13 +68,13 @@ function triggerChars(registry: HamAnnotationRegistry): string[] {
  * never interprets the domain — so it's unit-testable without ProseMirror.
  */
 export function collectSuggestions<Ctx>(
-  registry: HamAnnotationRegistry<Ctx>,
+  registry: HiermarkAnnotationRegistry<Ctx>,
   trigger: string,
   query: string,
   context: Ctx,
   maxItems = 8,
-): HamAnnotationSuggestion[] {
-  const out: HamAnnotationSuggestion[] = [];
+): HiermarkAnnotationSuggestion[] {
+  const out: HiermarkAnnotationSuggestion[] = [];
   const seen = new Set<string>();
   for (const t of registry.types) {
     if (t.suggest?.trigger !== trigger) continue;
@@ -121,7 +121,7 @@ function compute(
     if (before && /[A-Za-z0-9]/.test(before)) continue;
     // Reuse the last result for an identical (trigger, query, context) — so a
     // cursor move within the same token doesn't re-run the host's search().
-    let items: HamAnnotationSuggestion[];
+    let items: HiermarkAnnotationSuggestion[];
     if (cache.trigger === trigger && cache.query === match.query && cache.context === ctx.context) {
       items = cache.items;
     } else {
@@ -145,7 +145,7 @@ function compute(
  * annotation type "just works" without reconfiguring the editor.
  */
 export const AnnotationSuggest = Extension.create<AnnotationSuggestOptions>({
-  name: "hamAnnotationSuggest",
+  name: "hiermarkAnnotationSuggest",
 
   addOptions() {
     return { getContext: () => null };

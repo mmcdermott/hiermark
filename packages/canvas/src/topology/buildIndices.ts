@@ -1,10 +1,10 @@
-import type { HamBranchEdge, HamSurfaceId } from "../types";
+import type { HiermarkBranchEdge, HiermarkSurfaceId } from "../types";
 
-export interface HamTopologyIndices<EdgeMeta = unknown> {
+export interface HiermarkTopologyIndices<EdgeMeta = unknown> {
   /** Outgoing branch edges grouped by source surface. */
-  childEdgesBySurface: Map<HamSurfaceId, HamBranchEdge<EdgeMeta>[]>;
+  childEdgesBySurface: Map<HiermarkSurfaceId, HiermarkBranchEdge<EdgeMeta>[]>;
   /** The (single) incoming edge per target surface — i.e. the surface's parent edge. */
-  incomingEdgeByToSurface: Map<HamSurfaceId, HamBranchEdge<EdgeMeta>>;
+  incomingEdgeByToSurface: Map<HiermarkSurfaceId, HiermarkBranchEdge<EdgeMeta>>;
 }
 
 /**
@@ -14,10 +14,10 @@ export interface HamTopologyIndices<EdgeMeta = unknown> {
  * acyclic.
  */
 export function buildIndices<EdgeMeta = unknown>(
-  branchEdges: HamBranchEdge<EdgeMeta>[],
-): HamTopologyIndices<EdgeMeta> {
-  const childEdgesBySurface = new Map<HamSurfaceId, HamBranchEdge<EdgeMeta>[]>();
-  const incomingEdgeByToSurface = new Map<HamSurfaceId, HamBranchEdge<EdgeMeta>>();
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[],
+): HiermarkTopologyIndices<EdgeMeta> {
+  const childEdgesBySurface = new Map<HiermarkSurfaceId, HiermarkBranchEdge<EdgeMeta>[]>();
+  const incomingEdgeByToSurface = new Map<HiermarkSurfaceId, HiermarkBranchEdge<EdgeMeta>>();
 
   for (const edge of branchEdges) {
     const list = childEdgesBySurface.get(edge.fromSurfaceId);
@@ -34,12 +34,12 @@ export function buildIndices<EdgeMeta = unknown>(
 
 /** All surfaces reachable from `start` via outgoing edges (excludes `start`). */
 export function collectDescendants<EdgeMeta = unknown>(
-  start: HamSurfaceId,
-  childEdgesBySurface: Map<HamSurfaceId, HamBranchEdge<EdgeMeta>[]>,
-): Set<HamSurfaceId> {
-  const out = new Set<HamSurfaceId>();
-  const queue: HamSurfaceId[] = [start];
-  const seen = new Set<HamSurfaceId>([start]);
+  start: HiermarkSurfaceId,
+  childEdgesBySurface: Map<HiermarkSurfaceId, HiermarkBranchEdge<EdgeMeta>[]>,
+): Set<HiermarkSurfaceId> {
+  const out = new Set<HiermarkSurfaceId>();
+  const queue: HiermarkSurfaceId[] = [start];
+  const seen = new Set<HiermarkSurfaceId>([start]);
   while (queue.length) {
     const current = queue.shift()!;
     for (const edge of childEdgesBySurface.get(current) ?? []) {

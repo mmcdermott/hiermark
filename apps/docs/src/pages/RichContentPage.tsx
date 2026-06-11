@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import {
-  HamEditor,
-  type HamEditorHandle,
-  type HamEditorMode,
-  type HamImageUploadHandler,
-} from "@ham/editor";
+  HiermarkEditor,
+  type HiermarkEditorHandle,
+  type HiermarkEditorMode,
+  type HiermarkImageUploadHandler,
+} from "@hiermark/editor";
 
 import { LiveExample } from "../demos/LiveExample";
 
@@ -31,12 +31,12 @@ export const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 \`\`\`
 `;
 
-const CODE_SRC = `import { HamEditor } from "@ham/editor";
-import "@ham/editor/styles.css";
+const CODE_SRC = `import { HiermarkEditor } from "@hiermark/editor";
+import "@hiermark/editor/styles.css";
 
 // Fenced code blocks with a language are highlighted automatically;
 // the header adds a language picker + a copy-to-clipboard button.
-<HamEditor
+<HiermarkEditor
   surfaceId="code"
   value={{ kind: "markdown", markdown: "\`\`\`python\\ndef f(): ...\\n\`\`\`" }}
 />;`;
@@ -66,8 +66,8 @@ const MATH_MARKDOWN_LITERAL = [
   "$$\\int_0^1 x^2 \\, dx = \\tfrac{1}{3}$$",
 ].join("\n");
 
-const MATH_SRC = `import { HamEditor } from "@ham/editor";
-import "@ham/editor/styles.css";
+const MATH_SRC = `import { HiermarkEditor } from "@hiermark/editor";
+import "@hiermark/editor/styles.css";
 
 // Inline $…$ and display $$…$$ both render with KaTeX and round-trip through
 // markdown. Type them live too — typing the closing $ converts as you go.
@@ -76,7 +76,7 @@ const markdown = \`
 ${MATH_MARKDOWN_LITERAL}
 \`;
 
-<HamEditor surfaceId="math" value={{ kind: "markdown", markdown }} />;`;
+<HiermarkEditor surfaceId="math" value={{ kind: "markdown", markdown }} />;`;
 
 // ---------------------------------------------------------------------------
 // Tables — edit as a table or as raw markdown (source mode)
@@ -96,17 +96,17 @@ Add or remove a column in either form — the two round-trip.
 `;
 
 const TABLE_SRC = `import { useRef, useState } from "react";
-import { HamEditor, type HamEditorHandle, type HamEditorMode } from "@ham/editor";
+import { HiermarkEditor, type HiermarkEditorHandle, type HiermarkEditorMode } from "@hiermark/editor";
 
 function TableExample() {
-  const handle = useRef<HamEditorHandle | null>(null);
-  const [mode, setMode] = useState<HamEditorMode>("rich");
+  const handle = useRef<HiermarkEditorHandle | null>(null);
+  const [mode, setMode] = useState<HiermarkEditorMode>("rich");
   return (
     <>
       <button onClick={() => handle.current?.setMode(mode === "rich" ? "source" : "rich")}>
         {mode === "rich" ? "Edit as markdown" : "Back to table"}
       </button>
-      <HamEditor
+      <HiermarkEditor
         surfaceId="tbl"
         value={{ kind: "markdown", markdown: TABLE_MD }}
         onReady={(h) => (handle.current = h)}
@@ -117,8 +117,8 @@ function TableExample() {
 }`;
 
 function TableExample() {
-  const handle = useRef<HamEditorHandle | null>(null);
-  const [mode, setMode] = useState<HamEditorMode>("rich");
+  const handle = useRef<HiermarkEditorHandle | null>(null);
+  const [mode, setMode] = useState<HiermarkEditorMode>("rich");
   return (
     <LiveExample
       title="Tables — edit as a table or as markdown"
@@ -133,7 +133,7 @@ function TableExample() {
         </button>
       }
     >
-      <HamEditor
+      <HiermarkEditor
         surfaceId="tbl-doc"
         rootBlockId="blk_tbl"
         branchPolicy="off"
@@ -165,17 +165,17 @@ image and drag its handles** to resize it — the width is kept in the document
 `;
 
 const IMG_SRC = `import { useRef } from "react";
-import { HamEditor, type HamEditorHandle, type HamImageUploadHandler } from "@ham/editor";
+import { HiermarkEditor, type HiermarkEditorHandle, type HiermarkImageUploadHandler } from "@hiermark/editor";
 
 // You own storage. Here we keep it client-side with an object URL; a real app
 // would POST the file and return the stored URL.
-const onImageUpload: HamImageUploadHandler = async (file, { surfaceId }) => {
+const onImageUpload: HiermarkImageUploadHandler = async (file, { surfaceId }) => {
   // const { url } = await api.upload(file, surfaceId);
   return { src: URL.createObjectURL(file), alt: file.name };
 };
 
 function ImageExample() {
-  const handle = useRef<HamEditorHandle | null>(null);
+  const handle = useRef<HiermarkEditorHandle | null>(null);
   const picker = useRef<HTMLInputElement | null>(null);
   return (
     <>
@@ -191,7 +191,7 @@ function ImageExample() {
           e.target.value = "";
         }}
       />
-      <HamEditor
+      <HiermarkEditor
         surfaceId="img"
         value={{ kind: "markdown", markdown: IMG_MD }}
         onImageUpload={onImageUpload}
@@ -201,13 +201,13 @@ function ImageExample() {
   );
 }`;
 
-const onImageUpload: HamImageUploadHandler = async (file) => ({
+const onImageUpload: HiermarkImageUploadHandler = async (file) => ({
   src: URL.createObjectURL(file),
   alt: file.name,
 });
 
 function ImageExample() {
-  const handle = useRef<HamEditorHandle | null>(null);
+  const handle = useRef<HiermarkEditorHandle | null>(null);
   const picker = useRef<HTMLInputElement | null>(null);
   return (
     <LiveExample
@@ -232,7 +232,7 @@ function ImageExample() {
         </>
       }
     >
-      <HamEditor
+      <HiermarkEditor
         surfaceId="img-doc"
         rootBlockId="blk_img"
         branchPolicy="off"
@@ -269,7 +269,7 @@ export function RichContentPage() {
         button; the language is preserved on markdown round-trip.
       </p>
       <LiveExample title="Syntax highlighting + copy + language picker" source={CODE_SRC}>
-        <HamEditor
+        <HiermarkEditor
           surfaceId="code-doc"
           rootBlockId="blk_code"
           branchPolicy="off"
@@ -283,7 +283,7 @@ export function RichContentPage() {
         round-trip through markdown. Malformed LaTeX renders as an error token instead of throwing.
       </p>
       <LiveExample title="Inline + display math (KaTeX)" source={MATH_SRC}>
-        <HamEditor
+        <HiermarkEditor
           surfaceId="math-doc"
           rootBlockId="blk_math"
           branchPolicy="off"

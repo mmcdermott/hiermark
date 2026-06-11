@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
 import { useEffect, useRef } from "react";
 import { render, waitFor, cleanup, fireEvent, act } from "@testing-library/react";
-import { HamCanvas } from "../src/HamCanvas";
-import { useHamCanvas, type HamCanvasActions } from "../src/useHamCanvas";
+import { HiermarkCanvas } from "../src/HiermarkCanvas";
+import { useHiermarkCanvas, type HiermarkCanvasActions } from "../src/useHiermarkCanvas";
 import type {
-  HamBranchEdge,
-  HamCanvasBehaviorConfig,
-  HamCanvasHandlers,
-  HamCanvasOperationError,
-  HamCanvasProps,
-  HamSurface,
+  HiermarkBranchEdge,
+  HiermarkCanvasBehaviorConfig,
+  HiermarkCanvasHandlers,
+  HiermarkCanvasOperationError,
+  HiermarkCanvasProps,
+  HiermarkSurface,
 } from "../src/types";
 
 afterEach(() => {
@@ -20,7 +20,7 @@ beforeAll(() => {
   (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
 });
 
-const surface = (id: string, markdown: string, title?: string): HamSurface => ({
+const surface = (id: string, markdown: string, title?: string): HiermarkSurface => ({
   id,
   rootBlockId: `${id}_root`,
   ...(title ? { title } : {}),
@@ -39,7 +39,7 @@ const dummyResult = () => ({
   activate: false as const,
 });
 
-function makeHandlers(over: Partial<HamCanvasHandlers> = {}): HamCanvasHandlers {
+function makeHandlers(over: Partial<HiermarkCanvasHandlers> = {}): HiermarkCanvasHandlers {
   return {
     createSurfaceFromBlock: vi.fn(async () => dummyResult()),
     ...over,
@@ -65,14 +65,14 @@ const TWO_SURFACES = {
       toSurfaceId: "s_child",
       order: 0,
     },
-  ] as HamBranchEdge[],
+  ] as HiermarkBranchEdge[],
 };
 
 describe("canvas autosave", () => {
   it("debounces an edit into one saveSurface call with the edited content", async () => {
     const saveSurface = vi.fn(async (_payload: { surfaceId: string }) => {});
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root\n\nBody.", "Root") }}
         branchEdges={[]}
@@ -94,7 +94,7 @@ describe("canvas autosave", () => {
   it("does NOT fire a spurious save on unmount when nothing was edited", async () => {
     const saveSurface = vi.fn(async () => {});
     const { container, unmount } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root\n\nBody.", "Root") }}
         branchEdges={[]}
@@ -110,7 +110,7 @@ describe("canvas autosave", () => {
   it("flushes a pending edit when the surface de-expands (activate another surface)", async () => {
     const saveSurface = vi.fn(async (_payload: { surfaceId: string }) => {});
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={TWO_SURFACES.surfaces}
         branchEdges={TWO_SURFACES.edges}
@@ -123,7 +123,7 @@ describe("canvas autosave", () => {
     // debounce). The root's editor unmounts (expanded → card) — the pending
     // edit must flush, not die with the timer.
     typeEnter(container);
-    const open = [...container.querySelectorAll<HTMLElement>(".ham-surface-open")].find((b) =>
+    const open = [...container.querySelectorAll<HTMLElement>(".hiermark-surface-open")].find((b) =>
       b.closest('[data-surface-id="s_child"]'),
     );
     expect(open).toBeTruthy();
@@ -142,7 +142,7 @@ describe("canvas autosave", () => {
         }),
     );
     const { container, unmount } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root\n\nBody.", "Root") }}
         branchEdges={[]}
@@ -173,7 +173,7 @@ describe("canvas autosave", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Action-layer guards (useHamCanvas), exercised through a thin harness.
+// Action-layer guards (useHiermarkCanvas), exercised through a thin harness.
 // ---------------------------------------------------------------------------
 
 function Harness({
@@ -183,11 +183,11 @@ function Harness({
   onOperationError,
   branchEdges = [],
 }: {
-  actionsRef: { current: HamCanvasActions | null };
-  handlers: HamCanvasHandlers;
-  behavior?: Partial<HamCanvasBehaviorConfig>;
-  onOperationError?: (e: HamCanvasOperationError) => void;
-  branchEdges?: HamBranchEdge[];
+  actionsRef: { current: HiermarkCanvasActions | null };
+  handlers: HiermarkCanvasHandlers;
+  behavior?: Partial<HiermarkCanvasBehaviorConfig>;
+  onOperationError?: (e: HiermarkCanvasOperationError) => void;
+  branchEdges?: HiermarkBranchEdge[];
 }) {
   const props = {
     rootSurfaceId: "s_root",
@@ -196,8 +196,8 @@ function Harness({
     handlers,
     ...(behavior ? { behavior } : {}),
     ...(onOperationError ? { onOperationError } : {}),
-  } as HamCanvasProps;
-  const canvas = useHamCanvas(props);
+  } as HiermarkCanvasProps;
+  const canvas = useHiermarkCanvas(props);
   const ref = useRef(canvas.actions);
   ref.current = canvas.actions;
   useEffect(() => {
@@ -209,8 +209,8 @@ function Harness({
 describe("action-layer behavior guards", () => {
   it("enableSiblingBranchCreation=false blocks the gutter add-sibling path even with a handler present", async () => {
     const createSiblingSurface = vi.fn(async () => dummyResult());
-    const errors: HamCanvasOperationError[] = [];
-    const actionsRef = { current: null as HamCanvasActions | null };
+    const errors: HiermarkCanvasOperationError[] = [];
+    const actionsRef = { current: null as HiermarkCanvasActions | null };
     render(
       <Harness
         actionsRef={actionsRef}
@@ -258,8 +258,8 @@ describe("action-layer behavior guards", () => {
   });
 
   it("routes updateSurfaceSnapshot rejections to onOperationError (no unhandled rejection)", async () => {
-    const errors: HamCanvasOperationError[] = [];
-    const actionsRef = { current: null as HamCanvasActions | null };
+    const errors: HiermarkCanvasOperationError[] = [];
+    const actionsRef = { current: null as HiermarkCanvasActions | null };
     render(
       <Harness
         actionsRef={actionsRef}
@@ -286,10 +286,10 @@ describe("action-layer behavior guards", () => {
 
   it("addSibling append clears the MAX sibling order, not the group length (sparse orders)", async () => {
     const createSiblingSurface = vi.fn(async (_e: { order?: number }) => dummyResult());
-    const actionsRef = { current: null as HamCanvasActions | null };
+    const actionsRef = { current: null as HiermarkCanvasActions | null };
     // Orders [0, 2] — sparse after a delete. Appending with group.length (2)
     // would land mid-group; the correct append order is 3.
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e0", fromSurfaceId: "s_root", fromBlockId: "blk_1", toSurfaceId: "sa", order: 0 },
       { id: "e2", fromSurfaceId: "s_root", fromBlockId: "blk_1", toSurfaceId: "sb", order: 2 },
     ];
@@ -307,8 +307,8 @@ describe("action-layer behavior guards", () => {
   });
 
   it("reorderSiblings resolves true on success and false on handler rejection", async () => {
-    const actionsRef = { current: null as HamCanvasActions | null };
-    const edges: HamBranchEdge[] = [
+    const actionsRef = { current: null as HiermarkCanvasActions | null };
+    const edges: HiermarkBranchEdge[] = [
       { id: "e0", fromSurfaceId: "s_root", fromBlockId: "blk_1", toSurfaceId: "sa", order: 0 },
       { id: "e1", fromSurfaceId: "s_root", fromBlockId: "blk_1", toSurfaceId: "sb", order: 1 },
     ];
@@ -357,7 +357,7 @@ describe("active block scoping across expanded surfaces", () => {
         content: { kind: "tiptap-json" as const, json: { type: "doc", content: [block("In B")] } },
       },
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       {
         id: "e1",
         fromSurfaceId: "s_root",
@@ -367,7 +367,7 @@ describe("active block scoping across expanded surfaces", () => {
       },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -380,7 +380,7 @@ describe("active block scoping across expanded surfaces", () => {
     await waitFor(() => expect(container.querySelectorAll(".tiptap").length).toBe(2));
 
     await waitFor(() => {
-      const active = [...container.querySelectorAll(".ham-block-active")];
+      const active = [...container.querySelectorAll(".hiermark-block-active")];
       expect(active.length).toBeGreaterThanOrEqual(1);
       // Every active-block decoration must live inside the ACTIVE surface.
       for (const el of active) {

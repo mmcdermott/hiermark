@@ -3,9 +3,9 @@ import { resolveHits, type HitMeta } from "../src/annotations/conflict";
 import { recognizeAnnotations } from "../src/annotations/recognize";
 import { createExampleAnnotationRegistry } from "../src/annotations/recognizers";
 import { annotationId } from "../src/annotations/identity";
-import type { HamAnnotationHit, HamBlockSnapshot } from "../src/types";
+import type { HiermarkAnnotationHit, HiermarkBlockSnapshot } from "../src/types";
 
-function hit(p: Partial<HamAnnotationHit> & { id: string; type: string }): HamAnnotationHit {
+function hit(p: Partial<HiermarkAnnotationHit> & { id: string; type: string }): HiermarkAnnotationHit {
   return { blockId: "b1", ...p };
 }
 
@@ -80,7 +80,7 @@ describe("annotationId", () => {
 describe("recognizeAnnotations with the example registry", () => {
   const registry = createExampleAnnotationRegistry();
 
-  function block(id: string, type: string): HamBlockSnapshot {
+  function block(id: string, type: string): HiermarkBlockSnapshot {
     return {
       id,
       type,

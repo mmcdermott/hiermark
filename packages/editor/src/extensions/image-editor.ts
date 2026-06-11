@@ -17,15 +17,15 @@ export interface ImageEditorOptions {
   getContext: () => ImageEditorContext | null;
 }
 
-export const imageEditorKey = new PluginKey("hamImageEditor");
+export const imageEditorKey = new PluginKey("hiermarkImageEditor");
 
 /**
  * Opens the host's image editor (alt text — accessibility-critical — + title)
- * when an image is clicked. The popover + `setNodeMarkup` live in `HamEditor`;
+ * when an image is clicked. The popover + `setNodeMarkup` live in `HiermarkEditor`;
  * this only detects the click and reports the node's position + current attrs.
  */
 export const ImageEditor = Extension.create<ImageEditorOptions>({
-  name: "hamImageEditor",
+  name: "hiermarkImageEditor",
 
   addOptions() {
     return { getContext: () => null };

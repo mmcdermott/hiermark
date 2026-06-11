@@ -1,22 +1,22 @@
 import type { Node as PMNode } from "@tiptap/pm/model";
 
 import type {
-  HamBlockId,
-  HamBlockSnapshot,
-  HamBranchabilityRules,
-  HamBranchMode,
-  HamBranchPolicy,
-  HamSurfaceSnapshot,
+  HiermarkBlockId,
+  HiermarkBlockSnapshot,
+  HiermarkBranchabilityRules,
+  HiermarkBranchMode,
+  HiermarkBranchPolicy,
+  HiermarkSurfaceSnapshot,
 } from "../types";
 
 /**
- * ProseMirror node types that are HAM blocks — addressable, collapsible, and
+ * ProseMirror node types that are Hiermark blocks — addressable, collapsible, and
  * (subject to policy) branchable. List/task *items* are blocks; their wrapping
  * list containers are not. A `paragraph` is a block only at the top level; a
  * paragraph nested inside a listItem/taskItem/blockquote is that block's text,
- * not a separate block (see `getHamSurfaceSnapshot`).
+ * not a separate block (see `getHiermarkSurfaceSnapshot`).
  */
-export const DEFAULT_HAM_BLOCK_TYPES: ReadonlySet<string> = new Set([
+export const DEFAULT_HIERMARK_BLOCK_TYPES: ReadonlySet<string> = new Set([
   "paragraph",
   "heading",
   "blockquote",
@@ -54,13 +54,13 @@ export const TEXT_AND_RECURSE_TYPES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Whether a ProseMirror node should be treated as a HAM block, given its parent.
- * Mirrors `getHamSurfaceSnapshot`: a `paragraph` counts only at the top level; a
+ * Whether a ProseMirror node should be treated as a Hiermark block, given its parent.
+ * Mirrors `getHiermarkSurfaceSnapshot`: a `paragraph` counts only at the top level; a
  * paragraph nested in an item/blockquote is that block's text, not a block.
  */
-export function isHamBlockNode(node: PMNode, parent: PMNode | null): boolean {
+export function isHiermarkBlockNode(node: PMNode, parent: PMNode | null): boolean {
   const type = node.type.name;
-  if (!DEFAULT_HAM_BLOCK_TYPES.has(type)) return false;
+  if (!DEFAULT_HIERMARK_BLOCK_TYPES.has(type)) return false;
   if (type === "paragraph") {
     return parent == null || parent.type.name === "doc";
   }
@@ -77,7 +77,7 @@ export function isEmptyBlockNode(node: PMNode): boolean {
  * single-child intermediates (hoisting the affordance to the top of a chain),
  * and always allow headings (named decomposition anchors).
  */
-export const SMART_RULES: HamBranchabilityRules = {
+export const SMART_RULES: HiermarkBranchabilityRules = {
   kind: "rules",
   leaves: true,
   multiChildContainers: true,
@@ -113,11 +113,11 @@ export interface BranchabilityContext {
  * ```
  */
 export function resolveBranchMode(
-  block: HamBlockSnapshot,
-  snapshot: HamSurfaceSnapshot,
-  policy: HamBranchPolicy = "smart",
+  block: HiermarkBlockSnapshot,
+  snapshot: HiermarkSurfaceSnapshot,
+  policy: HiermarkBranchPolicy = "smart",
   ctx: BranchabilityContext = { existingChildCount: 0 },
-): HamBranchMode {
+): HiermarkBranchMode {
   if (policy === "off") return "none"; // no branch affordances at all
 
   // The bubble-up policy is a *whole-subtree* decision (and the root participates
@@ -152,12 +152,12 @@ export function resolveBranchMode(
  * depends on the live branch-child count, not the tree shape).
  */
 export function computeBranchPointSet(
-  snapshot: HamSurfaceSnapshot,
-  policy: HamBranchPolicy = "smart",
-): Set<HamBlockId> {
+  snapshot: HiermarkSurfaceSnapshot,
+  policy: HiermarkBranchPolicy = "smart",
+): Set<HiermarkBlockId> {
   if (policy === "off") return new Set();
   if (policy === "bubble-up") return bubbleUpBranchPoints(snapshot);
-  const set = new Set<HamBlockId>();
+  const set = new Set<HiermarkBlockId>();
   for (const id of snapshot.blockOrder) {
     const b = snapshot.blocks[id];
     if (b && resolveBranchMode(b, snapshot, policy, { existingChildCount: 0 }) === "branch") {
@@ -174,10 +174,10 @@ export function computeBranchPointSet(
  * skip this entirely (no affordances at all).
  */
 export function branchModeFromSet(
-  block: HamBlockSnapshot,
-  pointSet: Set<HamBlockId>,
+  block: HiermarkBlockSnapshot,
+  pointSet: Set<HiermarkBlockId>,
   ctx: BranchabilityContext = { existingChildCount: 0 },
-): HamBranchMode {
+): HiermarkBranchMode {
   if (ctx.existingChildCount > 0) return "add-sibling";
   return pointSet.has(block.id) ? "branch" : "none";
 }
@@ -189,22 +189,22 @@ export function branchModeFromSet(
  * branch points shows the fork *and* each nested point. The document root
  * participates (it can carry the whole doc); other empty blocks cannot.
  */
-function bubbleUpBranchPoints(snapshot: HamSurfaceSnapshot): Set<HamBlockId> {
-  const memo = new Map<HamBlockId, Set<HamBlockId>>();
-  const eligible = (b: HamBlockSnapshot) => b.id === snapshot.rootBlockId || !b.isEmpty;
+function bubbleUpBranchPoints(snapshot: HiermarkSurfaceSnapshot): Set<HiermarkBlockId> {
+  const memo = new Map<HiermarkBlockId, Set<HiermarkBlockId>>();
+  const eligible = (b: HiermarkBlockSnapshot) => b.id === snapshot.rootBlockId || !b.isEmpty;
 
-  const visit = (id: HamBlockId): Set<HamBlockId> => {
+  const visit = (id: HiermarkBlockId): Set<HiermarkBlockId> => {
     const cached = memo.get(id);
     if (cached) return cached;
-    const placeholder = new Set<HamBlockId>();
+    const placeholder = new Set<HiermarkBlockId>();
     memo.set(id, placeholder); // cycle guard (snapshots are trees, but be safe)
     const b = snapshot.blocks[id];
     if (!b) return placeholder;
 
-    const childPoints = new Set<HamBlockId>();
+    const childPoints = new Set<HiermarkBlockId>();
     for (const cid of b.childIds) for (const p of visit(cid)) childPoints.add(p);
 
-    let result: Set<HamBlockId>;
+    let result: Set<HiermarkBlockId>;
     if (childPoints.size === 0) {
       result = eligible(b) ? new Set([id]) : new Set();
     } else if (childPoints.size === 1) {
@@ -212,7 +212,7 @@ function bubbleUpBranchPoints(snapshot: HamSurfaceSnapshot): Set<HamBlockId> {
       result = eligible(b) ? new Set([id]) : childPoints;
     } else {
       // A real fork: this block and every distinct nested point.
-      result = eligible(b) ? new Set<HamBlockId>([id, ...childPoints]) : childPoints;
+      result = eligible(b) ? new Set<HiermarkBlockId>([id, ...childPoints]) : childPoints;
     }
     memo.set(id, result);
     return result;
@@ -223,9 +223,9 @@ function bubbleUpBranchPoints(snapshot: HamSurfaceSnapshot): Set<HamBlockId> {
 
 /** Heart of the smart policy: branchability from arity / depth / type. */
 function branchableByRules(
-  block: HamBlockSnapshot,
-  snapshot: HamSurfaceSnapshot,
-  r: HamBranchabilityRules,
+  block: HiermarkBlockSnapshot,
+  snapshot: HiermarkSurfaceSnapshot,
+  r: HiermarkBranchabilityRules,
 ): boolean {
   if (r.maxDepth != null && block.depth > r.maxDepth) return false;
 
@@ -247,7 +247,7 @@ function branchableByRules(
 }
 
 /** Whether the block's parent is itself a non-root single-child container. */
-function hasSingleChildParent(block: HamBlockSnapshot, snapshot: HamSurfaceSnapshot): boolean {
+function hasSingleChildParent(block: HiermarkBlockSnapshot, snapshot: HiermarkSurfaceSnapshot): boolean {
   const parent = block.parentId ? snapshot.blocks[block.parentId] : undefined;
   return !!parent && parent.id !== snapshot.rootBlockId && parent.childIds.length === 1;
 }
@@ -258,9 +258,9 @@ function hasSingleChildParent(block: HamBlockSnapshot, snapshot: HamSurfaceSnaps
  * (e.g. the create-time authoritative gate, which ignores existing children).
  */
 export function isBranchable(
-  block: HamBlockSnapshot,
-  snapshot: HamSurfaceSnapshot,
-  policy: HamBranchPolicy = "smart",
+  block: HiermarkBlockSnapshot,
+  snapshot: HiermarkSurfaceSnapshot,
+  policy: HiermarkBranchPolicy = "smart",
 ): boolean {
   return resolveBranchMode(block, snapshot, policy) !== "none";
 }

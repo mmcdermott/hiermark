@@ -1,29 +1,29 @@
 import { useMemo, useState } from "react";
 import {
-  HamCanvas,
-  type HamAddSiblingButtonProps,
-  type HamCanvasLayoutConfig,
-  type HamCanvasSlots,
-} from "@ham/canvas";
+  HiermarkCanvas,
+  type HiermarkAddSiblingButtonProps,
+  type HiermarkCanvasLayoutConfig,
+  type HiermarkCanvasSlots,
+} from "@hiermark/canvas";
 
 import { DemoFrame } from "./DemoFrame";
 import { useDemoCanvas } from "../lib/demoHost";
 import { galleryCanvas } from "../lib/examples";
 
-type Appearance = HamCanvasLayoutConfig["appearance"];
-type Connectors = HamCanvasLayoutConfig["showConnectors"];
-type Inactive = HamCanvasLayoutConfig["inactiveColumnMode"];
+type Appearance = HiermarkCanvasLayoutConfig["appearance"];
+type Connectors = HiermarkCanvasLayoutConfig["showConnectors"];
+type Inactive = HiermarkCanvasLayoutConfig["inactiveColumnMode"];
 type SiblingStyle = "plus" | "labeled" | "dot";
 
 // --- Three interchangeable add-sibling button components ------------------- //
-// Each is a drop-in for HamCanvasSlots.AddSiblingButton, exactly like swapping
+// Each is a drop-in for HiermarkCanvasSlots.AddSiblingButton, exactly like swapping
 // the editor's branch button. They receive the resolved insert position so a
 // custom button can label "insert" vs "append".
 
 /** A pill that spells out the action (and the position it will insert at). */
-function LabeledAddSibling({ isAppend, onAddSibling }: HamAddSiblingButtonProps) {
+function LabeledAddSibling({ isAppend, onAddSibling }: HiermarkAddSiblingButtonProps) {
   return (
-    <div className="ham-add-sibling-rail">
+    <div className="hiermark-add-sibling-rail">
       <button
         type="button"
         className="gallery-add-labeled"
@@ -40,9 +40,9 @@ function LabeledAddSibling({ isAppend, onAddSibling }: HamAddSiblingButtonProps)
 }
 
 /** A tiny circular dot — the quietest possible affordance. */
-function DotAddSibling({ onAddSibling }: HamAddSiblingButtonProps) {
+function DotAddSibling({ onAddSibling }: HiermarkAddSiblingButtonProps) {
   return (
-    <div className="ham-add-sibling-rail">
+    <div className="hiermark-add-sibling-rail">
       <button
         type="button"
         className="gallery-add-dot"
@@ -58,7 +58,7 @@ function DotAddSibling({ onAddSibling }: HamAddSiblingButtonProps) {
   );
 }
 
-const SIBLING_BUTTONS: Record<SiblingStyle, HamCanvasSlots["AddSiblingButton"]> = {
+const SIBLING_BUTTONS: Record<SiblingStyle, HiermarkCanvasSlots["AddSiblingButton"]> = {
   plus: undefined, // the package default
   labeled: LabeledAddSibling,
   dot: DotAddSibling,
@@ -107,14 +107,14 @@ export function CanvasStylesDemo() {
   const [columnScroll, setColumnScroll] = useState<"on" | "off">("off");
   const [inactive, setInactive] = useState<Inactive>("expanded");
 
-  const slots = useMemo<HamCanvasSlots>(() => {
+  const slots = useMemo<HiermarkCanvasSlots>(() => {
     const Btn = SIBLING_BUTTONS[siblingStyle];
     return Btn ? { AddSiblingButton: Btn } : {};
   }, [siblingStyle]);
 
   return (
     <DemoFrame
-      title="@ham/canvas — appearances, connectors, swappable buttons & navigation"
+      title="@hiermark/canvas — appearances, connectors, swappable buttons & navigation"
       onReset={canvas.reset}
       height={560}
       controls={
@@ -182,7 +182,7 @@ export function CanvasStylesDemo() {
         </span>
       }
     >
-      <HamCanvas
+      <HiermarkCanvas
         key={canvas.resetToken}
         rootSurfaceId="s_root"
         surfaces={canvas.surfaces}

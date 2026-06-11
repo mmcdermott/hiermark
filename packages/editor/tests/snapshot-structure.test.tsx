@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import { HamEditor } from "../src/HamEditor";
+import { HiermarkEditor } from "../src/HiermarkEditor";
 import { createExampleAnnotationRegistry } from "../src/annotations/recognizers";
-import type { HamEditorHandle } from "../src/types";
+import type { HiermarkEditorHandle } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
@@ -16,9 +16,9 @@ const li = (text: string, extra: unknown[] = []) => ({
 });
 
 async function mountJson(json: unknown, extra: Record<string, unknown> = {}) {
-  let handle: HamEditorHandle | null = null;
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "tiptap-json", json }}

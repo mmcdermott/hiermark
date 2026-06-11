@@ -20,16 +20,16 @@ export interface LinkEditorOptions {
   getContext: () => LinkEditorContext | null;
 }
 
-export const linkEditorKey = new PluginKey("hamLinkEditor");
+export const linkEditorKey = new PluginKey("hiermarkLinkEditor");
 
 /**
  * Wires link editing UX: clicking a link opens the host's edit popover anchored
  * to it, and `Mod-k` over a selection opens it to create/edit a link. The actual
- * popover + `setLink`/`unsetLink` live in `HamEditor`; this extension only
+ * popover + `setLink`/`unsetLink` live in `HiermarkEditor`; this extension only
  * detects the interaction and resolves the link's range + DOM anchor.
  */
 export const LinkEditor = Extension.create<LinkEditorOptions>({
-  name: "hamLinkEditor",
+  name: "hiermarkLinkEditor",
 
   addOptions() {
     return { getContext: () => null };

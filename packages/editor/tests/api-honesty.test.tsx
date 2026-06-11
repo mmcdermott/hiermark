@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import { HamEditor } from "../src/HamEditor";
-import type { HamCollaborationConfig, HamEditorHandle, HamEditorProps } from "../src/types";
+import { HiermarkEditor } from "../src/HiermarkEditor";
+import type { HiermarkCollaborationConfig, HiermarkEditorHandle, HiermarkEditorProps } from "../src/types";
 
 afterEach(() => cleanup());
 
@@ -11,10 +11,10 @@ afterEach(() => cleanup());
  * highlightedBlockIds ignored, collab config demanding fake transport fields).
  */
 
-async function mount(props: Partial<HamEditorProps> = {}) {
-  let handle: HamEditorHandle | null = null;
+async function mount(props: Partial<HiermarkEditorProps> = {}) {
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown: "# Title\n\nFirst para.\n\nSecond para.\n" }}
@@ -46,9 +46,9 @@ describe("autofocus contract", () => {
     // Remount with the same content + a block-id autofocus. Ids re-stamp on a
     // fresh mount, so resolve the target id from the new instance's snapshot
     // via the same text and assert the caret landed inside that block.
-    let handle: HamEditorHandle | null = null;
+    let handle: HiermarkEditorHandle | null = null;
     const { container } = render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s1"
         rootBlockId="blk_root"
         value={{ kind: "tiptap-json", json: tiptapDocWithIds() }}
@@ -98,9 +98,9 @@ function tiptapDocWithIds() {
 
 describe("highlightedBlockIds", () => {
   it("decorates exactly the listed blocks and re-decorates on prop change", async () => {
-    let handle: HamEditorHandle | null = null;
+    let handle: HiermarkEditorHandle | null = null;
     const view = render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s1"
         rootBlockId="blk_root"
         value={{ kind: "tiptap-json", json: tiptapDocWithIds() }}
@@ -112,13 +112,13 @@ describe("highlightedBlockIds", () => {
     );
     await waitFor(() => expect(handle).not.toBeNull());
     await waitFor(() => {
-      const hits = [...document.querySelectorAll(".ham-block-highlighted")];
+      const hits = [...document.querySelectorAll(".hiermark-block-highlighted")];
       expect(hits).toHaveLength(1);
       expect(hits[0]!.getAttribute("data-block-id")).toBe("blk_target");
     });
 
     view.rerender(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s1"
         rootBlockId="blk_root"
         value={{ kind: "tiptap-json", json: tiptapDocWithIds() }}
@@ -129,7 +129,7 @@ describe("highlightedBlockIds", () => {
       />,
     );
     await waitFor(() => {
-      const hits = [...document.querySelectorAll(".ham-block-highlighted")];
+      const hits = [...document.querySelectorAll(".hiermark-block-highlighted")];
       expect(hits).toHaveLength(1);
       expect(hits[0]!.getAttribute("data-block-id")).toBe("blk_first");
     });
@@ -138,25 +138,25 @@ describe("highlightedBlockIds", () => {
 
 describe("collaboration config union", () => {
   it("a custom runtime config type-checks without provider/url, and a hocuspocus config requires url", () => {
-    const runtimeConfig: HamCollaborationConfig = {
+    const runtimeConfig: HiermarkCollaborationConfig = {
       enabled: true,
       documentName: "doc",
       runtime: { ydoc: {}, connect: async () => ({ synced: true }) as never },
     };
-    const hocuspocusConfig: HamCollaborationConfig = {
+    const hocuspocusConfig: HiermarkCollaborationConfig = {
       enabled: true,
       documentName: "doc",
       provider: "hocuspocus",
       url: "wss://example",
     };
     // @ts-expect-error — hocuspocus transport without a url is invalid
-    const missingUrl: HamCollaborationConfig = {
+    const missingUrl: HiermarkCollaborationConfig = {
       enabled: true,
       documentName: "doc",
       provider: "hocuspocus",
     };
     // @ts-expect-error — neither runtime nor provider/url is invalid
-    const neither: HamCollaborationConfig = { enabled: true, documentName: "doc" };
+    const neither: HiermarkCollaborationConfig = { enabled: true, documentName: "doc" };
     expect([runtimeConfig, hocuspocusConfig, missingUrl, neither].length).toBe(4);
   });
 });

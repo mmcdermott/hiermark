@@ -44,7 +44,7 @@ jobs:
       - name: Generate API reference (TypeDoc)
         run: pnpm docs:api
       - name: Docs build
-        run: pnpm -F @ham/docs build
+        run: pnpm -F @hiermark/docs build
       - name: Packaging check (publint)
         run: pnpm -r --filter "./packages/*" exec publint --strict
       - name: Bundle size budgets (size-limit)

@@ -1,16 +1,16 @@
-import type { HamBranchEdge, HamSurfaceId } from "../types";
-import type { HamActivePath } from "../types";
-import { buildIndices, type HamTopologyIndices } from "./buildIndices";
+import type { HiermarkBranchEdge, HiermarkSurfaceId } from "../types";
+import type { HiermarkActivePath } from "../types";
+import { buildIndices, type HiermarkTopologyIndices } from "./buildIndices";
 
 export interface ActivePathInput<EdgeMeta = unknown> {
-  rootSurfaceId: HamSurfaceId;
-  activeSurfaceId: HamSurfaceId;
-  activeBlockId?: HamBlockId | null;
-  branchEdges?: HamBranchEdge<EdgeMeta>[];
-  indices?: HamTopologyIndices<EdgeMeta>;
+  rootSurfaceId: HiermarkSurfaceId;
+  activeSurfaceId: HiermarkSurfaceId;
+  activeBlockId?: HiermarkBlockId | null;
+  branchEdges?: HiermarkBranchEdge<EdgeMeta>[];
+  indices?: HiermarkTopologyIndices<EdgeMeta>;
 }
 
-type HamBlockId = string;
+type HiermarkBlockId = string;
 
 /**
  * Compute the root→active branch-edge lineage (spec §2.6) by walking *up* from
@@ -21,18 +21,18 @@ type HamBlockId = string;
  * If the active surface is unreachable from the root (an orphan), the path is
  * clamped to just `[activeSurfaceId]`.
  */
-export function getHamActivePath<EdgeMeta = unknown>(
+export function getHiermarkActivePath<EdgeMeta = unknown>(
   input: ActivePathInput<EdgeMeta>,
-): HamActivePath {
+): HiermarkActivePath {
   const { rootSurfaceId, activeSurfaceId, activeBlockId } = input;
   const { incomingEdgeByToSurface } = input.indices ?? buildIndices(input.branchEdges ?? []);
 
-  const surfaceIds: HamSurfaceId[] = [];
+  const surfaceIds: HiermarkSurfaceId[] = [];
   const edgeIds: string[] = [];
-  const anchorBlockIds: HamBlockId[] = [];
+  const anchorBlockIds: HiermarkBlockId[] = [];
 
-  const guard = new Set<HamSurfaceId>();
-  let cursor: HamSurfaceId | undefined = activeSurfaceId;
+  const guard = new Set<HiermarkSurfaceId>();
+  let cursor: HiermarkSurfaceId | undefined = activeSurfaceId;
 
   while (cursor != null) {
     surfaceIds.push(cursor);

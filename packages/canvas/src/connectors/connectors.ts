@@ -1,21 +1,21 @@
 import type {
-  HamActivePath,
-  HamBranchEdge,
-  HamCanvasLayoutConfig,
-  HamConnectorState,
+  HiermarkActivePath,
+  HiermarkBranchEdge,
+  HiermarkCanvasLayoutConfig,
+  HiermarkConnectorState,
 } from "../types";
 
-export interface HamHoverTarget {
+export interface HiermarkHoverTarget {
   surfaceId: string;
   blockId?: string | null;
 }
 
 export interface EdgeGeometry<EdgeMeta = unknown> {
-  edge: HamBranchEdge<EdgeMeta>;
+  edge: HiermarkBranchEdge<EdgeMeta>;
   from: { x: number; y: number };
   to: { x: number; y: number };
   path: string;
-  state: HamConnectorState;
+  state: HiermarkConnectorState;
 }
 
 /**
@@ -24,11 +24,11 @@ export interface EdgeGeometry<EdgeMeta = unknown> {
  * edge whose source *is* the active block ("where do this block's branches go").
  */
 export function visibleEdges<E>(
-  mode: HamCanvasLayoutConfig["showConnectors"],
-  edges: HamBranchEdge<E>[],
-  activePath: HamActivePath,
-  hovered: HamHoverTarget | null,
-): HamBranchEdge<E>[] {
+  mode: HiermarkCanvasLayoutConfig["showConnectors"],
+  edges: HiermarkBranchEdge<E>[],
+  activePath: HiermarkActivePath,
+  hovered: HiermarkHoverTarget | null,
+): HiermarkBranchEdge<E>[] {
   switch (mode) {
     case "off":
       return [];
@@ -65,9 +65,9 @@ export function visibleEdges<E>(
 }
 
 /** De-duplicate edges by id, preserving first-seen order. */
-function dedupeById<E>(edges: HamBranchEdge<E>[]): HamBranchEdge<E>[] {
+function dedupeById<E>(edges: HiermarkBranchEdge<E>[]): HiermarkBranchEdge<E>[] {
   const seen = new Set<string>();
-  const out: HamBranchEdge<E>[] = [];
+  const out: HiermarkBranchEdge<E>[] = [];
   for (const e of edges) {
     if (seen.has(e.id)) continue;
     seen.add(e.id);
@@ -78,9 +78,9 @@ function dedupeById<E>(edges: HamBranchEdge<E>[]): HamBranchEdge<E>[] {
 
 /** Styling state for an edge: on the active lineage, off an ancestor, or muted. */
 export function connectorState<E>(
-  edge: HamBranchEdge<E>,
-  activePath: HamActivePath,
-): HamConnectorState {
+  edge: HiermarkBranchEdge<E>,
+  activePath: HiermarkActivePath,
+): HiermarkConnectorState {
   if (activePath.edgeIds.includes(edge.id)) return "active";
   if (activePath.surfaceIds.includes(edge.fromSurfaceId)) return "ancestor";
   return "muted";

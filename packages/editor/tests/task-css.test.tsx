@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
 import fs from "node:fs";
 import path from "node:path";
-import { HamEditor } from "../src/HamEditor";
+import { HiermarkEditor } from "../src/HiermarkEditor";
 
 // Load the package's real stylesheet (minus the katex @import jsdom can't fetch)
 // so we verify the actual selectors against the actual rendered DOM. Vitest runs
@@ -15,7 +15,7 @@ afterEach(() => cleanup());
 beforeAll(() => {
   (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
   const style = document.createElement("style");
-  style.id = "ham-editor-css";
+  style.id = "hiermark-editor-css";
   style.textContent = css;
   document.head.appendChild(style);
 });
@@ -24,7 +24,7 @@ describe("task list CSS", () => {
   it("lays each task item out as a flex row (checkbox inline with text)", async () => {
     let ready = false;
     const { container } = render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s"
         rootBlockId="r"
         value={{ kind: "markdown", markdown: "- [ ] alpha\n- [x] beta" }}
@@ -50,7 +50,7 @@ describe("task list CSS", () => {
   it("strikes through a checked item's own text but not its nested children", async () => {
     let ready = false;
     const { container } = render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s"
         rootBlockId="r"
         value={{ kind: "markdown", markdown: "- [x] parent\n  - [ ] child" }}

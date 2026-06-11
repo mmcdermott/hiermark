@@ -1,16 +1,16 @@
 import type {
-  HamBranchEdge,
-  HamBranchEdgeId,
-  HamReorderBranchSiblingsEvent,
-  HamSurfaceId,
+  HiermarkBranchEdge,
+  HiermarkBranchEdgeId,
+  HiermarkReorderBranchSiblingsEvent,
+  HiermarkSurfaceId,
 } from "../types";
 
 /** The edges branching from one source block, in current order. */
 export function siblingEdges<EdgeMeta>(
-  branchEdges: HamBranchEdge<EdgeMeta>[],
-  fromSurfaceId: HamSurfaceId,
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[],
+  fromSurfaceId: HiermarkSurfaceId,
   fromBlockId: string,
-): HamBranchEdge<EdgeMeta>[] {
+): HiermarkBranchEdge<EdgeMeta>[] {
   return branchEdges
     .filter((e) => e.fromSurfaceId === fromSurfaceId && e.fromBlockId === fromBlockId)
     .sort((a, b) => a.order - b.order);
@@ -20,7 +20,7 @@ export interface SiblingInsert {
   /** The 0-based order the new sibling edge should take. */
   insertOrder: number;
   /** New orders for displaced existing siblings, keyed by edge id. */
-  shiftedSiblingOrders: Record<HamBranchEdgeId, number>;
+  shiftedSiblingOrders: Record<HiermarkBranchEdgeId, number>;
 }
 
 /**
@@ -30,10 +30,10 @@ export interface SiblingInsert {
  * up by one. Pure, so the position math is unit-testable.
  */
 export function computeSiblingInsert<EdgeMeta>(
-  group: HamBranchEdge<EdgeMeta>[],
+  group: HiermarkBranchEdge<EdgeMeta>[],
   insertOrder: number,
 ): SiblingInsert {
-  const shiftedSiblingOrders: Record<HamBranchEdgeId, number> = {};
+  const shiftedSiblingOrders: Record<HiermarkBranchEdgeId, number> = {};
   for (const e of group) if (e.order >= insertOrder) shiftedSiblingOrders[e.id] = e.order + 1;
   return { insertOrder, shiftedSiblingOrders };
 }
@@ -44,11 +44,11 @@ export function computeSiblingInsert<EdgeMeta>(
  * §8.3). Cross-anchor drops must be rejected.
  */
 export function areSameAnchorSiblings<EdgeMeta>(
-  branchEdges: HamBranchEdge<EdgeMeta>[],
-  orderedEdgeIds: HamBranchEdgeId[],
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[],
+  orderedEdgeIds: HiermarkBranchEdgeId[],
 ): boolean {
   const byId = new Map(branchEdges.map((e) => [e.id, e]));
-  let anchor: { s: HamSurfaceId; b: string } | null = null;
+  let anchor: { s: HiermarkSurfaceId; b: string } | null = null;
   for (const id of orderedEdgeIds) {
     const edge = byId.get(id);
     if (!edge) return false;
@@ -66,12 +66,12 @@ export function areSameAnchorSiblings<EdgeMeta>(
  * dense 0..n-1 and all other edges are untouched.
  */
 export function reorderSiblingEdgesByIndex<EdgeMeta>(
-  branchEdges: HamBranchEdge<EdgeMeta>[],
-  fromSurfaceId: HamSurfaceId,
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[],
+  fromSurfaceId: HiermarkSurfaceId,
   fromBlockId: string,
   from: number,
   to: number,
-): HamBranchEdge<EdgeMeta>[] {
+): HiermarkBranchEdge<EdgeMeta>[] {
   const group = siblingEdges(branchEdges, fromSurfaceId, fromBlockId);
   if (from < 0 || from >= group.length) return branchEdges;
   const reordered = [...group];
@@ -87,9 +87,9 @@ export function reorderSiblingEdgesByIndex<EdgeMeta>(
  * if the order is invalid or a no-op.
  */
 export function reorderSiblingEdgesByIds<EdgeMeta>(
-  branchEdges: HamBranchEdge<EdgeMeta>[],
-  orderedEdgeIds: HamBranchEdgeId[],
-): HamBranchEdge<EdgeMeta>[] {
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[],
+  orderedEdgeIds: HiermarkBranchEdgeId[],
+): HiermarkBranchEdge<EdgeMeta>[] {
   if (!areSameAnchorSiblings(branchEdges, orderedEdgeIds)) return branchEdges;
   // Must be an exact permutation of the full sibling group — a partial or
   // duplicated list would otherwise violate the dense-order invariant.
@@ -104,10 +104,10 @@ export function reorderSiblingEdgesByIds<EdgeMeta>(
 
 /** Renormalize `order` across the reordered group and splice them back. */
 function applyOrder<EdgeMeta>(
-  branchEdges: HamBranchEdge<EdgeMeta>[],
-  reorderedGroup: HamBranchEdge<EdgeMeta>[],
-): HamBranchEdge<EdgeMeta>[] {
-  const newOrderById = new Map<HamBranchEdgeId, number>();
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[],
+  reorderedGroup: HiermarkBranchEdge<EdgeMeta>[],
+): HiermarkBranchEdge<EdgeMeta>[] {
+  const newOrderById = new Map<HiermarkBranchEdgeId, number>();
   reorderedGroup.forEach((e, i) => newOrderById.set(e.id, i));
   let changed = false;
   const next = branchEdges.map((e) => {
@@ -121,10 +121,10 @@ function applyOrder<EdgeMeta>(
 
 /** Build the host event for a confirmed sibling reorder. */
 export function buildReorderEvent<EdgeMeta>(
-  branchEdges: HamBranchEdge<EdgeMeta>[],
-  fromSurfaceId: HamSurfaceId,
+  branchEdges: HiermarkBranchEdge<EdgeMeta>[],
+  fromSurfaceId: HiermarkSurfaceId,
   fromBlockId: string,
-): HamReorderBranchSiblingsEvent {
+): HiermarkReorderBranchSiblingsEvent {
   const group = siblingEdges(branchEdges, fromSurfaceId, fromBlockId);
   return {
     fromSurfaceId,

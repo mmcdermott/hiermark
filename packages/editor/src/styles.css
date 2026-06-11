@@ -1,25 +1,25 @@
-/* @ham/editor default styles. Override via the CSS variables below. */
+/* @hiermark/editor default styles. Override via the CSS variables below. */
 @import "katex/dist/katex.min.css";
 
 :root {
-  --ham-bg: #ffffff;
-  --ham-surface-bg: #ffffff;
-  --ham-surface-border: #d8d8df;
-  --ham-text: #16161a;
-  --ham-muted: #6f6f7a;
-  --ham-accent: #6f5cff;
-  --ham-accent-soft: #efecff;
-  --ham-danger: #c73b3b;
+  --hiermark-bg: #ffffff;
+  --hiermark-surface-bg: #ffffff;
+  --hiermark-surface-border: #d8d8df;
+  --hiermark-text: #16161a;
+  --hiermark-muted: #6f6f7a;
+  --hiermark-accent: #6f5cff;
+  --hiermark-accent-soft: #efecff;
+  --hiermark-danger: #c73b3b;
   /* Surfaces that aren't variabilized below (inline code / table header / source
      textarea bg) read from these so dark mode can retheme them. */
-  --ham-inline-code-bg: #f1f0f8;
-  --ham-th-bg: #f1f0f8;
-  --ham-source-bg: #fbfbfe;
-  --ham-radius: 12px;
-  --ham-column-gap: 24px;
-  --ham-surface-gap: 16px;
-  --ham-gutter-right: 2em;
-  --ham-gutter-left: 1.4em;
+  --hiermark-inline-code-bg: #f1f0f8;
+  --hiermark-th-bg: #f1f0f8;
+  --hiermark-source-bg: #fbfbfe;
+  --hiermark-radius: 12px;
+  --hiermark-column-gap: 24px;
+  --hiermark-surface-gap: 16px;
+  --hiermark-gutter-right: 2em;
+  --hiermark-gutter-left: 1.4em;
 }
 
 /* Dark theme — applied by the OS preference (unless a host opts a subtree into
@@ -27,61 +27,61 @@
    the tokens change; the code block is already dark in both. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ham-bg: #15151c;
-    --ham-surface-bg: #1b1b24;
-    --ham-surface-border: #34343f;
-    --ham-text: #e7e7f1;
-    --ham-muted: #9a9aab;
-    --ham-accent: #9c8cff;
-    --ham-accent-soft: #2a2740;
-    --ham-inline-code-bg: #2a2a36;
-    --ham-th-bg: #23232e;
-    --ham-source-bg: #1b1b24;
+    --hiermark-bg: #15151c;
+    --hiermark-surface-bg: #1b1b24;
+    --hiermark-surface-border: #34343f;
+    --hiermark-text: #e7e7f1;
+    --hiermark-muted: #9a9aab;
+    --hiermark-accent: #9c8cff;
+    --hiermark-accent-soft: #2a2740;
+    --hiermark-inline-code-bg: #2a2a36;
+    --hiermark-th-bg: #23232e;
+    --hiermark-source-bg: #1b1b24;
   }
 }
 [data-theme="dark"] {
-  --ham-bg: #15151c;
-  --ham-surface-bg: #1b1b24;
-  --ham-surface-border: #34343f;
-  --ham-text: #e7e7f1;
-  --ham-muted: #9a9aab;
-  --ham-accent: #9c8cff;
-  --ham-accent-soft: #2a2740;
-  --ham-inline-code-bg: #2a2a36;
-  --ham-th-bg: #23232e;
-  --ham-source-bg: #1b1b24;
+  --hiermark-bg: #15151c;
+  --hiermark-surface-bg: #1b1b24;
+  --hiermark-surface-border: #34343f;
+  --hiermark-text: #e7e7f1;
+  --hiermark-muted: #9a9aab;
+  --hiermark-accent: #9c8cff;
+  --hiermark-accent-soft: #2a2740;
+  --hiermark-inline-code-bg: #2a2a36;
+  --hiermark-th-bg: #23232e;
+  --hiermark-source-bg: #1b1b24;
 }
 
-.ham-editor {
+.hiermark-editor {
   position: relative;
-  color: var(--ham-text);
+  color: var(--hiermark-text);
   font:
     15px/1.6 system-ui,
     -apple-system,
     sans-serif;
 }
 
-.ham-editor .ProseMirror {
+.hiermark-editor .ProseMirror {
   outline: none;
   white-space: pre-wrap;
   word-wrap: break-word;
   /* Reserve a left gutter for fold toggles and a right gutter for branch
      affordances, so neither is clipped by the editor / surface card edge. */
-  padding: 2px var(--ham-gutter-right) 2px var(--ham-gutter-left);
+  padding: 2px var(--hiermark-gutter-right) 2px var(--hiermark-gutter-left);
 }
 
 /* Raw-markdown source mode (handle.setMode("source")) ----------------------- */
-.ham-editor .ham-source-editor {
+.hiermark-editor .hiermark-source-editor {
   display: block;
   box-sizing: border-box;
   width: 100%;
   min-height: 9em;
   resize: vertical;
-  border: 1px solid var(--ham-surface-border);
+  border: 1px solid var(--hiermark-surface-border);
   border-radius: 8px;
   padding: 10px 12px;
-  background: var(--ham-source-bg);
-  color: var(--ham-text);
+  background: var(--hiermark-source-bg);
+  color: var(--hiermark-text);
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.86em;
   line-height: 1.55;
@@ -89,49 +89,49 @@
   white-space: pre;
   overflow: auto;
 }
-.ham-editor .ham-source-editor:focus {
+.hiermark-editor .hiermark-source-editor:focus {
   outline: none;
-  border-color: var(--ham-accent);
+  border-color: var(--hiermark-accent);
 }
 
-.ham-editor .ProseMirror > * {
+.hiermark-editor .ProseMirror > * {
   margin: 0.5em 0;
 }
-.ham-editor .ProseMirror > *:first-child {
+.hiermark-editor .ProseMirror > *:first-child {
   margin-top: 0;
 }
 
-.ham-editor .ProseMirror p.is-editor-empty:first-child::before {
+.hiermark-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
   float: left;
   height: 0;
   pointer-events: none;
 }
 
 /* Content elements ---------------------------------------------------------- */
-.ham-editor .ProseMirror h1 {
+.hiermark-editor .ProseMirror h1 {
   font-size: 1.6em;
   line-height: 1.25;
 }
-.ham-editor .ProseMirror h2 {
+.hiermark-editor .ProseMirror h2 {
   font-size: 1.3em;
 }
-.ham-editor .ProseMirror h3 {
+.hiermark-editor .ProseMirror h3 {
   font-size: 1.12em;
 }
-.ham-editor .ProseMirror ul,
-.ham-editor .ProseMirror ol {
+.hiermark-editor .ProseMirror ul,
+.hiermark-editor .ProseMirror ol {
   padding-left: 1.4em;
   margin: 0.4em 0;
 }
-.ham-editor .ProseMirror blockquote {
-  border-left: 3px solid var(--ham-surface-border);
+.hiermark-editor .ProseMirror blockquote {
+  border-left: 3px solid var(--hiermark-surface-border);
   margin-left: 0;
   padding-left: 1em;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
 }
-.ham-editor .ProseMirror pre {
+.hiermark-editor .ProseMirror pre {
   background: #16161f;
   color: #e7e7f3;
   border-radius: 8px;
@@ -140,24 +140,24 @@
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.86em;
 }
-.ham-editor .ProseMirror code {
+.hiermark-editor .ProseMirror code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.88em;
-  background: var(--ham-inline-code-bg);
+  background: var(--hiermark-inline-code-bg);
   border-radius: 4px;
   padding: 1px 4px;
 }
-.ham-editor .ProseMirror pre code {
+.hiermark-editor .ProseMirror pre code {
   background: none;
   padding: 0;
 }
 
 /* Code block chrome: a header bar with the language picker + copy button ----- */
-.ham-editor .ham-code-block {
+.hiermark-editor .hiermark-code-block {
   position: relative;
   margin: 0.7em 0;
 }
-.ham-editor .ham-code-block-header {
+.hiermark-editor .hiermark-code-block-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -170,11 +170,11 @@
   font-size: 12px;
   user-select: none;
 }
-.ham-editor .ham-code-block > pre {
+.hiermark-editor .hiermark-code-block > pre {
   margin: 0;
   border-radius: 0 0 8px 8px;
 }
-.ham-editor .ham-code-lang {
+.hiermark-editor .hiermark-code-lang {
   background: transparent;
   color: #c7c7d6;
   border: 1px solid #3a3a4d;
@@ -184,11 +184,11 @@
   padding: 1px 4px;
   cursor: pointer;
 }
-.ham-editor .ham-code-lang:disabled {
+.hiermark-editor .hiermark-code-lang:disabled {
   opacity: 0.6;
   cursor: default;
 }
-.ham-editor .ham-code-copy {
+.hiermark-editor .hiermark-code-copy {
   background: #2c2c3a;
   color: #e7e7f3;
   border: 1px solid #3a3a4d;
@@ -198,10 +198,10 @@
   padding: 2px 10px;
   cursor: pointer;
 }
-.ham-editor .ham-code-copy:hover {
+.hiermark-editor .hiermark-code-copy:hover {
   background: #39394d;
 }
-.ham-editor .ham-code-wrap {
+.hiermark-editor .hiermark-code-wrap {
   background: #2c2c3a;
   color: #c7c7d6;
   border: 1px solid #3a3a4d;
@@ -212,11 +212,11 @@
   padding: 2px 8px;
   cursor: pointer;
 }
-.ham-editor .ham-code-wrap[aria-pressed="true"] {
+.hiermark-editor .hiermark-code-wrap[aria-pressed="true"] {
   background: #45455c;
   color: #fff;
 }
-.ham-editor .ham-code-block[data-wrap="true"] > pre {
+.hiermark-editor .hiermark-code-block[data-wrap="true"] > pre {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-x: visible;
@@ -224,55 +224,55 @@
 
 /* Syntax highlighting (lowlight / highlight.js token classes) — dark theme
    tuned to the code block background. ---------------------------------------- */
-.ham-editor .ProseMirror pre code .hljs-comment,
-.ham-editor .ProseMirror pre code .hljs-quote {
+.hiermark-editor .ProseMirror pre code .hljs-comment,
+.hiermark-editor .ProseMirror pre code .hljs-quote {
   color: #8a8aa0;
   font-style: italic;
 }
-.ham-editor .ProseMirror pre code .hljs-keyword,
-.ham-editor .ProseMirror pre code .hljs-selector-tag,
-.ham-editor .ProseMirror pre code .hljs-tag,
-.ham-editor .ProseMirror pre code .hljs-doctag,
-.ham-editor .ProseMirror pre code .hljs-name {
+.hiermark-editor .ProseMirror pre code .hljs-keyword,
+.hiermark-editor .ProseMirror pre code .hljs-selector-tag,
+.hiermark-editor .ProseMirror pre code .hljs-tag,
+.hiermark-editor .ProseMirror pre code .hljs-doctag,
+.hiermark-editor .ProseMirror pre code .hljs-name {
   color: #c792ea;
 }
-.ham-editor .ProseMirror pre code .hljs-string,
-.ham-editor .ProseMirror pre code .hljs-regexp,
-.ham-editor .ProseMirror pre code .hljs-addition,
-.ham-editor .ProseMirror pre code .hljs-meta .hljs-string {
+.hiermark-editor .ProseMirror pre code .hljs-string,
+.hiermark-editor .ProseMirror pre code .hljs-regexp,
+.hiermark-editor .ProseMirror pre code .hljs-addition,
+.hiermark-editor .ProseMirror pre code .hljs-meta .hljs-string {
   color: #c3e88d;
 }
-.ham-editor .ProseMirror pre code .hljs-number,
-.ham-editor .ProseMirror pre code .hljs-literal,
-.ham-editor .ProseMirror pre code .hljs-symbol,
-.ham-editor .ProseMirror pre code .hljs-bullet,
-.ham-editor .ProseMirror pre code .hljs-deletion {
+.hiermark-editor .ProseMirror pre code .hljs-number,
+.hiermark-editor .ProseMirror pre code .hljs-literal,
+.hiermark-editor .ProseMirror pre code .hljs-symbol,
+.hiermark-editor .ProseMirror pre code .hljs-bullet,
+.hiermark-editor .ProseMirror pre code .hljs-deletion {
   color: #f78c6c;
 }
-.ham-editor .ProseMirror pre code .hljs-title,
-.ham-editor .ProseMirror pre code .hljs-section,
-.ham-editor .ProseMirror pre code .hljs-attr,
-.ham-editor .ProseMirror pre code .hljs-attribute,
-.ham-editor .ProseMirror pre code .hljs-function .hljs-title {
+.hiermark-editor .ProseMirror pre code .hljs-title,
+.hiermark-editor .ProseMirror pre code .hljs-section,
+.hiermark-editor .ProseMirror pre code .hljs-attr,
+.hiermark-editor .ProseMirror pre code .hljs-attribute,
+.hiermark-editor .ProseMirror pre code .hljs-function .hljs-title {
   color: #82aaff;
 }
-.ham-editor .ProseMirror pre code .hljs-built_in,
-.ham-editor .ProseMirror pre code .hljs-class .hljs-title,
-.ham-editor .ProseMirror pre code .hljs-title.class_,
-.ham-editor .ProseMirror pre code .hljs-type {
+.hiermark-editor .ProseMirror pre code .hljs-built_in,
+.hiermark-editor .ProseMirror pre code .hljs-class .hljs-title,
+.hiermark-editor .ProseMirror pre code .hljs-title.class_,
+.hiermark-editor .ProseMirror pre code .hljs-type {
   color: #ffcb6b;
 }
-.ham-editor .ProseMirror pre code .hljs-operator,
-.ham-editor .ProseMirror pre code .hljs-punctuation {
+.hiermark-editor .ProseMirror pre code .hljs-operator,
+.hiermark-editor .ProseMirror pre code .hljs-punctuation {
   color: #89ddff;
 }
-.ham-editor .ProseMirror pre code .hljs-meta {
+.hiermark-editor .ProseMirror pre code .hljs-meta {
   color: #b2ccd6;
 }
-.ham-editor .ProseMirror pre code .hljs-emphasis {
+.hiermark-editor .ProseMirror pre code .hljs-emphasis {
   font-style: italic;
 }
-.ham-editor .ProseMirror pre code .hljs-strong {
+.hiermark-editor .ProseMirror pre code .hljs-strong {
   font-weight: 600;
 }
 
@@ -280,155 +280,155 @@
 /* Tiptap puts data-type="taskList" on the <ul> and data-checked on each <li>
    (the <li> has NO data-type), so target the list items via the list. Each item
    is <li><label><input></label><div>…content…</div></li>. */
-.ham-editor .ProseMirror ul[data-type="taskList"] {
+.hiermark-editor .ProseMirror ul[data-type="taskList"] {
   list-style: none;
   padding-left: 0.1em;
   margin-left: 0;
 }
-.ham-editor .ProseMirror ul[data-type="taskList"] > li {
+.hiermark-editor .ProseMirror ul[data-type="taskList"] > li {
   display: flex;
   align-items: flex-start;
   gap: 0.5em;
   margin: 0.25em 0;
 }
-.ham-editor .ProseMirror ul[data-type="taskList"] > li > label {
+.hiermark-editor .ProseMirror ul[data-type="taskList"] > li > label {
   flex: 0 0 auto;
   margin-top: 0.18em;
   user-select: none;
 }
-.ham-editor .ProseMirror ul[data-type="taskList"] > li > div {
+.hiermark-editor .ProseMirror ul[data-type="taskList"] > li > div {
   flex: 1 1 auto;
   min-width: 0;
 }
-.ham-editor .ProseMirror ul[data-type="taskList"] > li > div > p {
+.hiermark-editor .ProseMirror ul[data-type="taskList"] > li > div > p {
   margin: 0;
 }
 /* Strike through only the item's OWN paragraph — not a nested sub-list, whose
    children keep their own checked state. */
-.ham-editor .ProseMirror ul[data-type="taskList"] > li[data-checked="true"] > div > p {
-  color: var(--ham-muted);
+.hiermark-editor .ProseMirror ul[data-type="taskList"] > li[data-checked="true"] > div > p {
+  color: var(--hiermark-muted);
   text-decoration: line-through;
 }
 /* Nested task lists get their own indent. */
-.ham-editor .ProseMirror ul[data-type="taskList"] ul[data-type="taskList"] {
+.hiermark-editor .ProseMirror ul[data-type="taskList"] ul[data-type="taskList"] {
   padding-left: 1.2em;
 }
 
 /* Tables -------------------------------------------------------------------- */
-.ham-editor .ProseMirror table {
+.hiermark-editor .ProseMirror table {
   border-collapse: collapse;
   width: max-content;
   max-width: 100%;
   margin: 0.5em 0;
   overflow: hidden;
 }
-.ham-editor .ProseMirror th,
-.ham-editor .ProseMirror td {
-  border: 1px solid var(--ham-surface-border);
+.hiermark-editor .ProseMirror th,
+.hiermark-editor .ProseMirror td {
+  border: 1px solid var(--hiermark-surface-border);
   padding: 4px 9px;
   vertical-align: top;
   text-align: left;
 }
-.ham-editor .ProseMirror th {
-  background: var(--ham-th-bg);
+.hiermark-editor .ProseMirror th {
+  background: var(--hiermark-th-bg);
   font-weight: 600;
 }
-.ham-editor .ProseMirror .selectedCell::after {
+.hiermark-editor .ProseMirror .selectedCell::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--ham-accent-soft);
+  background: var(--hiermark-accent-soft);
   pointer-events: none;
 }
 
 /* Images / figures ---------------------------------------------------------- */
-.ham-editor .ProseMirror img {
+.hiermark-editor .ProseMirror img {
   max-width: 100%;
   height: auto;
   border-radius: 6px;
   vertical-align: middle;
 }
-.ham-editor .ProseMirror img.ProseMirror-selectednode {
-  outline: 2px solid var(--ham-accent);
+.hiermark-editor .ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid var(--hiermark-accent);
   outline-offset: 1px;
 }
 
 /* Math ---------------------------------------------------------------------- */
-.ham-editor .ProseMirror .katex {
+.hiermark-editor .ProseMirror .katex {
   font-size: 1.04em;
 }
 /* A malformed expression renders as KaTeX's error token (throwOnError:false). */
-.ham-editor .ProseMirror .katex-error {
+.hiermark-editor .ProseMirror .katex-error {
   color: #c0392b;
 }
 /* Editable math invites a click (opens the LaTeX editor). */
-.ham-editor .ProseMirror .tiptap-mathematics-render--editable {
+.hiermark-editor .ProseMirror .tiptap-mathematics-render--editable {
   cursor: pointer;
   border-radius: 4px;
   padding: 0 1px;
 }
-.ham-editor .ProseMirror .tiptap-mathematics-render--editable:hover {
-  background: var(--ham-accent-soft, rgba(111, 92, 255, 0.12));
+.hiermark-editor .ProseMirror .tiptap-mathematics-render--editable:hover {
+  background: var(--hiermark-accent-soft, rgba(111, 92, 255, 0.12));
 }
 
 /* LaTeX edit popover (click a math node) ------------------------------------ */
-.ham-math-popover {
+.hiermark-math-popover {
   z-index: 40;
   display: flex;
   flex-direction: column;
   gap: 6px;
   width: min(360px, 80vw);
   padding: 8px;
-  background: var(--ham-surface-bg, #fff);
-  border: 1px solid var(--ham-surface-border, #e3e1ee);
+  background: var(--hiermark-surface-bg, #fff);
+  border: 1px solid var(--hiermark-surface-border, #e3e1ee);
   border-radius: 9px;
   box-shadow: 0 8px 28px rgba(20, 18, 40, 0.18);
 }
-.ham-math-input {
+.hiermark-math-input {
   width: 100%;
   box-sizing: border-box;
   resize: vertical;
-  border: 1px solid var(--ham-surface-border, #e3e1ee);
+  border: 1px solid var(--hiermark-surface-border, #e3e1ee);
   border-radius: 6px;
   padding: 6px 8px;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 13px;
   line-height: 1.5;
 }
-.ham-math-input:focus {
+.hiermark-math-input:focus {
   outline: none;
-  border-color: var(--ham-accent, #6f5cff);
+  border-color: var(--hiermark-accent, #6f5cff);
 }
-.ham-math-popover-actions {
+.hiermark-math-popover-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
-.ham-math-hint {
+.hiermark-math-hint {
   font-size: 11px;
-  color: var(--ham-muted, #6b6880);
+  color: var(--hiermark-muted, #6b6880);
 }
-.ham-math-btn {
-  border: 1px solid var(--ham-surface-border, #e3e1ee);
+.hiermark-math-btn {
+  border: 1px solid var(--hiermark-surface-border, #e3e1ee);
   border-radius: 6px;
-  background: var(--ham-surface-bg, #fff);
+  background: var(--hiermark-surface-bg, #fff);
   font: inherit;
   font-size: 12px;
   padding: 3px 10px;
   cursor: pointer;
 }
-.ham-math-btn.ham-math-del {
+.hiermark-math-btn.hiermark-math-del {
   color: #c0392b;
   border-color: #e9c4c0;
 }
-.ham-math-btn:hover {
+.hiermark-math-btn:hover {
   background: #f6f5fb;
 }
 
 /* Remote collaborator cursors (CollaborationCaret) — the extension sets each
    user's color inline; these rules only handle layout. ----------------------- */
-.ham-editor .collaboration-cursor__caret {
+.hiermark-editor .collaboration-cursor__caret {
   position: relative;
   margin-left: -1px;
   margin-right: -1px;
@@ -437,7 +437,7 @@
   word-break: normal;
   pointer-events: none;
 }
-.ham-editor .collaboration-cursor__label {
+.hiermark-editor .collaboration-cursor__label {
   position: absolute;
   top: -1.45em;
   left: -1px;
@@ -452,20 +452,20 @@
 }
 
 /* Block hover host + active block ------------------------------------------ */
-.ham-block {
+.hiermark-block {
   position: relative;
 }
-.ham-block-highlighted {
-  background: var(--ham-highlight-bg, rgba(255, 213, 0, 0.18));
+.hiermark-block-highlighted {
+  background: var(--hiermark-highlight-bg, rgba(255, 213, 0, 0.18));
   border-radius: 4px;
 }
 
-.ham-block-active {
-  box-shadow: -2px 0 0 0 var(--ham-accent);
+.hiermark-block-active {
+  box-shadow: -2px 0 0 0 var(--hiermark-accent);
 }
 
 /* Branch gutter — RIGHT side (children appear to the right) ----------------- */
-.ham-block-gutter {
+.hiermark-block-gutter {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -473,25 +473,25 @@
 
 /* Document-level affordance: bubble-up can land the only branch point on the
    whole document (the synthetic root), shown at the editor's top-right. */
-.ham-editor .ham-root-gutter {
+.hiermark-editor .hiermark-root-gutter {
   inset: auto;
   top: 2px;
   right: 2px;
   width: auto;
   height: auto;
 }
-.ham-editor .ham-root-gutter .ham-block-gutter-affordances {
+.hiermark-editor .hiermark-root-gutter .hiermark-block-gutter-affordances {
   position: static;
   right: auto;
   height: auto;
 }
-.ham-editor:hover .ham-root-gutter .ham-branch-button,
-.ham-root-gutter .ham-branch-button:focus-visible {
+.hiermark-editor:hover .hiermark-root-gutter .hiermark-branch-button,
+.hiermark-root-gutter .hiermark-branch-button:focus-visible {
   opacity: 1;
 }
-.ham-block-gutter-affordances {
+.hiermark-block-gutter-affordances {
   position: absolute;
-  right: calc(-1 * var(--ham-gutter-right));
+  right: calc(-1 * var(--hiermark-gutter-right));
   top: 0;
   height: 100%;
   display: flex;
@@ -501,11 +501,11 @@
   gap: 4px;
   pointer-events: none;
 }
-.ham-block-gutter-affordances > * {
+.hiermark-block-gutter-affordances > * {
   pointer-events: auto;
 }
 
-.ham-branch-button {
+.hiermark-branch-button {
   align-self: stretch;
   display: inline-flex;
   align-items: center;
@@ -516,7 +516,7 @@
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
   font-size: 0.95em;
   line-height: 1;
   cursor: pointer;
@@ -527,30 +527,30 @@
     background 0.12s ease,
     border-color 0.12s ease;
 }
-.ham-block:hover .ham-branch-button,
-.ham-block-active .ham-branch-button,
-.ham-branch-button:focus-visible {
+.hiermark-block:hover .hiermark-branch-button,
+.hiermark-block-active .hiermark-branch-button,
+.hiermark-branch-button:focus-visible {
   opacity: 1;
 }
-.ham-branch-button:hover {
-  background: var(--ham-accent-soft);
-  border-color: var(--ham-accent);
-  color: var(--ham-accent);
+.hiermark-branch-button:hover {
+  background: var(--hiermark-accent-soft);
+  border-color: var(--hiermark-accent);
+  color: var(--hiermark-accent);
 }
 
-.ham-branch-children {
+.hiermark-branch-children {
   display: inline-flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 4px;
 }
-.ham-branch-child-chip {
-  border: 1px solid var(--ham-surface-border);
+.hiermark-branch-child-chip {
+  border: 1px solid var(--hiermark-surface-border);
   border-radius: 999px;
   /* Opaque background + clamped width so a chip stays readable and can't run far
      over a full-width block's text. */
-  background: var(--ham-surface-bg);
-  color: var(--ham-muted);
+  background: var(--hiermark-surface-bg);
+  color: var(--hiermark-muted);
   font-size: 0.74em;
   padding: 0 8px;
   line-height: 1.7;
@@ -560,20 +560,20 @@
   white-space: nowrap;
   cursor: pointer;
 }
-.ham-branch-child-chip:hover {
-  border-color: var(--ham-accent);
-  color: var(--ham-accent);
+.hiermark-branch-child-chip:hover {
+  border-color: var(--hiermark-accent);
+  color: var(--hiermark-accent);
 }
-.ham-branch-child-chip-active {
-  border-color: var(--ham-accent);
-  color: var(--ham-accent);
-  background: var(--ham-accent-soft);
+.hiermark-branch-child-chip-active {
+  border-color: var(--hiermark-accent);
+  color: var(--hiermark-accent);
+  background: var(--hiermark-accent-soft);
 }
 
 /* Fold — disclosure triangle in the LEFT gutter (never clipped) ------------- */
-.ham-fold-toggle {
+.hiermark-fold-toggle {
   position: absolute;
-  left: calc(-1 * var(--ham-gutter-left));
+  left: calc(-1 * var(--hiermark-gutter-left));
   top: 0.15em;
   width: 1.1em;
   height: 1.4em;
@@ -582,45 +582,45 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
   cursor: pointer;
   font-size: 0.7em;
   line-height: 1;
   z-index: 1;
 }
-.ham-fold-toggle:hover {
-  color: var(--ham-accent);
+.hiermark-fold-toggle:hover {
+  color: var(--hiermark-accent);
 }
-.ham-folded {
+.hiermark-folded {
   display: none;
 }
 
 /* Annotations --------------------------------------------------------------- */
-.ham-annotation {
+.hiermark-annotation {
   border-radius: 3px;
 }
-.ham-annotation-citation {
-  color: var(--ham-accent);
-  background: var(--ham-accent-soft);
+.hiermark-annotation-citation {
+  color: var(--hiermark-accent);
+  background: var(--hiermark-accent-soft);
   padding: 0 1px;
   cursor: pointer;
 }
-.ham-citation-unknown {
-  color: var(--ham-danger);
+.hiermark-citation-unknown {
+  color: var(--hiermark-danger);
   text-decoration: underline dotted;
 }
-.ham-annotation-mention {
+.hiermark-annotation-mention {
   color: #0a7d4f;
   background: #e6f6ee;
   padding: 0 1px;
   cursor: pointer;
 }
-.ham-annotation-url {
+.hiermark-annotation-url {
   color: #1b6ec2;
   text-decoration: underline;
 }
 
-.ham-annotation-chip {
+.hiermark-annotation-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -630,37 +630,37 @@
   margin-left: 6px;
   vertical-align: middle;
 }
-.ham-annotation-chip-task {
+.hiermark-annotation-chip-task {
   background: #eef1f6;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
 }
 
 /* Annotation popover -------------------------------------------------------- */
-.ham-annotation-popover {
+.hiermark-annotation-popover {
   z-index: 50;
   max-width: 320px;
-  background: var(--ham-surface-bg);
-  border: 1px solid var(--ham-surface-border);
-  border-radius: var(--ham-radius);
+  background: var(--hiermark-surface-bg);
+  border: 1px solid var(--hiermark-surface-border);
+  border-radius: var(--hiermark-radius);
   box-shadow: 0 6px 24px rgba(20, 20, 30, 0.16);
   padding: 10px 12px;
   font-size: 13px;
 }
 
 /* Annotation type-ahead (search) popover ------------------------------------ */
-.ham-suggest-popover {
+.hiermark-suggest-popover {
   z-index: 55;
   min-width: 220px;
   max-width: 360px;
   max-height: 260px;
   overflow-y: auto;
-  background: var(--ham-surface-bg);
-  border: 1px solid var(--ham-surface-border);
+  background: var(--hiermark-surface-bg);
+  border: 1px solid var(--hiermark-surface-border);
   border-radius: 10px;
   box-shadow: 0 8px 28px rgba(20, 20, 30, 0.18);
   padding: 4px;
 }
-.ham-suggest-item {
+.hiermark-suggest-item {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -673,18 +673,18 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
-  color: var(--ham-text);
+  color: var(--hiermark-text);
 }
-.ham-suggest-item-active {
-  background: var(--ham-accent-soft);
+.hiermark-suggest-item-active {
+  background: var(--hiermark-accent-soft);
 }
-.ham-suggest-label {
+.hiermark-suggest-label {
   font-size: 13px;
   font-weight: 600;
 }
-.ham-suggest-detail {
+.hiermark-suggest-detail {
   font-size: 11px;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -692,16 +692,16 @@
 }
 
 /* Collaboration error/loading fallbacks ------------------------------------- */
-.ham-editor-error,
-.ham-editor-loading {
+.hiermark-editor-error,
+.hiermark-editor-loading {
   padding: 12px 14px;
   font-size: 13px;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
 }
-.ham-editor-error {
+.hiermark-editor-error {
   color: #c0392b;
 }
-.ham-collab-retry {
+.hiermark-collab-retry {
   border: 1px solid currentColor;
   background: transparent;
   color: inherit;
@@ -711,45 +711,45 @@
   padding: 2px 10px;
   cursor: pointer;
 }
-.ham-collab-retry:hover {
+.hiermark-collab-retry:hover {
   background: rgba(192, 57, 43, 0.08);
 }
 
 /* Link edit popover (click a link / Mod-k) ---------------------------------- */
-.ham-link-popover {
+.hiermark-link-popover {
   z-index: 40;
   display: flex;
   flex-direction: column;
   gap: 6px;
   width: min(340px, 80vw);
   padding: 8px;
-  background: var(--ham-surface-bg, #fff);
-  border: 1px solid var(--ham-surface-border, #e3e1ee);
+  background: var(--hiermark-surface-bg, #fff);
+  border: 1px solid var(--hiermark-surface-border, #e3e1ee);
   border-radius: 9px;
   box-shadow: 0 8px 28px rgba(20, 18, 40, 0.18);
 }
-.ham-link-input {
+.hiermark-link-input {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--ham-surface-border, #e3e1ee);
+  border: 1px solid var(--hiermark-surface-border, #e3e1ee);
   border-radius: 6px;
   padding: 6px 8px;
   font: inherit;
   font-size: 13px;
 }
-.ham-link-input:focus {
+.hiermark-link-input:focus {
   outline: none;
-  border-color: var(--ham-accent, #6f5cff);
+  border-color: var(--hiermark-accent, #6f5cff);
 }
-.ham-link-actions {
+.hiermark-link-actions {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.ham-link-btn {
-  border: 1px solid var(--ham-surface-border, #e3e1ee);
+.hiermark-link-btn {
+  border: 1px solid var(--hiermark-surface-border, #e3e1ee);
   border-radius: 6px;
-  background: var(--ham-surface-bg, #fff);
+  background: var(--hiermark-surface-bg, #fff);
   color: inherit;
   text-decoration: none;
   font: inherit;
@@ -757,40 +757,40 @@
   padding: 3px 10px;
   cursor: pointer;
 }
-.ham-link-btn:hover {
+.hiermark-link-btn:hover {
   background: #f6f5fb;
 }
-.ham-link-btn.ham-link-remove {
+.hiermark-link-btn.hiermark-link-remove {
   color: #c0392b;
   border-color: #e9c4c0;
 }
-.ham-image-field {
+.hiermark-image-field {
   display: flex;
   flex-direction: column;
   gap: 3px;
   font-size: 11px;
-  color: var(--ham-muted, #6b6880);
+  color: var(--hiermark-muted, #6b6880);
 }
-.ham-image-field > span {
+.hiermark-image-field > span {
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 /* Clicking an image opens the alt-text editor; hint that it is interactive. */
-.ham-editor[data-mode="rich"] .ProseMirror img {
+.hiermark-editor[data-mode="rich"] .ProseMirror img {
   cursor: pointer;
 }
 /* Floating formatting toolbar over a text selection (BubbleToolbar). */
-.ham-bubble-toolbar {
+.hiermark-bubble-toolbar {
   z-index: 45;
   display: flex;
   gap: 2px;
   padding: 3px;
-  background: var(--ham-surface-bg, #fff);
-  border: 1px solid var(--ham-surface-border, #e3e1ee);
+  background: var(--hiermark-surface-bg, #fff);
+  border: 1px solid var(--hiermark-surface-border, #e3e1ee);
   border-radius: 8px;
   box-shadow: 0 6px 22px rgba(20, 18, 40, 0.2);
 }
-.ham-bubble-btn {
+.hiermark-bubble-btn {
   min-width: 28px;
   border: none;
   background: transparent;
@@ -802,23 +802,23 @@
   line-height: 1;
   cursor: pointer;
 }
-.ham-bubble-btn[data-mark="bold"] {
+.hiermark-bubble-btn[data-mark="bold"] {
   font-weight: 700;
 }
-.ham-bubble-btn[data-mark="italic"] {
+.hiermark-bubble-btn[data-mark="italic"] {
   font-style: italic;
 }
-.ham-bubble-btn[data-mark="strike"] {
+.hiermark-bubble-btn[data-mark="strike"] {
   text-decoration: line-through;
 }
-.ham-bubble-btn[data-mark="code"] {
+.hiermark-bubble-btn[data-mark="code"] {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11px;
 }
-.ham-bubble-btn:hover {
-  background: var(--ham-accent-soft, #efecff);
+.hiermark-bubble-btn:hover {
+  background: var(--hiermark-accent-soft, #efecff);
 }
-.ham-bubble-btn-active {
-  background: var(--ham-accent, #6f5cff);
+.hiermark-bubble-btn-active {
+  background: var(--hiermark-accent, #6f5cff);
   color: #fff;
 }

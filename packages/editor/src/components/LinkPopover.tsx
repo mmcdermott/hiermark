@@ -78,11 +78,11 @@ export function LinkPopover({
       <div
         ref={refs.setFloating}
         style={floatingStyles}
-        className="ham-link-popover"
+        className="hiermark-link-popover"
         {...getFloatingProps()}
       >
         <input
-          className="ham-link-input"
+          className="hiermark-link-input"
           type="url"
           inputMode="url"
           placeholder="https://…"
@@ -102,10 +102,10 @@ export function LinkPopover({
             }
           }}
         />
-        <div className="ham-link-actions">
+        <div className="hiermark-link-actions">
           <button
             type="button"
-            className="ham-link-btn"
+            className="hiermark-link-btn"
             onMouseDown={(e) => e.preventDefault()}
             onClick={apply}
           >
@@ -113,7 +113,7 @@ export function LinkPopover({
           </button>
           {open.href && (isAllowedHref?.(open.href) ?? true) && (
             <a
-              className="ham-link-btn"
+              className="hiermark-link-btn"
               href={open.href}
               target="_blank"
               rel="noopener noreferrer nofollow"
@@ -124,7 +124,7 @@ export function LinkPopover({
           {open.href && (
             <button
               type="button"
-              className="ham-link-btn ham-link-remove"
+              className="hiermark-link-btn hiermark-link-remove"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 onRemove(open.from, open.to);

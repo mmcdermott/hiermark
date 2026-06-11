@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import type { Editor } from "@tiptap/core";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import { HamEditor } from "../src/HamEditor";
-import type { HamBlockSlotProps, HamEditorHandle, HamEditorProps } from "../src/types";
+import { HiermarkEditor } from "../src/HiermarkEditor";
+import type { HiermarkBlockSlotProps, HiermarkEditorHandle, HiermarkEditorProps } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
   (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
 });
 
-async function mount(extra: Partial<HamEditorProps> = {}, markdown = "# Title\n\nbody") {
-  let handle: HamEditorHandle | null = null;
+async function mount(extra: Partial<HiermarkEditorProps> = {}, markdown = "# Title\n\nbody") {
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown }}
@@ -126,15 +126,15 @@ describe("branch gutter — right side + slots", () => {
   it("renders the branch button inside the right-side gutter affordances", async () => {
     const { container } = await mount();
     await waitFor(() => {
-      const btn = container.querySelector(".ham-branch-button");
+      const btn = container.querySelector(".hiermark-branch-button");
       expect(btn).not.toBeNull();
       // It lives inside the gutter overlay's affordances row (positioned right).
-      expect(btn!.closest(".ham-block-gutter-affordances")).not.toBeNull();
-      expect(btn!.closest(".ham-block-gutter")).not.toBeNull();
+      expect(btn!.closest(".hiermark-block-gutter-affordances")).not.toBeNull();
+      expect(btn!.closest(".hiermark-block-gutter")).not.toBeNull();
     });
   });
 
-  it("tags branch-child chips with data-ham-branch-child (for connector anchoring)", async () => {
+  it("tags branch-child chips with data-hiermark-branch-child (for connector anchoring)", async () => {
     const { container } = await mount({
       value: {
         kind: "tiptap-json",
@@ -157,14 +157,14 @@ describe("branch gutter — right side + slots", () => {
       },
     });
     await waitFor(() => {
-      const chip = container.querySelector(".ham-branch-child-chip");
+      const chip = container.querySelector(".hiermark-branch-child-chip");
       expect(chip).not.toBeNull();
-      expect(chip!.getAttribute("data-ham-branch-child")).toBe("s_child");
+      expect(chip!.getAttribute("data-hiermark-branch-child")).toBe("s_child");
     });
   });
 
   it("uses a custom BlockBranchButton slot component when provided", async () => {
-    const CustomButton = ({ blockId, onBranch }: HamBlockSlotProps) => (
+    const CustomButton = ({ blockId, onBranch }: HiermarkBlockSlotProps) => (
       <button className="my-custom-branch" data-for={blockId} onClick={() => onBranch()}>
         custom
       </button>
@@ -173,7 +173,7 @@ describe("branch gutter — right side + slots", () => {
     await waitFor(() => {
       expect(container.querySelector(".my-custom-branch")).not.toBeNull();
       // the default button is not used when a slot is provided
-      expect(container.querySelector(".ham-branch-button")).toBeNull();
+      expect(container.querySelector(".hiermark-branch-button")).toBeNull();
     });
   });
 });

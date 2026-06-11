@@ -1,22 +1,22 @@
 import { describe, it, expect, vi, beforeAll } from "vitest";
 import { render, waitFor, cleanup, fireEvent } from "@testing-library/react";
 import { afterEach } from "vitest";
-import { HamEditor } from "../src/HamEditor";
-import type { HamBranchRequestEvent, HamEditorHandle } from "../src/types";
+import { HiermarkEditor } from "../src/HiermarkEditor";
+import type { HiermarkBranchRequestEvent, HiermarkEditorHandle } from "../src/types";
 
 afterEach(() => cleanup());
 
 beforeAll(() => {
-  // jsdom lacks scrollIntoView; HamEditor's handle may call it.
+  // jsdom lacks scrollIntoView; HiermarkEditor's handle may call it.
   (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
 });
 
 const MD = "# Method\n\nWe describe it.\n\n## Data\n\nThe dataset is eICU.\n\n- [ ] pull cohort\n";
 
-async function mountEditor(extra: Partial<Parameters<typeof HamEditor>[0]> = {}) {
-  let handle: HamEditorHandle | null = null;
+async function mountEditor(extra: Partial<Parameters<typeof HiermarkEditor>[0]> = {}) {
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       title="Method"
@@ -31,7 +31,7 @@ async function mountEditor(extra: Partial<Parameters<typeof HamEditor>[0]> = {})
   return { ...utils, getHandle: () => handle! };
 }
 
-describe("HamEditor", () => {
+describe("HiermarkEditor", () => {
   it("assigns a unique data-block-id to every block (no duplicates)", async () => {
     const { container } = await mountEditor();
     await waitFor(() => {
@@ -100,16 +100,16 @@ describe("HamEditor", () => {
   });
 
   it("emits a branch request with the source block id and surface snapshot", async () => {
-    const onBranchRequest = vi.fn<(e: HamBranchRequestEvent) => void>();
+    const onBranchRequest = vi.fn<(e: HiermarkBranchRequestEvent) => void>();
     const { container } = await mountEditor({ onBranchRequest });
 
     // Branch buttons render after the gutter context effect runs.
     let button: HTMLElement | null = null;
     await waitFor(() => {
-      button = container.querySelector<HTMLElement>(".ham-branch-button");
+      button = container.querySelector<HTMLElement>(".hiermark-branch-button");
       expect(button).not.toBeNull();
     });
-    const blockId = button!.getAttribute("data-ham-branch-for");
+    const blockId = button!.getAttribute("data-hiermark-branch-for");
     fireEvent.click(button!);
 
     expect(onBranchRequest).toHaveBeenCalledOnce();
@@ -153,11 +153,11 @@ describe("HamEditor", () => {
   });
 
   it("invokes the current onBranchRequest after a re-render (no stale handler)", async () => {
-    const fn1 = vi.fn<(e: HamBranchRequestEvent) => void>();
-    const fn2 = vi.fn<(e: HamBranchRequestEvent) => void>();
-    let handle: HamEditorHandle | null = null;
-    const view = (cb: (e: HamBranchRequestEvent) => void) => (
-      <HamEditor
+    const fn1 = vi.fn<(e: HiermarkBranchRequestEvent) => void>();
+    const fn2 = vi.fn<(e: HiermarkBranchRequestEvent) => void>();
+    let handle: HiermarkEditorHandle | null = null;
+    const view = (cb: (e: HiermarkBranchRequestEvent) => void) => (
+      <HiermarkEditor
         surfaceId="s1"
         rootBlockId="blk_root"
         title="Method"
@@ -173,7 +173,7 @@ describe("HamEditor", () => {
 
     let button: HTMLElement | null = null;
     await waitFor(() => {
-      button = container.querySelector<HTMLElement>(".ham-branch-button");
+      button = container.querySelector<HTMLElement>(".hiermark-branch-button");
       expect(button).not.toBeNull();
     });
 

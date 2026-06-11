@@ -1,87 +1,87 @@
-/* @ham/canvas default styles. Override via CSS variables. */
+/* @hiermark/canvas default styles. Override via CSS variables. */
 :root {
-  --ham-canvas-bg: #f6f6f9;
-  --ham-column-gap: 24px;
-  --ham-surface-gap: 16px;
-  --ham-canvas-padding: 24px;
-  --ham-surface-bg: #ffffff;
-  --ham-surface-border: #d8d8df;
-  --ham-accent: #6f5cff;
-  --ham-accent-soft: #efecff;
-  --ham-muted: #6f6f7a;
-  --ham-radius: 12px;
+  --hiermark-canvas-bg: #f6f6f9;
+  --hiermark-column-gap: 24px;
+  --hiermark-surface-gap: 16px;
+  --hiermark-canvas-padding: 24px;
+  --hiermark-surface-bg: #ffffff;
+  --hiermark-surface-border: #d8d8df;
+  --hiermark-accent: #6f5cff;
+  --hiermark-accent-soft: #efecff;
+  --hiermark-muted: #6f6f7a;
+  --hiermark-radius: 12px;
 }
 
 /* Dark theme (OS preference, opt-out per subtree via [data-theme="light"], or
    force via [data-theme="dark"]). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ham-canvas-bg: #101017;
-    --ham-surface-bg: #1b1b24;
-    --ham-surface-border: #34343f;
-    --ham-accent: #9c8cff;
-    --ham-accent-soft: #2a2740;
-    --ham-muted: #9a9aab;
+    --hiermark-canvas-bg: #101017;
+    --hiermark-surface-bg: #1b1b24;
+    --hiermark-surface-border: #34343f;
+    --hiermark-accent: #9c8cff;
+    --hiermark-accent-soft: #2a2740;
+    --hiermark-muted: #9a9aab;
   }
 }
 [data-theme="dark"] {
-  --ham-canvas-bg: #101017;
-  --ham-surface-bg: #1b1b24;
-  --ham-surface-border: #34343f;
-  --ham-accent: #9c8cff;
-  --ham-accent-soft: #2a2740;
-  --ham-muted: #9a9aab;
+  --hiermark-canvas-bg: #101017;
+  --hiermark-surface-bg: #1b1b24;
+  --hiermark-surface-border: #34343f;
+  --hiermark-accent: #9c8cff;
+  --hiermark-accent-soft: #2a2740;
+  --hiermark-muted: #9a9aab;
 }
 
-.ham-canvas {
+.hiermark-canvas {
   position: relative; /* containing block for the connectors SVG overlay */
   display: flex;
   align-items: flex-start;
-  gap: var(--ham-column-gap);
+  gap: var(--hiermark-column-gap);
   overflow-x: auto;
-  background: var(--ham-canvas-bg);
+  background: var(--hiermark-canvas-bg);
   min-height: 320px;
 }
 
-.ham-column {
+.hiermark-column {
   display: flex;
   flex-direction: column;
-  gap: var(--ham-surface-gap);
+  gap: var(--hiermark-surface-gap);
   flex: 0 0 auto;
   /* Driven by layout.columnWidth (fallback keeps a sane default if unset). */
-  width: var(--ham-column-width, 520px);
+  width: var(--hiermark-column-width, 520px);
   min-width: 240px;
 }
 /* A column is only as wide as its widest surface's display mode needs, so
    rail/outline columns read as a compact sidebar rather than empty full-width
    boxes. The active column (below) still overrides this. */
-.ham-column[data-col-mode="rail"] {
-  width: var(--ham-rail-column-width, 220px);
+.hiermark-column[data-col-mode="rail"] {
+  width: var(--hiermark-rail-column-width, 220px);
   min-width: 0;
 }
-.ham-column[data-col-mode="outline"] {
+.hiermark-column[data-col-mode="outline"] {
   width: 320px;
   min-width: 0;
 }
-.ham-column[data-col-mode="hidden"] {
+.hiermark-column[data-col-mode="hidden"] {
   display: none;
 }
 /* The focused column widens when layout.activeColumnMode === "expanded", and
    GROWS to fill leftover horizontal space (so the editor uses a wide screen
    instead of being capped at the column width). When columns overflow the
    canvas there's no free space, so it just scrolls — no layout fight. */
-.ham-column-active {
+.hiermark-column-active {
   flex-grow: 1;
-  width: var(--ham-expanded-column-width, 720px);
+  width: var(--hiermark-expanded-column-width, 720px);
   max-width: 100%;
 }
 
 /* layout.columnScroll: each column scrolls vertically on its own (needs a
    bounded canvas height to be useful). */
-.ham-columns-scroll {
+.hiermark-columns-scroll {
   max-height: 100%;
 }
-.ham-columns-scroll .ham-column {
+.hiermark-columns-scroll .hiermark-column {
   max-height: 100%;
   /* min-height:0 lets a short column shrink to its content inside the flex row,
      so `auto` only paints a scrollbar when the cards genuinely overflow. */
@@ -90,7 +90,7 @@
 }
 
 /* Sibling-group provenance header (layout.showGroupHeaders). */
-.ham-group-header {
+.hiermark-group-header {
   display: flex;
   align-items: baseline;
   gap: 4px;
@@ -101,190 +101,190 @@
   margin: 0;
   font: inherit;
   font-size: 11px;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
   cursor: pointer;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
 }
-.ham-group-header:hover {
-  color: var(--ham-accent);
+.hiermark-group-header:hover {
+  color: var(--hiermark-accent);
 }
-.ham-group-header-arrow {
+.hiermark-group-header-arrow {
   flex: 0 0 auto;
   opacity: 0.7;
 }
-.ham-group-header-parent {
+.hiermark-group-header-parent {
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ham-group-header-anchor {
+.hiermark-group-header-anchor {
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 /* Connectors can't track a surface mid-drag — fade them, re-snap on drop. */
-.ham-dragging .ham-connectors {
+.hiermark-dragging .hiermark-connectors {
   opacity: 0.25;
   transition: opacity 0.1s ease;
 }
 
-.ham-surface {
+.hiermark-surface {
   display: flex;
   flex-direction: column;
-  background: var(--ham-surface-bg);
-  border: 1px solid var(--ham-surface-border);
-  border-radius: var(--ham-radius);
+  background: var(--hiermark-surface-bg);
+  border: 1px solid var(--hiermark-surface-border);
+  border-radius: var(--hiermark-radius);
   box-shadow: 0 1px 2px rgba(20, 20, 30, 0.04);
   overflow: hidden;
   transition:
     box-shadow 0.15s ease,
     border-color 0.15s ease;
 }
-.ham-surface-active {
-  border-color: var(--ham-accent);
+.hiermark-surface-active {
+  border-color: var(--hiermark-accent);
   box-shadow: 0 4px 16px rgba(111, 92, 255, 0.16);
 }
-.ham-surface-ancestor {
-  border-left: 3px solid var(--ham-accent);
+.hiermark-surface-ancestor {
+  border-left: 3px solid var(--hiermark-accent);
 }
-.ham-surface-sibling {
+.hiermark-surface-sibling {
   border-style: dashed;
 }
-.ham-surface-mode-rail,
-.ham-surface-mode-hidden {
+.hiermark-surface-mode-rail,
+.hiermark-surface-mode-hidden {
   opacity: 0.7;
 }
-.ham-surface-mode-hidden {
+.hiermark-surface-mode-hidden {
   display: none;
 }
-.ham-surface-pending {
+.hiermark-surface-pending {
   opacity: 0.6;
   pointer-events: none;
 }
 /* Visible (not just dimmed) pending affordance in the surface header. */
-.ham-surface-spinner {
+.hiermark-surface-spinner {
   width: 12px;
   height: 12px;
   flex: none;
   border-radius: 50%;
-  border: 2px solid var(--ham-surface-border, #e3e1ee);
-  border-top-color: var(--ham-accent, #6f5cff);
-  animation: ham-spin 0.7s linear infinite;
+  border: 2px solid var(--hiermark-surface-border, #e3e1ee);
+  border-top-color: var(--hiermark-accent, #6f5cff);
+  animation: hiermark-spin 0.7s linear infinite;
 }
-@keyframes ham-spin {
+@keyframes hiermark-spin {
   to {
     transform: rotate(360deg);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ham-surface-spinner {
+  .hiermark-surface-spinner {
     animation-duration: 2s;
   }
 }
 
 /* Boundary between the reachable tree and detached (orphan) surfaces. */
-.ham-detached-divider {
+.hiermark-detached-divider {
   flex: none;
   align-self: stretch;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 28px;
-  border-left: 2px dashed var(--ham-surface-border, #e3e1ee);
+  border-left: 2px dashed var(--hiermark-surface-border, #e3e1ee);
 }
-.ham-detached-divider > span {
+.hiermark-detached-divider > span {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ham-muted, #8a87a0);
+  color: var(--hiermark-muted, #8a87a0);
   white-space: nowrap;
 }
-.ham-column-detached {
+.hiermark-column-detached {
   opacity: 0.92;
 }
 
-.ham-surface-header {
+.hiermark-surface-header {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 10px;
-  border-bottom: 1px solid var(--ham-surface-border);
+  border-bottom: 1px solid var(--hiermark-surface-border);
   font-size: 13px;
   font-weight: 600;
 }
-.ham-surface-title {
+.hiermark-surface-title {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ham-surface-spacer {
+.hiermark-surface-spacer {
   flex: 1;
 }
-.ham-surface-header button {
+.hiermark-surface-header button {
   border: none;
   background: transparent;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
   cursor: pointer;
   border-radius: 6px;
   padding: 2px 6px;
   font-size: 13px;
 }
-.ham-surface-header button:hover {
-  background: var(--ham-accent-soft);
-  color: var(--ham-accent);
+.hiermark-surface-header button:hover {
+  background: var(--hiermark-accent-soft);
+  color: var(--hiermark-accent);
 }
-.ham-surface-drag {
+.hiermark-surface-drag {
   cursor: grab;
   touch-action: none;
 }
 
-.ham-surface-body {
+.hiermark-surface-body {
   /* Size to content by default; only the expanded editor reserves a min height
      (an outline/card/rail body should be exactly as tall as its content). */
   min-height: 0;
-  max-height: var(--ham-max-surface-height, none);
+  max-height: var(--hiermark-max-surface-height, none);
   /* Scroll on either axis ONLY when content actually overflows (a wide table or
      code block scrolls horizontally; nothing scrolls when it fits). */
   overflow: auto;
   padding: 12px 14px;
 }
-.ham-surface-mode-expanded .ham-surface-body {
+.hiermark-surface-mode-expanded .hiermark-surface-body {
   /* Driven by layout.minSurfaceHeight — the editing surface wants a usable
      minimum; compact modes do not. */
-  min-height: var(--ham-min-surface-height, 0);
+  min-height: var(--hiermark-min-surface-height, 0);
 }
 
-.ham-surface-preview {
+.hiermark-surface-preview {
   text-align: left;
   width: 100%;
   border: none;
   background: transparent;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
   font: inherit;
   cursor: pointer;
   line-height: 1.5;
 }
 
-.ham-surface-collapse {
+.hiermark-surface-collapse {
   cursor: pointer;
 }
 
 /* Add-sibling rail — quiet "+" in the gap between sibling surfaces ----------- */
-.ham-add-sibling-rail {
-  height: var(--ham-surface-gap, 16px);
+.hiermark-add-sibling-rail {
+  height: var(--hiermark-surface-gap, 16px);
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.ham-add-sibling {
+.hiermark-add-sibling {
   border: 1px dashed transparent;
   background: transparent;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
   cursor: pointer;
   border-radius: 6px;
   padding: 0 10px;
@@ -299,35 +299,35 @@
     border-color 0.12s ease,
     color 0.12s ease;
 }
-.ham-column:hover .ham-add-sibling,
-.ham-add-sibling:focus-visible {
+.hiermark-column:hover .hiermark-add-sibling,
+.hiermark-add-sibling:focus-visible {
   opacity: 1;
 }
-.ham-add-sibling:hover {
-  background: var(--ham-accent-soft);
-  border-color: var(--ham-accent);
-  color: var(--ham-accent);
+.hiermark-add-sibling:hover {
+  background: var(--hiermark-accent-soft);
+  border-color: var(--hiermark-accent);
+  color: var(--hiermark-accent);
 }
 
-.ham-canvas:focus-visible {
-  outline: 2px solid var(--ham-accent);
+.hiermark-canvas:focus-visible {
+  outline: 2px solid var(--hiermark-accent);
   outline-offset: -2px;
 }
 
 /* Outline (compact) mode ---------------------------------------------------- */
-.ham-surface-outline {
+.hiermark-surface-outline {
   list-style: none;
   margin: 0;
   padding: 0;
   font-size: 13px;
 }
-.ham-outline-item {
+.hiermark-outline-item {
   padding: 1px 0;
 }
-.ham-outline-heading > .ham-outline-link {
+.hiermark-outline-heading > .hiermark-outline-link {
   font-weight: 600;
 }
-.ham-outline-link {
+.hiermark-outline-link {
   border: none;
   background: transparent;
   color: inherit;
@@ -340,94 +340,94 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ham-outline-link:hover {
-  color: var(--ham-accent);
+.hiermark-outline-link:hover {
+  color: var(--hiermark-accent);
 }
 
-.ham-surface-mode-rail {
+.hiermark-surface-mode-rail {
   /* Driven by layout.railColumnWidth. */
-  min-width: var(--ham-rail-column-width, 220px);
+  min-width: var(--hiermark-rail-column-width, 220px);
 }
 
 /* Cross-column connectors ---------------------------------------------------- */
-.ham-connectors {
+.hiermark-connectors {
   /* Sits above the cards; never intercepts pointer input (set inline too). */
   z-index: 1;
 }
-.ham-branch-connector {
-  stroke: var(--ham-surface-border);
+.hiermark-branch-connector {
+  stroke: var(--hiermark-surface-border);
   stroke-width: 1.5;
   fill: none;
 }
-.ham-branch-connector-muted {
-  stroke: var(--ham-surface-border);
+.hiermark-branch-connector-muted {
+  stroke: var(--hiermark-surface-border);
   opacity: 0.5;
 }
-.ham-branch-connector-ancestor {
-  stroke: var(--ham-accent);
+.hiermark-branch-connector-ancestor {
+  stroke: var(--hiermark-accent);
   opacity: 0.45;
 }
-.ham-branch-connector-active {
-  stroke: var(--ham-accent);
+.hiermark-branch-connector-active {
+  stroke: var(--hiermark-accent);
   stroke-width: 2;
   opacity: 0.9;
 }
 
 /* Appearance: flat — a column reads as one holistic editor ------------------- */
-.ham-appearance-flat .ham-column {
+.hiermark-appearance-flat .hiermark-column {
   gap: 0;
-  background: var(--ham-surface-bg);
-  border: 1px solid var(--ham-surface-border);
-  border-radius: var(--ham-radius);
+  background: var(--hiermark-surface-bg);
+  border: 1px solid var(--hiermark-surface-border);
+  border-radius: var(--hiermark-radius);
   overflow: hidden;
 }
-.ham-appearance-flat .ham-surface {
+.hiermark-appearance-flat .hiermark-surface {
   border: none;
   border-radius: 0;
   box-shadow: none;
 }
 /* Hairline divider between stacked surfaces in a flat column. */
-.ham-appearance-flat .ham-surface + .ham-surface {
-  border-top: 1px solid var(--ham-surface-border);
+.hiermark-appearance-flat .hiermark-surface + .hiermark-surface {
+  border-top: 1px solid var(--hiermark-surface-border);
 }
-.ham-appearance-flat .ham-surface-active {
-  box-shadow: inset 3px 0 0 0 var(--ham-accent);
+.hiermark-appearance-flat .hiermark-surface-active {
+  box-shadow: inset 3px 0 0 0 var(--hiermark-accent);
 }
-.ham-appearance-flat .ham-surface-header {
+.hiermark-appearance-flat .hiermark-surface-header {
   background: transparent;
   font-weight: 500;
 }
 
-/* Appearance: plain — no HAM chrome at all (bring your own CSS) ------------- */
+/* Appearance: plain — no Hiermark chrome at all (bring your own CSS) ------------- */
 /* Collapse the canvas/column gaps to a hairline so surfaces read as one
    continuous, unstyled stack. (The gap variables are set inline on the root, so
    we override the resolved `gap` property directly here rather than the var.) */
-.ham-appearance-plain {
+.hiermark-appearance-plain {
   gap: 12px;
   background: transparent;
 }
-.ham-appearance-plain .ham-column {
+.hiermark-appearance-plain .hiermark-column {
   gap: 0;
 }
-.ham-appearance-plain .ham-surface {
+.hiermark-appearance-plain .hiermark-surface {
   border: none;
   border-radius: 0;
   box-shadow: none;
   background: transparent;
 }
-.ham-appearance-plain .ham-surface-header {
+.hiermark-appearance-plain .hiermark-surface-header {
   border-bottom: none;
   padding: 4px 14px 0;
   font-size: 12px;
   font-weight: 500;
-  color: var(--ham-muted);
+  color: var(--hiermark-muted);
 }
-.ham-appearance-plain .ham-surface-active {
-  box-shadow: inset 3px 0 0 0 var(--ham-accent);
+.hiermark-appearance-plain .hiermark-surface-active {
+  box-shadow: inset 3px 0 0 0 var(--hiermark-accent);
 }
 
 /* Accessibility helpers ----------------------------------------------------- */
-.ham-sr-only {
+.hiermark-sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -438,18 +438,18 @@
   white-space: nowrap;
   border: 0;
 }
-.ham-canvas-empty {
+.hiermark-canvas-empty {
   margin: auto;
   padding: 24px;
-  color: var(--ham-muted, #6f6f7a);
+  color: var(--hiermark-muted, #6f6f7a);
   font-size: 14px;
 }
 
 /* Respect a user's reduced-motion preference (auto-scroll uses "auto" in JS). */
 @media (prefers-reduced-motion: reduce) {
-  .ham-surface,
-  .ham-add-sibling,
-  .ham-connectors path {
+  .hiermark-surface,
+  .hiermark-add-sibling,
+  .hiermark-connectors path {
     transition: none !important;
   }
 }

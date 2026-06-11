@@ -12,7 +12,7 @@ export interface ChecklistItem {
   checked: boolean;
   /** Content-addressed key (hash of normalized text). */
   key: string;
-  /** `ham:task` id if present, else null. */
+  /** `hiermark:task` id if present, else null. */
   stableId: string | null;
   /** Index of the block this item belongs to. */
   blockPosition: number;
@@ -50,7 +50,7 @@ export function taskKey(text: string): string {
 }
 
 function stripTaskId(line: string): string {
-  return line.replace(/<!--\s*ham:task=[A-Za-z0-9_-]+\s*-->/g, "");
+  return line.replace(/<!--\s*hiermark:task=[A-Za-z0-9_-]+\s*-->/g, "");
 }
 
 /** Parse all task-list items in one block body, skipping fenced code. */
@@ -81,7 +81,7 @@ export function parseChecklist(bodyMarkdown: string, blockPosition: number): Che
 }
 
 /**
- * Inject `ham:task=<id>` comments into task lines that have a known id and don't
+ * Inject `hiermark:task=<id>` comments into task lines that have a known id and don't
  * already carry one — never inside a fence.
  */
 export function injectTaskIds(markdown: string, idByKey: Map<string, string>): string {

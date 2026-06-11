@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup, fireEvent } from "@testing-library/react";
-import { HamCanvas } from "../src/HamCanvas";
-import type { HamCanvasHandlers, HamSurface } from "../src/types";
+import { HiermarkCanvas } from "../src/HiermarkCanvas";
+import type { HiermarkCanvasHandlers, HiermarkSurface } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
   (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
 });
 
-const surface = (id: string, markdown: string, title?: string): HamSurface => ({
+const surface = (id: string, markdown: string, title?: string): HiermarkSurface => ({
   id,
   rootBlockId: `${id}_root`,
   ...(title ? { title } : {}),
@@ -18,14 +18,14 @@ const surface = (id: string, markdown: string, title?: string): HamSurface => ({
 describe("canvas failure modes", () => {
   it("reports a rejected createSurfaceFromBlock via onOperationError and clears pending", async () => {
     const error = new Error("server 500");
-    const handlers: HamCanvasHandlers = {
+    const handlers: HiermarkCanvasHandlers = {
       createSurfaceFromBlock: vi.fn(async () => {
         throw error;
       }),
     };
     const onOperationError = vi.fn();
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root\n\nBranch me.", "Root") }}
         branchEdges={[]}
@@ -35,7 +35,7 @@ describe("canvas failure modes", () => {
       />,
     );
     const btn = await waitFor(() => {
-      const el = container.querySelector<HTMLElement>(".ham-branch-button");
+      const el = container.querySelector<HTMLElement>(".hiermark-branch-button");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -48,7 +48,7 @@ describe("canvas failure modes", () => {
     expect(call.error).toBe(error);
     // No surface should remain stuck in the pending (opacity-dimmed) state.
     await waitFor(() => {
-      expect(container.querySelector(".ham-surface-pending")).toBeNull();
+      expect(container.querySelector(".hiermark-surface-pending")).toBeNull();
     });
   });
 });

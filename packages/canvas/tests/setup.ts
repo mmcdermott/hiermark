@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 
-// The canvas mounts @ham/editor (ProseMirror) in integration tests, which
+// The canvas mounts @hiermark/editor (ProseMirror) in integration tests, which
 // touches layout APIs jsdom does not implement. Shim the minimum needed.
 if (!globalThis.ResizeObserver) {
   globalThis.ResizeObserver = class {

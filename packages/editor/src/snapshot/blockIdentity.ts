@@ -1,6 +1,6 @@
 import type { Node as PMNode } from "@tiptap/pm/model";
 
-import { isHamBlockNode } from "./blockTreePolicy";
+import { isHiermarkBlockNode } from "./blockTreePolicy";
 
 /** A block's stable id paired with the content that identifies it. */
 export interface BlockIdentity {
@@ -15,11 +15,11 @@ export interface BlockIdRestore {
   id: string;
 }
 
-/** Collect every id-bearing HAM block's (id, type, text), in document order. */
+/** Collect every id-bearing Hiermark block's (id, type, text), in document order. */
 export function collectBlockIdentities(doc: PMNode): BlockIdentity[] {
   const out: BlockIdentity[] = [];
   doc.descendants((node, _pos, parent) => {
-    if (!isHamBlockNode(node, parent)) return;
+    if (!isHiermarkBlockNode(node, parent)) return;
     const id = node.attrs.dataBlockId as string | null;
     if (id) out.push({ id, type: node.type.name, text: node.textContent });
   });
@@ -47,7 +47,7 @@ export function planBlockIdRestore(
 ): BlockIdRestore[] {
   const newBlocks: { pos: number; type: string; text: string }[] = [];
   newDoc.descendants((node, pos, parent) => {
-    if (!isHamBlockNode(node, parent)) return;
+    if (!isHiermarkBlockNode(node, parent)) return;
     if (node.attrs.dataBlockId) {
       newBlocks.push({ pos, type: node.type.name, text: node.textContent });
     }

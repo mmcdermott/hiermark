@@ -1,25 +1,25 @@
 import type {
-  HamActivePath,
-  HamBranchEdge,
-  HamCanvasLayoutConfig,
-  HamPathState,
-  HamSurfaceDisplayMode,
-  HamSurfaceId,
+  HiermarkActivePath,
+  HiermarkBranchEdge,
+  HiermarkCanvasLayoutConfig,
+  HiermarkPathState,
+  HiermarkSurfaceDisplayMode,
+  HiermarkSurfaceId,
 } from "../types";
-import type { HamTopologyIndices } from "./buildIndices";
+import type { HiermarkTopologyIndices } from "./buildIndices";
 
 export interface PathStateContext {
-  activeSurfaceId: HamSurfaceId;
-  activeSurfaceSet: Set<HamSurfaceId>;
-  descendantsOfActive: Set<HamSurfaceId>;
-  incomingEdgeByToSurface: Map<HamSurfaceId, HamBranchEdge>;
+  activeSurfaceId: HiermarkSurfaceId;
+  activeSurfaceSet: Set<HiermarkSurfaceId>;
+  descendantsOfActive: Set<HiermarkSurfaceId>;
+  incomingEdgeByToSurface: Map<HiermarkSurfaceId, HiermarkBranchEdge>;
 }
 
 /** Parent (source surface) of a surface, via its incoming edge. */
 function parentOf(
-  surfaceId: HamSurfaceId,
-  incoming: Map<HamSurfaceId, HamBranchEdge>,
-): { surface?: HamSurfaceId; block?: HamSurfaceId } {
+  surfaceId: HiermarkSurfaceId,
+  incoming: Map<HiermarkSurfaceId, HiermarkBranchEdge>,
+): { surface?: HiermarkSurfaceId; block?: HiermarkSurfaceId } {
   const edge = incoming.get(surfaceId);
   return { surface: edge?.fromSurfaceId, block: edge?.fromBlockId };
 }
@@ -29,7 +29,7 @@ function parentOf(
  * both the same parent surface *and* the same anchor block as the active surface
  * (the strict definition that also governs reorder eligibility).
  */
-export function computePathState(surfaceId: HamSurfaceId, ctx: PathStateContext): HamPathState {
+export function computePathState(surfaceId: HiermarkSurfaceId, ctx: PathStateContext): HiermarkPathState {
   if (surfaceId === ctx.activeSurfaceId) return "active";
   if (ctx.activeSurfaceSet.has(surfaceId)) return "ancestor";
   if (ctx.descendantsOfActive.has(surfaceId)) return "descendant";
@@ -49,10 +49,10 @@ export function computePathState(surfaceId: HamSurfaceId, ctx: PathStateContext)
 
 /** Map path state + collapse + layout to a display mode (spec §2.4 / §6.11). */
 export function pickDisplayMode(
-  pathState: HamPathState,
+  pathState: HiermarkPathState,
   isCollapsed: boolean,
-  layout: HamCanvasLayoutConfig,
-): HamSurfaceDisplayMode {
+  layout: HiermarkCanvasLayoutConfig,
+): HiermarkSurfaceDisplayMode {
   // The active path must remain visible even when its columns are compacted.
   const onActivePath = pathState === "active" || pathState === "ancestor";
 
@@ -74,9 +74,9 @@ export function pickDisplayMode(
 }
 
 export function buildPathStateContext(
-  activePath: HamActivePath,
-  descendantsOfActive: Set<HamSurfaceId>,
-  indices: HamTopologyIndices,
+  activePath: HiermarkActivePath,
+  descendantsOfActive: Set<HiermarkSurfaceId>,
+  indices: HiermarkTopologyIndices,
 ): PathStateContext {
   return {
     activeSurfaceId: activePath.activeSurfaceId,

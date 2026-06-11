@@ -1,8 +1,8 @@
 {
-  "name": "ham-monorepo",
+  "name": "hiermark-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "Hierarchical, Annotatable Markdown (HAM): a 2D canvas of linked, editable markdown surfaces with rich annotations and block-anchored branching.",
+  "description": "Hiermark: a 2D canvas of linked, editable markdown surfaces with rich annotations and block-anchored branching.",
   "license": "MIT",
   "author": {
     "name": "Matthew McDermott",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mmcdermott/ham.git"
+    "url": "https://github.com/mmcdermott/hiermark.git"
   },
   "packageManager": "pnpm@10.33.2",
   "engines": {
@@ -20,7 +20,7 @@
   },
   "scripts": {
     "build": "pnpm -r --filter \"./packages/*\" build",
-    "dev": "pnpm -F @ham/docs dev",
+    "dev": "pnpm -F @hiermark/docs dev",
     "test": "pnpm -r --no-bail test",
     "test:run": "pnpm -r --no-bail test:run",
     "typecheck": "pnpm -r --no-bail typecheck",
@@ -28,7 +28,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "docs:api": "typedoc",
-    "docs:build": "pnpm build && pnpm docs:api && pnpm -F @ham/docs build",
+    "docs:build": "pnpm build && pnpm docs:api && pnpm -F @hiermark/docs build",
     "lint:pkg": "pnpm build && pnpm -r --filter \"./packages/*\" exec publint --strict",
     "size": "size-limit",
     "changeset": "changeset",

@@ -2,7 +2,7 @@ import { FloatingPortal, autoUpdate, flip, offset, shift, useFloating } from "@f
 import { useEffect } from "react";
 import type { Editor } from "@tiptap/core";
 
-import type { HamAnnotationSuggestion } from "../types";
+import type { HiermarkAnnotationSuggestion } from "../types";
 import type { AnnotationSuggestState } from "./suggest";
 
 export interface SuggestPopoverProps {
@@ -11,13 +11,13 @@ export interface SuggestPopoverProps {
   index: number;
   editor: Editor | null;
   onHover: (index: number) => void;
-  onSelect: (item: HamAnnotationSuggestion) => void;
+  onSelect: (item: HiermarkAnnotationSuggestion) => void;
 }
 
 /**
  * Presentational type-ahead popover: a Floating-UI list anchored at the trigger
  * position. All state (open, items, highlighted index) is owned by the host
- * (HamEditor) so the keyboard handler the plugin forwards to and the rendered
+ * (HiermarkEditor) so the keyboard handler the plugin forwards to and the rendered
  * highlight never disagree.
  */
 export function SuggestPopover({ state, index, editor, onHover, onSelect }: SuggestPopoverProps) {
@@ -50,7 +50,7 @@ export function SuggestPopover({ state, index, editor, onHover, onSelect }: Sugg
       <div
         ref={refs.setFloating}
         style={floatingStyles}
-        className="ham-suggest-popover"
+        className="hiermark-suggest-popover"
         role="listbox"
         aria-label="Annotation suggestions"
       >
@@ -60,7 +60,7 @@ export function SuggestPopover({ state, index, editor, onHover, onSelect }: Sugg
             type="button"
             role="option"
             aria-selected={i === index}
-            className={"ham-suggest-item" + (i === index ? " ham-suggest-item-active" : "")}
+            className={"hiermark-suggest-item" + (i === index ? " hiermark-suggest-item-active" : "")}
             onMouseEnter={() => onHover(i)}
             // mousedown (not click) + preventDefault so the editor keeps focus
             // and the selection/range is still valid when we insert.
@@ -69,8 +69,8 @@ export function SuggestPopover({ state, index, editor, onHover, onSelect }: Sugg
               onSelect(item);
             }}
           >
-            <span className="ham-suggest-label">{item.label}</span>
-            {item.detail ? <span className="ham-suggest-detail">{item.detail}</span> : null}
+            <span className="hiermark-suggest-label">{item.label}</span>
+            {item.detail ? <span className="hiermark-suggest-detail">{item.detail}</span> : null}
           </button>
         ))}
       </div>

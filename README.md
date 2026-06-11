@@ -1,9 +1,9 @@
-# HAM — Hierarchical, Annotatable Markdown
+# Hiermark — hierarchical, annotatable markdown
 
 > A 2D canvas of linked, editable markdown surfaces with rich annotations and
 > block-anchored branching.
 
-HAM is two React + TypeScript packages for building applications around a
+Hiermark is two React + TypeScript packages for building applications around a
 **2D canvas of editable markdown surfaces**. Any block inside a surface
 (paragraph, heading, checklist item, …) can be _branched_ into a child surface
 that elaborates it; child surfaces lay out in the next column to the right,
@@ -12,30 +12,30 @@ recognizes and renders structured entities (tasks, citations, links, mentions,
 math, …) atop the user's markdown.
 
 ```text
-@ham/editor   one editable markdown / block-tree surface
-@ham/canvas   a 2D grid of many editable surfaces, linked by branch edges
+@hiermark/editor   one editable markdown / block-tree surface
+@hiermark/canvas   a 2D grid of many editable surfaces, linked by branch edges
 ```
 
 The key architectural split:
 
 ```text
-@ham/editor owns the intra-surface block tree.
-@ham/canvas owns the inter-surface 2D topology.
+@hiermark/editor owns the intra-surface block tree.
+@hiermark/canvas owns the inter-surface 2D topology.
 ```
 
 ## 📖 Documentation & live demos
 
-**→ [mmcdermott.github.io/ham](https://mmcdermott.github.io/ham/)** — an
+**→ [mmcdermott.github.io/ham](https://mmcdermott.github.io/hiermark/)** — an
 interactive documentation site (in `apps/docs`) with live, editable demos of the
 editor, the canvas, progressive paper decomposition, and real-time
-collaboration. It is the best way to see what HAM is and how to use it.
+collaboration. It is the best way to see what Hiermark is and how to use it.
 
 ## Packages
 
 | Package       | Description                                                       |
 | ------------- | ----------------------------------------------------------------- |
-| `@ham/editor` | One collaborative, block-centric markdown surface (Tiptap 3).     |
-| `@ham/canvas` | A 2D canvas of surfaces connected by block-anchored branch edges. |
+| `@hiermark/editor` | One collaborative, block-centric markdown surface (Tiptap 3).     |
+| `@hiermark/canvas` | A 2D canvas of surfaces connected by block-anchored branch edges. |
 
 ## Features
 

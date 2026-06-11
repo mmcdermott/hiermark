@@ -6,33 +6,33 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import {
   branchModeFromSet,
   computeBranchPointSet,
-  isHamBlockNode,
+  isHiermarkBlockNode,
 } from "../snapshot/blockTreePolicy";
-import type { HamBlockId, HamBranchMode, HamBranchPolicy, HamSurfaceSnapshot } from "../types";
+import type { HiermarkBlockId, HiermarkBranchMode, HiermarkBranchPolicy, HiermarkSurfaceSnapshot } from "../types";
 
 /** One block's gutter overlay; React renders the branch button + child chips into `container`. */
 export interface GutterEntry {
-  blockId: HamBlockId;
+  blockId: HiermarkBlockId;
   blockType: string;
   /** How this block branches right now — drives which affordance React renders. */
-  mode: HamBranchMode;
+  mode: HiermarkBranchMode;
   container: HTMLElement;
 }
 
 export interface BlockGutterContext {
-  branchPolicy: HamBranchPolicy;
-  activeBlockId: HamBlockId | null;
-  /** Blocks decorated with `ham-block-highlighted` (search hits, errors, …). */
-  highlightedBlockIds?: ReadonlySet<HamBlockId>;
+  branchPolicy: HiermarkBranchPolicy;
+  activeBlockId: HiermarkBlockId | null;
+  /** Blocks decorated with `hiermark-block-highlighted` (search hits, errors, …). */
+  highlightedBlockIds?: ReadonlySet<HiermarkBlockId>;
   editable: boolean;
   /** Branch-edge count already anchored at each block (drives `add-sibling` mode). */
-  branchChildCounts: Record<HamBlockId, number>;
+  branchChildCounts: Record<HiermarkBlockId, number>;
   /**
    * Project a snapshot from the current doc. Branchability is arity-aware (it
    * needs childIds/depth), which only the snapshot has — so the plugin resolves
    * each block's mode here rather than from the live PM node.
    */
-  computeSnapshot: (doc: PMNode) => HamSurfaceSnapshot;
+  computeSnapshot: (doc: PMNode) => HiermarkSurfaceSnapshot;
   /** Receives the current gutter entries so React can portal affordances in. */
   onGutter: (entries: GutterEntry[]) => void;
 }
@@ -42,7 +42,7 @@ export interface BlockGutterOptions {
 }
 
 /** Plugin key — dispatch `tr.setMeta(blockGutterKey, true)` to force a rebuild. */
-export const blockGutterKey = new PluginKey<GutterState>("hamBlockGutter");
+export const blockGutterKey = new PluginKey<GutterState>("hiermarkBlockGutter");
 
 interface GutterState {
   decoSet: DecorationSet;
@@ -67,16 +67,16 @@ function build(
   const branchPoints =
     snapshot && ctx && !branchesOff
       ? computeBranchPointSet(snapshot, ctx.branchPolicy)
-      : new Set<HamBlockId>();
+      : new Set<HiermarkBlockId>();
 
   doc.descendants((node, pos, parent) => {
-    if (!isHamBlockNode(node, parent)) return;
+    if (!isHiermarkBlockNode(node, parent)) return;
     const blockId = (node.attrs?.dataBlockId as string | null) ?? null;
     if (!blockId) return;
 
-    const classes = ["ham-block"];
-    if (ctx && blockId === ctx.activeBlockId) classes.push("ham-block-active");
-    if (ctx?.highlightedBlockIds?.has(blockId)) classes.push("ham-block-highlighted");
+    const classes = ["hiermark-block"];
+    if (ctx && blockId === ctx.activeBlockId) classes.push("hiermark-block-active");
+    if (ctx?.highlightedBlockIds?.has(blockId)) classes.push("hiermark-block-highlighted");
     decos.push(Decoration.node(pos, pos + node.nodeSize, { class: classes.join(" ") }));
 
     // A stable overlay container per block (PM reuses it across rebuilds via the
@@ -84,17 +84,17 @@ function build(
     let el = containers.get(blockId);
     if (!el) {
       el = document.createElement("div");
-      el.className = "ham-block-gutter";
+      el.className = "hiermark-block-gutter";
       el.contentEditable = "false";
       // Distinct from the block node's own `data-block-id` so DOM queries for
       // block ids don't double-count the gutter overlay.
-      el.setAttribute("data-ham-gutter-for", blockId);
+      el.setAttribute("data-hiermark-gutter-for", blockId);
       containers.set(blockId, el);
     }
     live.add(blockId);
 
     const block = snapshot?.blocks[blockId];
-    const mode: HamBranchMode =
+    const mode: HiermarkBranchMode =
       ctx && snapshot && block && !branchesOff
         ? branchModeFromSet(block, branchPoints, {
             existingChildCount: ctx.branchChildCounts[blockId] ?? 0,
@@ -125,9 +125,9 @@ function build(
       let el = containers.get(rootId);
       if (!el) {
         el = document.createElement("div");
-        el.className = "ham-block-gutter ham-root-gutter";
+        el.className = "hiermark-block-gutter hiermark-root-gutter";
         el.contentEditable = "false";
-        el.setAttribute("data-ham-gutter-for", rootId);
+        el.setAttribute("data-hiermark-gutter-for", rootId);
         containers.set(rootId, el);
       }
       live.add(rootId);
@@ -146,15 +146,15 @@ function build(
 }
 
 /**
- * Hosts a per-block gutter overlay (`.ham-block-gutter`) and a `.ham-block`
+ * Hosts a per-block gutter overlay (`.hiermark-block-gutter`) and a `.hiermark-block`
  * node decoration. The overlay containers are stable across rebuilds; React
- * (in `HamEditor`) portals the branch button and child chips into them, so the
- * affordances are fully customizable via `HamEditorSlots`. Entries are pushed to
+ * (in `HiermarkEditor`) portals the branch button and child chips into them, so the
+ * affordances are fully customizable via `HiermarkEditorSlots`. Entries are pushed to
  * the host through `getContext().onGutter` only when the block set / branchable
  * state changes (a `view().update` signature gate), keeping typing cheap.
  */
 export const BlockGutter = Extension.create<BlockGutterOptions>({
-  name: "hamBlockGutter",
+  name: "hiermarkBlockGutter",
 
   addOptions() {
     return { getContext: () => null };

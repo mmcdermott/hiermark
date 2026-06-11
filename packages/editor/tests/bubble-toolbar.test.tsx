@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
 import type { Editor } from "@tiptap/core";
-import { HamEditor } from "../src/HamEditor";
-import type { HamEditorHandle } from "../src/types";
+import { HiermarkEditor } from "../src/HiermarkEditor";
+import type { HiermarkEditorHandle } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
   (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
 });
 
-async function mount(extra: Partial<Parameters<typeof HamEditor>[0]> = {}) {
-  let handle: HamEditorHandle | null = null;
+async function mount(extra: Partial<Parameters<typeof HiermarkEditor>[0]> = {}) {
+  let handle: HiermarkEditorHandle | null = null;
   render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown: "Hello world" }}
@@ -32,9 +32,9 @@ describe("BubbleToolbar", () => {
     editor.commands.focus();
     editor.commands.setTextSelection({ from: 1, to: 6 }); // "Hello"
     await waitFor(() => {
-      expect(document.querySelector(".ham-bubble-toolbar")).not.toBeNull();
+      expect(document.querySelector(".hiermark-bubble-toolbar")).not.toBeNull();
     });
-    const bold = document.querySelector<HTMLButtonElement>('.ham-bubble-btn[data-mark="bold"]')!;
+    const bold = document.querySelector<HTMLButtonElement>('.hiermark-bubble-btn[data-mark="bold"]')!;
     expect(bold.getAttribute("aria-pressed")).toBe("false");
     bold.click();
     expect(editor.isActive("bold")).toBe(true);
@@ -44,9 +44,9 @@ describe("BubbleToolbar", () => {
     const editor = await mount();
     editor.commands.focus();
     editor.commands.setTextSelection({ from: 1, to: 6 });
-    await waitFor(() => expect(document.querySelector(".ham-bubble-toolbar")).not.toBeNull());
+    await waitFor(() => expect(document.querySelector(".hiermark-bubble-toolbar")).not.toBeNull());
     editor.commands.setTextSelection({ from: 3, to: 3 }); // collapse
-    await waitFor(() => expect(document.querySelector(".ham-bubble-toolbar")).toBeNull());
+    await waitFor(() => expect(document.querySelector(".hiermark-bubble-toolbar")).toBeNull());
   });
 
   it("does not render when bubbleMenu is false", async () => {
@@ -55,6 +55,6 @@ describe("BubbleToolbar", () => {
     editor.commands.setTextSelection({ from: 1, to: 6 });
     // Give any effect a tick; the toolbar must never appear.
     await new Promise((r) => setTimeout(r, 50));
-    expect(document.querySelector(".ham-bubble-toolbar")).toBeNull();
+    expect(document.querySelector(".hiermark-bubble-toolbar")).toBeNull();
   });
 });

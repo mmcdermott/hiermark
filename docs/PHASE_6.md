@@ -20,12 +20,12 @@ state is honored.
 **3. Branch button was on the LEFT; slots were never wired.**
 The branch affordance now lives in a **right-side, full-height** gutter (children
 appear to the right, so the button does too). The gutter is a React-portal
-overlay, so `HamEditorSlots.BlockBranchButton` / `BranchChildChip` are wired —
+overlay, so `HiermarkEditorSlots.BlockBranchButton` / `BranchChildChip` are wired —
 pass any component; the default is a full-height `+`. A faint resting state plus
 hover/active reveal improves discoverability.
 
 **4. Fold/collapse not working; disclosure triangles clipped.**
-The fold toggle and gutter previously sat in negative space that `.ham-surface {
+The fold toggle and gutter previously sat in negative space that `.hiermark-surface {
 overflow: hidden }` clipped. The editor now reserves real left/right gutters
 (`padding`) so the fold triangle (left) and branch button (right) render fully
 and remain clickable. Surface collapse continues to work via the header toggle.
@@ -46,6 +46,6 @@ content styles (headings, lists, blockquote, code).
 
 ```text
 pnpm build · pnpm typecheck · pnpm lint · pnpm test · pnpm format:check
-pnpm -F @ham/docs build   (KaTeX CSS + fonts bundled)
+pnpm -F @hiermark/docs build   (KaTeX CSS + fonts bundled)
 editor 65 · canvas 26 · docs 5
 ```

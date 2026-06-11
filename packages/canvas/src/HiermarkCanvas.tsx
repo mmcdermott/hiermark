@@ -28,26 +28,26 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  HamEditor,
-  type HamBranchChildSummary,
-  type HamEditorHandle,
-  type HamSurfaceSnapshot,
-} from "@ham/editor";
+  HiermarkEditor,
+  type HiermarkBranchChildSummary,
+  type HiermarkEditorHandle,
+  type HiermarkSurfaceSnapshot,
+} from "@hiermark/editor";
 
 import { resolveBehavior, resolveLayout } from "./defaults";
 import { devWarn } from "./devWarn";
-import { useHamCanvas } from "./useHamCanvas";
-import { HamConnectorsOverlay } from "./connectors/HamConnectorsOverlay";
-import type { HamHoverTarget } from "./connectors/connectors";
+import { useHiermarkCanvas } from "./useHiermarkCanvas";
+import { HiermarkConnectorsOverlay } from "./connectors/HiermarkConnectorsOverlay";
+import type { HiermarkHoverTarget } from "./connectors/connectors";
 import { siblingEdgeOrder } from "./topology/siblingOrder";
 import type {
-  HamAddSiblingButtonProps,
-  HamBlockId,
-  HamCanvasColumn,
-  HamCanvasItem,
-  HamCanvasProps,
-  HamGroupHeaderProps,
-  HamSurfaceId,
+  HiermarkAddSiblingButtonProps,
+  HiermarkBlockId,
+  HiermarkCanvasColumn,
+  HiermarkCanvasItem,
+  HiermarkCanvasProps,
+  HiermarkGroupHeaderProps,
+  HiermarkSurfaceId,
 } from "./types";
 
 /**
@@ -55,13 +55,13 @@ import type {
  * surfaces (and below the last). Mirrors the editor's branch button: same glyph,
  * `onMouseDown` preventDefault (so it doesn't steal focus), quiet-until-hover.
  */
-function DefaultAddSiblingButton({ isAppend, onAddSibling }: HamAddSiblingButtonProps) {
+function DefaultAddSiblingButton({ isAppend, onAddSibling }: HiermarkAddSiblingButtonProps) {
   const label = isAppend ? "Add a sibling branch" : "Insert a sibling branch here";
   return (
-    <div className="ham-add-sibling-rail">
+    <div className="hiermark-add-sibling-rail">
       <button
         type="button"
-        className="ham-add-sibling"
+        className="hiermark-add-sibling"
         title={label}
         aria-label={label}
         onMouseDown={(e) => e.preventDefault()}
@@ -91,7 +91,7 @@ function scrollBehavior(): ScrollBehavior {
 
 /** How much width each display mode wants, low → high. A column sizes to its
  * widest surface's mode (via the `data-col-mode` attribute + CSS). */
-const DISPLAY_MODE_RANK: Record<HamCanvasItem["displayMode"], number> = {
+const DISPLAY_MODE_RANK: Record<HiermarkCanvasItem["displayMode"], number> = {
   hidden: 0,
   rail: 1,
   outline: 2,
@@ -108,13 +108,13 @@ function DefaultGroupHeader({
   parentSurfaceId,
   anchorPreview,
   onActivateParent,
-}: HamGroupHeaderProps) {
+}: HiermarkGroupHeaderProps) {
   const parent = parentSurface?.title ?? parentSurfaceId;
   return (
-    <button type="button" className="ham-group-header" onClick={onActivateParent} title={parent}>
-      <span className="ham-group-header-arrow">↳</span>
-      <span className="ham-group-header-parent">{parent}</span>
-      {anchorPreview ? <span className="ham-group-header-anchor"> · {anchorPreview}</span> : null}
+    <button type="button" className="hiermark-group-header" onClick={onActivateParent} title={parent}>
+      <span className="hiermark-group-header-arrow">↳</span>
+      <span className="hiermark-group-header-parent">{parent}</span>
+      {anchorPreview ? <span className="hiermark-group-header-anchor"> · {anchorPreview}</span> : null}
     </button>
   );
 }
@@ -125,12 +125,12 @@ function DefaultGroupHeader({
  * object per render, forcing a gutter-decoration rebuild in every mounted
  * editor whenever the canvas re-rendered (e.g. on hover). */
 function buildChildrenBySurface(
-  props: HamCanvasProps,
-  activeSurfaceSet: Set<HamSurfaceId>,
-): Map<HamSurfaceId, Record<string, HamBranchChildSummary[]>> {
-  const out = new Map<HamSurfaceId, Record<string, HamBranchChildSummary[]>>();
+  props: HiermarkCanvasProps,
+  activeSurfaceSet: Set<HiermarkSurfaceId>,
+): Map<HiermarkSurfaceId, Record<string, HiermarkBranchChildSummary[]>> {
+  const out = new Map<HiermarkSurfaceId, Record<string, HiermarkBranchChildSummary[]>>();
   for (const edge of props.branchEdges) {
-    const summary: HamBranchChildSummary = {
+    const summary: HiermarkBranchChildSummary = {
       edgeId: edge.id,
       surfaceId: edge.toSurfaceId,
       order: edge.order,
@@ -149,18 +149,18 @@ function buildChildrenBySurface(
   return out;
 }
 
-const NO_CHILDREN: Record<string, HamBranchChildSummary[]> = {};
+const NO_CHILDREN: Record<string, HiermarkBranchChildSummary[]> = {};
 
 interface ItemProps {
-  item: HamCanvasItem;
-  canvas: ReturnType<typeof useHamCanvas>;
-  props: HamCanvasProps;
+  item: HiermarkCanvasItem;
+  canvas: ReturnType<typeof useHiermarkCanvas>;
+  props: HiermarkCanvasProps;
   /** Report this surface's live editor handle to the canvas (null on teardown). */
-  registerHandle: (surfaceId: HamSurfaceId, handle: HamEditorHandle | null) => void;
+  registerHandle: (surfaceId: HiermarkSurfaceId, handle: HiermarkEditorHandle | null) => void;
   /** Precomputed branch-child summaries for THIS surface (stable identity). */
-  branchChildren: Record<string, HamBranchChildSummary[]>;
+  branchChildren: Record<string, HiermarkBranchChildSummary[]>;
   /** Hand keyboard focus into a surface's editor (parks until it mounts). */
-  focusEditor: (surfaceId: HamSurfaceId, blockId: HamBlockId | null) => void;
+  focusEditor: (surfaceId: HiermarkSurfaceId, blockId: HiermarkBlockId | null) => void;
   sortable: boolean;
   depth: number;
   /** 1-based position among this column's surfaces (ARIA tree). */
@@ -197,7 +197,7 @@ function SurfaceItem({
   const pending = canvas.pendingSurfaceIds.has(surface.id);
 
   // Debounced persistence through the host's saveSurface handler.
-  const handleRef = useRef<HamEditorHandle | null>(null);
+  const handleRef = useRef<HiermarkEditorHandle | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveSurfaceRef = useRef(props.handlers.saveSurface);
   saveSurfaceRef.current = props.handlers.saveSurface;
@@ -212,7 +212,7 @@ function SurfaceItem({
   // A payload captured at editor teardown while a save was in flight — sent as
   // exactly one final write after the in-flight save settles (even though the
   // component may be gone by then), so the user's last edits are never dropped.
-  const trailingPayloadRef = useRef<Awaited<ReturnType<HamEditorHandle["save"]>> | null>(null);
+  const trailingPayloadRef = useRef<Awaited<ReturnType<HiermarkEditorHandle["save"]>> | null>(null);
   const runSave = () => {
     const handle = handleRef.current;
     const save = saveSurfaceRef.current;
@@ -303,10 +303,10 @@ function SurfaceItem({
   }, [isExpanded]);
 
   const frameClass = [
-    "ham-surface",
-    `ham-surface-${item.pathState}`,
-    `ham-surface-mode-${item.displayMode}`,
-    pending ? "ham-surface-pending" : "",
+    "hiermark-surface",
+    `hiermark-surface-${item.pathState}`,
+    `hiermark-surface-mode-${item.displayMode}`,
+    pending ? "hiermark-surface-pending" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -335,17 +335,17 @@ function SurfaceItem({
   const previewNode = PreviewSlot ? (
     <PreviewSlot item={item} onActivate={onActivate} />
   ) : (
-    <button type="button" className="ham-surface-preview" onClick={onActivate}>
+    <button type="button" className="hiermark-surface-preview" onClick={onActivate}>
       {previewText(surface.content)}
     </button>
   );
 
   const defaultHeader = (
     // A plain div (not <header>) — a card header is not a page `banner` landmark.
-    <div className="ham-surface-header">
+    <div className="hiermark-surface-header">
       <button
         type="button"
-        className="ham-surface-collapse"
+        className="hiermark-surface-collapse"
         aria-label={collapsed ? "Expand surface" : "Collapse surface"}
         aria-expanded={collapsed ? "false" : "true"}
         onClick={() => canvas.actions.toggleCollapsed(surface.id)}
@@ -355,7 +355,7 @@ function SurfaceItem({
       {sortable && (
         <button
           type="button"
-          className="ham-surface-drag"
+          className="hiermark-surface-drag"
           aria-label="Reorder surface"
           {...attributes}
           {...listeners}
@@ -363,20 +363,20 @@ function SurfaceItem({
           ⠿
         </button>
       )}
-      <span className="ham-surface-title">{surface.title ?? "Untitled"}</span>
-      <span className="ham-surface-spacer" />
+      <span className="hiermark-surface-title">{surface.title ?? "Untitled"}</span>
+      <span className="hiermark-surface-spacer" />
       {pending && (
-        <span className="ham-surface-spinner" role="status" aria-label="Saving…" title="Saving…" />
+        <span className="hiermark-surface-spinner" role="status" aria-label="Saving…" title="Saving…" />
       )}
       {item.pathState !== "active" && (
-        <button type="button" className="ham-surface-open" onClick={onActivate}>
+        <button type="button" className="hiermark-surface-open" onClick={onActivate}>
           Open
         </button>
       )}
       {canDelete && (
         <button
           type="button"
-          className="ham-surface-delete"
+          className="hiermark-surface-delete"
           aria-label="Delete surface"
           onClick={() => void canvas.actions.removeSurface(surface.id)}
         >
@@ -407,7 +407,7 @@ function SurfaceItem({
 
   const bodyContent: ReactNode =
     item.displayMode === "expanded" ? (
-      <HamEditor
+      <HiermarkEditor
         // Host-provided editor defaults flow through first; the canvas-owned
         // wiring below (content, branch handlers, snapshot) always wins.
         {...props.editorDefaults}
@@ -482,7 +482,7 @@ function SurfaceItem({
   const body =
     bodyContent === null ? null : (
       <div
-        className="ham-surface-body"
+        className="hiermark-surface-body"
         // Activate a surface when the user interacts with its body. In expanded
         // mode several editors are mounted at once, and clicking back into one
         // at its existing cursor position won't fire onActiveBlockChange (the
@@ -544,7 +544,7 @@ function OutlineBody({
   onActivate,
 }: {
   surfaceId: string;
-  snapshot: HamSurfaceSnapshot | undefined;
+  snapshot: HiermarkSurfaceSnapshot | undefined;
   /** Rendered when the snapshot isn't available yet (honors a SurfacePreview slot). */
   fallbackPreview: ReactNode;
   onActivate: () => void;
@@ -552,13 +552,13 @@ function OutlineBody({
   if (!snapshot) return <>{fallbackPreview}</>;
   const top = snapshot.blocks[snapshot.rootBlockId]?.childIds ?? [];
   return (
-    <ul className="ham-surface-outline" aria-label={`Outline of ${surfaceId}`}>
+    <ul className="hiermark-surface-outline" aria-label={`Outline of ${surfaceId}`}>
       {top.map((id) => {
         const block = snapshot.blocks[id];
         if (!block) return null;
         return (
-          <li key={id} className={`ham-outline-item ham-outline-${block.type}`}>
-            <button type="button" className="ham-outline-link" onClick={onActivate}>
+          <li key={id} className={`hiermark-outline-item hiermark-outline-${block.type}`}>
+            <button type="button" className="hiermark-outline-link" onClick={onActivate}>
               {block.textPreview || "(empty)"}
             </button>
           </li>
@@ -592,8 +592,8 @@ function previewText(content: { kind: string; markdown?: string; json?: unknown 
 }
 
 /** Group a column's items by their (parentSurface, anchorBlock) so each sibling set is a sortable context. */
-function groupColumn(column: HamCanvasColumn): { key: string; items: HamCanvasItem[] }[] {
-  const groups = new Map<string, HamCanvasItem[]>();
+function groupColumn(column: HiermarkCanvasColumn): { key: string; items: HiermarkCanvasItem[] }[] {
+  const groups = new Map<string, HiermarkCanvasItem[]>();
   for (const item of column.items) {
     const key = item.incomingEdge
       ? `${item.incomingEdge.fromSurfaceId}::${item.incomingEdge.fromBlockId}`
@@ -605,21 +605,21 @@ function groupColumn(column: HamCanvasColumn): { key: string; items: HamCanvasIt
 
 /**
  * Renders a 2D canvas of editable surfaces linked by branch edges. The active
- * surface mounts a full {@link HamEditor}; others render compact previews.
+ * surface mounts a full {@link HiermarkEditor}; others render compact previews.
  * Same-anchor siblings can be reordered with dnd-kit; branch/add-sibling/delete
  * flow through the host handlers.
  */
-export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
-  props: HamCanvasProps<SurfaceMeta, EdgeMeta>,
+export function HiermarkCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
+  props: HiermarkCanvasProps<SurfaceMeta, EdgeMeta>,
 ) {
-  const canvas = useHamCanvas(props);
+  const canvas = useHiermarkCanvas(props);
   const rootRef = useRef<HTMLDivElement>(null);
   const activeSurfaceSet = useMemo(
     () => new Set(canvas.activePath.surfaceIds),
     [canvas.activePath.surfaceIds],
   );
   const childrenBySurface = useMemo(
-    () => buildChildrenBySurface(props as HamCanvasProps, activeSurfaceSet),
+    () => buildChildrenBySurface(props as HiermarkCanvasProps, activeSurfaceSet),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the inputs the builder reads
     [props.branchEdges, props.surfaces, activeSurfaceSet],
   );
@@ -628,7 +628,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   // Hover target for connector "hover" mode, tracked via delegation on the root
   // so it costs nothing in the other modes.
-  const [hovered, setHovered] = useState<HamHoverTarget | null>(null);
+  const [hovered, setHovered] = useState<HiermarkHoverTarget | null>(null);
   // True while a surface is being dragged (fades connectors — see root class).
   const [dragging, setDragging] = useState(false);
   const onPointerOver = (event: ReactMouseEvent<HTMLDivElement>) => {
@@ -686,7 +686,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   // losslessly reversible through the existing handler (re-apply the prior
   // order), with no host "restore" capability required. Branch-create / delete
   // undo would need a host re-create seam, so they're out of scope here.
-  type ReorderHistory = { fromSurfaceId: HamSurfaceId; fromBlockId: string; order: string[] };
+  type ReorderHistory = { fromSurfaceId: HiermarkSurfaceId; fromBlockId: string; order: string[] };
   const undoStack = useRef<ReorderHistory[]>([]);
   const redoStack = useRef<ReorderHistory[]>([]);
 
@@ -749,7 +749,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   // Find a surface card by id without interpolating the id into a selector
   // (surface ids may contain CSS-special characters that would throw).
-  const surfaceEl = useCallback((surfaceId: HamSurfaceId): HTMLElement | undefined => {
+  const surfaceEl = useCallback((surfaceId: HiermarkSurfaceId): HTMLElement | undefined => {
     const root = rootRef.current;
     if (!root) return undefined;
     return [...root.querySelectorAll<HTMLElement>("[data-surface-id]")].find(
@@ -758,7 +758,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   }, []);
 
   const scrollSurfaceIntoView = useCallback(
-    (surfaceId: HamSurfaceId) => {
+    (surfaceId: HiermarkSurfaceId) => {
       // Bring the activated surface to the START (left) of the canvas, so its
       // subtree to the right comes into view — clicking an editor pulls it to the
       // window start rather than leaving it mid-scroll.
@@ -776,7 +776,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   // to the top of its column; otherwise it's nudged into view minimally.
   const columnScroll = layout.columnScroll;
   const revealChildren = useCallback(
-    (surfaceId: HamSurfaceId) => {
+    (surfaceId: HiermarkSurfaceId) => {
       const first = props.branchEdges
         .filter((e) => e.fromSurfaceId === surfaceId)
         .sort((a, b) => a.order - b.order)[0];
@@ -800,7 +800,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   // selecting a paragraph under a branched heading scrolls that heading's child
   // surface into view). Falls back to the surface's first child.
   const revealBranchFromBlock = useCallback(
-    (surfaceId: HamSurfaceId, blockId: HamBlockId | null) => {
+    (surfaceId: HiermarkSurfaceId, blockId: HiermarkBlockId | null) => {
       const fromEdges = props.branchEdges.filter((e) => e.fromSurfaceId === surfaceId);
       if (!fromEdges.length) return;
       const snap = snapshotsRef.current[surfaceId];
@@ -843,11 +843,11 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   // editor (a specific block, or just the caret). Activating a card may mount
   // its editor asynchronously — a focus requested before the editor exists
   // parks here and lands on registration.
-  const editorHandlesRef = useRef(new Map<HamSurfaceId, HamEditorHandle>());
-  const pendingFocusRef = useRef<{ surfaceId: HamSurfaceId; blockId: HamBlockId | null } | null>(
+  const editorHandlesRef = useRef(new Map<HiermarkSurfaceId, HiermarkEditorHandle>());
+  const pendingFocusRef = useRef<{ surfaceId: HiermarkSurfaceId; blockId: HiermarkBlockId | null } | null>(
     null,
   );
-  const focusHandle = useCallback((handle: HamEditorHandle, blockId: HamBlockId | null) => {
+  const focusHandle = useCallback((handle: HiermarkEditorHandle, blockId: HiermarkBlockId | null) => {
     if (blockId) {
       handle.focusBlock(blockId, { scroll: true });
       return;
@@ -858,7 +858,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     ed?.commands?.focus?.();
   }, []);
   const focusEditor = useCallback(
-    (surfaceId: HamSurfaceId, blockId: HamBlockId | null) => {
+    (surfaceId: HiermarkSurfaceId, blockId: HiermarkBlockId | null) => {
       const handle = editorHandlesRef.current.get(surfaceId);
       if (handle) focusHandle(handle, blockId);
       else pendingFocusRef.current = { surfaceId, blockId };
@@ -866,7 +866,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     [focusHandle],
   );
   const registerHandle = useCallback(
-    (surfaceId: HamSurfaceId, handle: HamEditorHandle | null) => {
+    (surfaceId: HiermarkSurfaceId, handle: HiermarkEditorHandle | null) => {
       if (handle) {
         editorHandlesRef.current.set(surfaceId, handle);
         const pending = pendingFocusRef.current;
@@ -951,7 +951,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     // Activating also moves DOM focus to the new treeitem — Alt+Arrow
     // navigation used to restyle the canvas while focus stayed put, so the
     // "navigation" was unreachable for keyboard users.
-    const activateAndFocus = (id: HamSurfaceId) => {
+    const activateAndFocus = (id: HiermarkSurfaceId) => {
       canvas.actions.activate(id, null);
       surfaceEl(id)?.focus();
     };
@@ -986,7 +986,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     const target = event.target as HTMLElement;
     if (
       target.isContentEditable ||
-      target.closest(".ham-editor, input, textarea, [contenteditable='true']")
+      target.closest(".hiermark-editor, input, textarea, [contenteditable='true']")
     ) {
       return;
     }
@@ -1049,7 +1049,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     >
       {/* Announce async create/delete/save activity. Kept OUTSIDE role="tree"
           so the tree owns only group/treeitem children (axe aria-required-children). */}
-      <div className="ham-sr-only" aria-live="polite" role="status">
+      <div className="hiermark-sr-only" aria-live="polite" role="status">
         {pendingCount > 0
           ? `${pendingCount} operation${pendingCount > 1 ? "s" : ""} in progress`
           : ""}
@@ -1058,33 +1058,33 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         (EmptyCanvas ? (
           <EmptyCanvas rootSurfaceId={props.rootSurfaceId} />
         ) : (
-          <div className="ham-canvas-empty" role="note">
+          <div className="hiermark-canvas-empty" role="note">
             No surfaces to show.
           </div>
         ))}
       <div
         ref={rootRef}
         className={[
-          "ham-canvas",
-          `ham-appearance-${layout.appearance}`,
-          layout.columnScroll ? "ham-columns-scroll" : "",
+          "hiermark-canvas",
+          `hiermark-appearance-${layout.appearance}`,
+          layout.columnScroll ? "hiermark-columns-scroll" : "",
           // While a surface is dragged, connectors can't track it live, so fade
           // them to signal they're momentarily stale (re-snap on drop).
-          dragging ? "ham-dragging" : "",
+          dragging ? "hiermark-dragging" : "",
           props.className,
         ]
           .filter(Boolean)
           .join(" ")}
         style={
           {
-            "--ham-column-gap": `${layout.columnGap}px`,
-            "--ham-surface-gap": `${layout.surfaceGap}px`,
-            "--ham-column-width": `${layout.columnWidth}px`,
-            "--ham-expanded-column-width": `${layout.expandedColumnWidth}px`,
-            "--ham-rail-column-width": `${layout.railColumnWidth}px`,
-            "--ham-min-surface-height": `${layout.minSurfaceHeight}px`,
+            "--hiermark-column-gap": `${layout.columnGap}px`,
+            "--hiermark-surface-gap": `${layout.surfaceGap}px`,
+            "--hiermark-column-width": `${layout.columnWidth}px`,
+            "--hiermark-expanded-column-width": `${layout.expandedColumnWidth}px`,
+            "--hiermark-rail-column-width": `${layout.railColumnWidth}px`,
+            "--hiermark-min-surface-height": `${layout.minSurfaceHeight}px`,
             ...(layout.maxSurfaceHeight != null
-              ? { "--ham-max-surface-height": `${layout.maxSurfaceHeight}px` }
+              ? { "--hiermark-max-surface-height": `${layout.maxSurfaceHeight}px` }
               : {}),
             padding: layout.padding,
           } as CSSProperties
@@ -1106,16 +1106,16 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
             column.items.some((i) => i.surface.id === canvas.activeSurfaceId);
           // A column is only as wide as its widest surface needs — so rail/outline
           // columns become a narrow sidebar instead of full-width empty boxes.
-          const colMode = column.items.reduce<HamCanvasItem["displayMode"]>(
+          const colMode = column.items.reduce<HiermarkCanvasItem["displayMode"]>(
             (m, i) => (DISPLAY_MODE_RANK[i.displayMode] > DISPLAY_MODE_RANK[m] ? i.displayMode : m),
             "hidden",
           );
           const columnEl = (
             <div
               className={
-                "ham-column" +
-                (isActiveColumn ? " ham-column-active" : "") +
-                (column.detached ? " ham-column-detached" : "")
+                "hiermark-column" +
+                (isActiveColumn ? " hiermark-column-active" : "") +
+                (column.detached ? " hiermark-column-detached" : "")
               }
               key={column.depth}
               data-depth={column.depth}
@@ -1196,9 +1196,9 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
                       {group.items.map((item, i) => (
                         <Fragment key={item.surface.id}>
                           <SurfaceItem
-                            item={item as HamCanvasItem}
+                            item={item as HiermarkCanvasItem}
                             canvas={canvas}
-                            props={props as HamCanvasProps}
+                            props={props as HiermarkCanvasProps}
                             registerHandle={registerHandle}
                             branchChildren={childrenBySurface.get(item.surface.id) ?? NO_CHILDREN}
                             focusEditor={focusEditor}
@@ -1228,7 +1228,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
           if (column.detached && column.depth === firstDetachedDepth) {
             return (
               <Fragment key={`detached-${column.depth}`}>
-                <div className="ham-detached-divider" aria-hidden="true">
+                <div className="hiermark-detached-divider" aria-hidden="true">
                   <span>Not linked to root</span>
                 </div>
                 {columnEl}
@@ -1239,7 +1239,7 @@ export function HamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
         })}
         {/* Purely decorative cross-column lines — hide from the a11y tree. */}
         <div aria-hidden="true" style={{ display: "contents" }}>
-          <HamConnectorsOverlay
+          <HiermarkConnectorsOverlay
             rootRef={rootRef}
             edges={props.branchEdges}
             activePath={canvas.activePath}

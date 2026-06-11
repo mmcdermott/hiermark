@@ -11,24 +11,24 @@ import {
 import type { ComponentType } from "react";
 
 import type {
-  HamActivePath,
-  HamBranchEdge,
-  HamCanvasLayoutConfig,
-  HamConnectorRenderProps,
+  HiermarkActivePath,
+  HiermarkBranchEdge,
+  HiermarkCanvasLayoutConfig,
+  HiermarkConnectorRenderProps,
 } from "../types";
 import {
   connectorState,
   geometryFor,
   visibleEdges,
   type EdgeGeometry,
-  type HamHoverTarget,
+  type HiermarkHoverTarget,
 } from "./connectors";
 
 /** Default connector: a themed bezier path classed by its active-path state. */
-export function DefaultConnector({ path, state, edge }: HamConnectorRenderProps) {
+export function DefaultConnector({ path, state, edge }: HiermarkConnectorRenderProps) {
   return (
     <path
-      className={`ham-branch-connector ham-branch-connector-${state}`}
+      className={`hiermark-branch-connector hiermark-branch-connector-${state}`}
       d={path}
       fill="none"
       data-edge-id={edge.id}
@@ -38,10 +38,10 @@ export function DefaultConnector({ path, state, edge }: HamConnectorRenderProps)
 
 interface OverlayProps<EdgeMeta = unknown> {
   rootRef: RefObject<HTMLDivElement | null>;
-  edges: HamBranchEdge<EdgeMeta>[];
-  activePath: HamActivePath;
-  layout: HamCanvasLayoutConfig;
-  hovered: HamHoverTarget | null;
+  edges: HiermarkBranchEdge<EdgeMeta>[];
+  activePath: HiermarkActivePath;
+  layout: HiermarkCanvasLayoutConfig;
+  hovered: HiermarkHoverTarget | null;
   /** Identity changes whenever columns / snapshots reshape, forcing a re-measure. */
   reshapeKey: string;
   /**
@@ -51,16 +51,16 @@ interface OverlayProps<EdgeMeta = unknown> {
    */
   geometryKey: string;
   /** Only the EdgeMeta-typed Connector slot is relevant to the overlay. */
-  slots?: { Connector?: ComponentType<HamConnectorRenderProps<EdgeMeta>> } | undefined;
+  slots?: { Connector?: ComponentType<HiermarkConnectorRenderProps<EdgeMeta>> } | undefined;
 }
 
 /**
  * One SVG overlay drawing a path per branch edge, from each source block's DOM
- * rect to its child surface card. Mounted as the last child of `.ham-canvas`
+ * rect to its child surface card. Mounted as the last child of `.hiermark-canvas`
  * (which is `position: relative`), sized to the scroll-content box so paths
  * live in content coordinates and scroll with the columns for free.
  */
-export function HamConnectorsOverlay<EdgeMeta = unknown>({
+export function HiermarkConnectorsOverlay<EdgeMeta = unknown>({
   rootRef,
   edges,
   activePath,
@@ -114,8 +114,8 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
       const key = `${sid}\0${blockId}`;
       if (!blockEls.has(key)) blockEls.set(key, el);
     });
-    root.querySelectorAll<HTMLElement>("[data-ham-branch-child]").forEach((el) => {
-      const id = el.getAttribute("data-ham-branch-child");
+    root.querySelectorAll<HTMLElement>("[data-hiermark-branch-child]").forEach((el) => {
+      const id = el.getAttribute("data-hiermark-branch-child");
       if (id && !chipEls.has(id)) chipEls.set(id, el);
     });
 
@@ -189,7 +189,7 @@ export function HamConnectorsOverlay<EdgeMeta = unknown>({
   const Connector = slots?.Connector ?? DefaultConnector;
   return (
     <svg
-      className="ham-connectors"
+      className="hiermark-connectors"
       width={size.w || undefined}
       height={size.h || undefined}
       aria-hidden="true"

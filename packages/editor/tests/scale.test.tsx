@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
 import type { Editor } from "@tiptap/core";
-import { HamEditor } from "../src/HamEditor";
-import type { HamEditorHandle } from "../src/types";
+import { HiermarkEditor } from "../src/HiermarkEditor";
+import type { HiermarkEditorHandle } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
@@ -16,9 +16,9 @@ const BIG = Array.from({ length: 300 }, (_, i) => `## Section ${i}\n\nBody parag
 );
 
 async function mount() {
-  let handle: HamEditorHandle | null = null;
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown: BIG }}
@@ -31,7 +31,7 @@ async function mount() {
   return { ...utils, editor: handle!.getUnsafeTiptapEditor() as Editor, getHandle: () => handle! };
 }
 
-describe("HamEditor at scale (300 sections)", () => {
+describe("HiermarkEditor at scale (300 sections)", () => {
   it("assigns unique block ids to a large document", async () => {
     const { container } = await mount();
     const ids = [...container.querySelectorAll("[data-block-id]")].map((el) =>

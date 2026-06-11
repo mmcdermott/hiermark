@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup, fireEvent } from "@testing-library/react";
 import type { Editor } from "@tiptap/core";
-import { HamEditor } from "../src/HamEditor";
-import type { HamEditorHandle } from "../src/types";
+import { HiermarkEditor } from "../src/HiermarkEditor";
+import type { HiermarkEditorHandle } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
@@ -10,9 +10,9 @@ beforeAll(() => {
 });
 
 async function mount(markdown = "") {
-  let handle: HamEditorHandle | null = null;
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown }}
@@ -79,7 +79,7 @@ describe("math click-to-edit", () => {
     fireEvent.click(mathEl);
 
     const input = await waitFor(() => {
-      const el = document.querySelector<HTMLTextAreaElement>(".ham-math-input");
+      const el = document.querySelector<HTMLTextAreaElement>(".hiermark-math-input");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -88,7 +88,7 @@ describe("math click-to-edit", () => {
     fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => expect(getEditor().getMarkdown()).toContain("$a^2 + b^2 = c^2$"));
-    expect(document.querySelector(".ham-math-popover")).toBeNull();
+    expect(document.querySelector(".hiermark-math-popover")).toBeNull();
   });
 
   it("deletes the math node via the popover Delete button", async () => {
@@ -100,7 +100,7 @@ describe("math click-to-edit", () => {
     });
     fireEvent.click(mathEl);
     const del = await waitFor(() => {
-      const el = document.querySelector<HTMLButtonElement>(".ham-math-del");
+      const el = document.querySelector<HTMLButtonElement>(".hiermark-math-del");
       expect(el).not.toBeNull();
       return el!;
     });

@@ -1,6 +1,6 @@
 import { describe, it, expect, expectTypeOf } from "vitest";
 import * as api from "../src/index";
-import type { HamEditorProps, HamEditorHandle, HamBranchPolicy } from "../src/index";
+import type { HiermarkEditorProps, HiermarkEditorHandle, HiermarkBranchPolicy } from "../src/index";
 
 /**
  * Guards the public export surface: a missing/renamed export is a breaking change
@@ -9,16 +9,16 @@ import type { HamEditorProps, HamEditorHandle, HamBranchPolicy } from "../src/in
  */
 describe("public API surface", () => {
   it("exports the headline component + factory + version", () => {
-    expect(typeof api.HamEditor).toBe("function");
-    expect(typeof api.createHamEditorExtensions).toBe("function");
-    expect(typeof api.HAM_EDITOR_VERSION).toBe("string");
+    expect(typeof api.HiermarkEditor).toBe("function");
+    expect(typeof api.createHiermarkEditorExtensions).toBe("function");
+    expect(typeof api.HIERMARK_EDITOR_VERSION).toBe("string");
   });
 
   it("exports the extensions added during hardening", () => {
     for (const name of [
-      "HamCodeBlock",
-      "HamInlineMath",
-      "HamBlockMath",
+      "HiermarkCodeBlock",
+      "HiermarkInlineMath",
+      "HiermarkBlockMath",
       "Sanitize",
       "LinkEditor",
       "ImageUpload",
@@ -39,7 +39,7 @@ describe("public API surface", () => {
       "computeBranchPointSet",
       "branchModeFromSet",
       "resolveBranchMode",
-      "uploadHamImages",
+      "uploadHiermarkImages",
       "generateBlockId",
     ] as const) {
       expect(typeof api[name], name).toBe("function");
@@ -53,8 +53,8 @@ describe("public API surface", () => {
   });
 
   it("key public types are shaped as expected", () => {
-    expectTypeOf<HamEditorProps["surfaceId"]>().toEqualTypeOf<string>();
-    expectTypeOf<HamEditorHandle["getMode"]>().returns.toEqualTypeOf<"rich" | "source">();
-    expectTypeOf<HamBranchPolicy>().extract<"bubble-up">().toEqualTypeOf<"bubble-up">();
+    expectTypeOf<HiermarkEditorProps["surfaceId"]>().toEqualTypeOf<string>();
+    expectTypeOf<HiermarkEditorHandle["getMode"]>().returns.toEqualTypeOf<"rich" | "source">();
+    expectTypeOf<HiermarkBranchPolicy>().extract<"bubble-up">().toEqualTypeOf<"bubble-up">();
   });
 });

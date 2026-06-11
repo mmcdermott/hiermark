@@ -1,6 +1,6 @@
-import type { HamCanvasBehaviorConfig, HamCanvasLayoutConfig } from "./types";
+import type { HiermarkCanvasBehaviorConfig, HiermarkCanvasLayoutConfig } from "./types";
 
-export const defaultLayout: HamCanvasLayoutConfig = {
+export const defaultLayout: HiermarkCanvasLayoutConfig = {
   orientation: "left-to-right",
   columnWidth: 520,
   expandedColumnWidth: 720,
@@ -19,7 +19,7 @@ export const defaultLayout: HamCanvasLayoutConfig = {
   showGroupHeaders: false,
 };
 
-export const defaultBehavior: HamCanvasBehaviorConfig = {
+export const defaultBehavior: HiermarkCanvasBehaviorConfig = {
   enableSurfaceReorder: true,
   enableBranchCreation: true,
   enableSiblingBranchCreation: true,
@@ -29,12 +29,12 @@ export const defaultBehavior: HamCanvasBehaviorConfig = {
   deleteSurfacePolicy: "prevent-if-has-children",
 };
 
-export function resolveLayout(partial?: Partial<HamCanvasLayoutConfig>): HamCanvasLayoutConfig {
+export function resolveLayout(partial?: Partial<HiermarkCanvasLayoutConfig>): HiermarkCanvasLayoutConfig {
   return { ...defaultLayout, ...partial };
 }
 
 export function resolveBehavior(
-  partial?: Partial<HamCanvasBehaviorConfig>,
-): HamCanvasBehaviorConfig {
+  partial?: Partial<HiermarkCanvasBehaviorConfig>,
+): HiermarkCanvasBehaviorConfig {
   return { ...defaultBehavior, ...partial };
 }

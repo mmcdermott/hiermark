@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { siblingEdgeOrder } from "../src/topology/siblingOrder";
-import type { HamBranchEdge } from "../src/types";
+import type { HiermarkBranchEdge } from "../src/types";
 
-const edge = (id: string, from: string, block: string, order: number): HamBranchEdge => ({
+const edge = (id: string, from: string, block: string, order: number): HiermarkBranchEdge => ({
   id,
   fromSurfaceId: from,
   fromBlockId: block,

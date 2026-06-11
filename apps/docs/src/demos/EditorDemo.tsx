@@ -1,18 +1,18 @@
 import { useMemo, useState } from "react";
-import { HamEditor, createExampleAnnotationRegistry, type HamEditorProps } from "@ham/editor";
+import { HiermarkEditor, createExampleAnnotationRegistry, type HiermarkEditorProps } from "@hiermark/editor";
 
 import { DemoFrame } from "./DemoFrame";
 import { annotatedMarkdown, annotationContext } from "../lib/examples";
 
-type Registry = HamEditorProps["annotations"];
+type Registry = HiermarkEditorProps["annotations"];
 
-const SOURCE = `import { HamEditor, createExampleAnnotationRegistry } from "@ham/editor";
-import "@ham/editor/styles.css";
+const SOURCE = `import { HiermarkEditor, createExampleAnnotationRegistry } from "@hiermark/editor";
+import "@hiermark/editor/styles.css";
 
 // One surface = one annotated markdown document. The annotation registry
 // recognizes @citations, @mentions, URLs, and tasks; onBranchRequest fires
 // when a block's "+" gutter button is clicked.
-<HamEditor
+<HiermarkEditor
   surfaceId="demo-editor"
   rootBlockId="blk_root"
   title="Related work"
@@ -29,13 +29,13 @@ export function EditorDemo() {
 
   return (
     <DemoFrame
-      title="@ham/editor — one annotated surface"
+      title="@hiermark/editor — one annotated surface"
       onReset={() => setKey((k) => k + 1)}
       source={SOURCE}
       height="auto"
     >
       <div className="demo-editor-wrap">
-        <HamEditor
+        <HiermarkEditor
           key={key}
           surfaceId="demo-editor"
           rootBlockId="blk_root"

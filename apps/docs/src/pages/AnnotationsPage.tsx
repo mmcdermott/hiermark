@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-import { HamEditor, createExampleAnnotationRegistry, type HamEditorProps } from "@ham/editor";
+import { HiermarkEditor, createExampleAnnotationRegistry, type HiermarkEditorProps } from "@hiermark/editor";
 
 import { annotationContext, annotatedMarkdown } from "../lib/examples";
 
-type Registry = HamEditorProps["annotations"];
+type Registry = HiermarkEditorProps["annotations"];
 
 const PLACEMENTS: { name: string; what: string }[] = [
   {
@@ -23,11 +23,11 @@ const PLACEMENTS: { name: string; what: string }[] = [
 ];
 
 const CUSTOM = `// A custom recognizer: turn #tags into clickable chips.
-import type { HamAnnotationType } from "@ham/editor";
+import type { HiermarkAnnotationType } from "@hiermark/editor";
 
 interface TagCtx { tags?: Record<string, { count: number }> }
 
-const tagAnnotation: HamAnnotationType<TagCtx> = {
+const tagAnnotation: HiermarkAnnotationType<TagCtx> = {
   name: "tag",
   priority: 80,
   placement: "popover",                 // clickable → opens render()
@@ -79,7 +79,7 @@ export function AnnotationsPage() {
 
       <h3>The model</h3>
       <p>
-        A <code>HamAnnotationType</code> has a <code>recognize(block, text, context)</code> function
+        A <code>HiermarkAnnotationType</code> has a <code>recognize(block, text, context)</code> function
         — pure over the block&apos;s text and a host-supplied <code>context</code> the framework
         never interprets — returning hits with block-relative <code>from</code>/<code>to</code>{" "}
         offsets and arbitrary <code>data</code>. A registry is just{" "}
@@ -101,7 +101,7 @@ export function AnnotationsPage() {
           </button>
         </div>
         <div className="doc-live-body">
-          <HamEditor
+          <HiermarkEditor
             key={key}
             surfaceId="anno-doc"
             rootBlockId="blk_anno"

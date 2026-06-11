@@ -1,5 +1,5 @@
 ---
-"@ham/editor": patch
+"@hiermark/editor": patch
 ---
 
 Editor correctness batch: the bubble toolbar's text-selection check no longer

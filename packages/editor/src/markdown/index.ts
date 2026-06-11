@@ -1,4 +1,4 @@
-// @ham/editor/markdown — the pure markdown helpers, with **zero** React/Tiptap deps.
+// @hiermark/editor/markdown — the pure markdown helpers, with **zero** React/Tiptap deps.
 //
 // This subpath exists so a host app's server-side reconciler, collab worker, or
 // git-sync CLI can share the *exact same* grammar + stable-id/hash implementation
@@ -8,7 +8,7 @@
 // helpers is a correctness requirement — see GitHub issue #50.
 //
 // Everything below imports only siblings in this directory; keep it that way. The
-// package root (`@ham/editor`) re-exports this module, so these symbols are also
+// package root (`@hiermark/editor`) re-exports this module, so these symbols are also
 // reachable from the root barrel — but a server should import from here to avoid
 // the browser stack entirely.
 

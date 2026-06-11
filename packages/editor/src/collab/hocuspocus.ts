@@ -2,34 +2,34 @@ import { HocuspocusProvider } from "@hocuspocus/provider";
 import * as Y from "yjs";
 
 import type {
-  HamCollaborationFlushResult,
-  HamCollaborationHocuspocusConfig,
-  HamCollaborationProvider,
-  HamCollaborationRuntime,
+  HiermarkCollaborationFlushResult,
+  HiermarkCollaborationHocuspocusConfig,
+  HiermarkCollaborationProvider,
+  HiermarkCollaborationRuntime,
 } from "../types";
 
 /**
- * Build a Hocuspocus-backed collaboration runtime from a {@link HamCollaborationConfig}.
+ * Build a Hocuspocus-backed collaboration runtime from a {@link HiermarkCollaborationConfig}.
  * The editor owns the Y.Doc; `connect()` opens the transport against it. The
  * server side must persist/load **raw `Uint8Array`** Yjs state, never a `Y.Doc`
  * (under a duplicated-yjs runtime a returned `Y.Doc` fails Hocuspocus's
  * `instanceof Doc` check and silently loads empty).
  */
 export function createHocuspocusCollab(
-  config: HamCollaborationHocuspocusConfig,
+  config: HiermarkCollaborationHocuspocusConfig,
   existingYdoc?: Y.Doc,
-): HamCollaborationRuntime {
+): HiermarkCollaborationRuntime {
   const ydoc = existingYdoc ?? (config.ydoc as Y.Doc | undefined) ?? new Y.Doc();
   return {
     ydoc,
-    async connect(): Promise<HamCollaborationProvider> {
+    async connect(): Promise<HiermarkCollaborationProvider> {
       const provider = new HocuspocusProvider({
         url: config.url,
         name: config.documentName,
         document: ydoc,
         ...(config.token ? { token: config.token } : {}),
       });
-      return provider as unknown as HamCollaborationProvider;
+      return provider as unknown as HiermarkCollaborationProvider;
     },
   };
 }
@@ -42,8 +42,8 @@ export function createHocuspocusCollab(
  * pendingChanges }` on timeout — so a host can warn about potentially lost edits.
  */
 export function flushAndDestroy(
-  provider: HamCollaborationProvider,
-): Promise<HamCollaborationFlushResult> {
+  provider: HiermarkCollaborationProvider,
+): Promise<HiermarkCollaborationFlushResult> {
   return new Promise((resolve) => {
     if (!provider.hasUnsyncedChanges) {
       provider.destroy();

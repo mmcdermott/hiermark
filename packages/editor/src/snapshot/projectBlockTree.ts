@@ -1,39 +1,39 @@
 import { inferBlockContainment } from "../markdown/containment";
-import type { HamBlockId, HamBlockSnapshot, HamSurfaceId, HamSurfaceSnapshot } from "../types";
+import type { HiermarkBlockId, HiermarkBlockSnapshot, HiermarkSurfaceId, HiermarkSurfaceSnapshot } from "../types";
 
 /**
  * One structural block node, as observed in document order. This is the pure
- * input to {@link projectBlockTree} — `getHamSurfaceSnapshot` derives these from
+ * input to {@link projectBlockTree} — `getHiermarkSurfaceSnapshot` derives these from
  * the live ProseMirror tree, but tests build them by hand.
  */
 export interface BlockNodeMeta {
-  id: HamBlockId;
+  id: HiermarkBlockId;
   type: string;
   /** Heading level 1–6, or null for non-heading blocks. */
   headingLevel: number | null;
   text: string;
   isEmpty: boolean;
   /**
-   * Id of the nearest enclosing HAM-block ancestor via *literal* PM nesting
+   * Id of the nearest enclosing Hiermark-block ancestor via *literal* PM nesting
    * (e.g. a nested list item's parent item), or null for a top-level block that
    * is contained only by the doc / a non-block wrapper such as a top-level list.
    * Top-level blocks (null) are subject to projected heading containment; nested
    * blocks attach literally to their ancestor.
    */
-  literalParentId: HamBlockId | null;
+  literalParentId: HiermarkBlockId | null;
   attrs?: Record<string, unknown>;
 }
 
 export interface ProjectBlockTreeOptions {
-  surfaceId: HamSurfaceId;
-  rootBlockId: HamBlockId;
+  surfaceId: HiermarkSurfaceId;
+  rootBlockId: HiermarkBlockId;
   rootTitle?: string;
   rootType?: string;
   revision?: string | number;
 }
 
 /**
- * Assemble a tree-shaped {@link HamSurfaceSnapshot} from flat block metas.
+ * Assemble a tree-shaped {@link HiermarkSurfaceSnapshot} from flat block metas.
  *
  * Parent resolution (spec §5.11):
  *  - a block with a `literalParentId` attaches to that ancestor (list nesting);
@@ -48,11 +48,11 @@ export interface ProjectBlockTreeOptions {
 export function projectBlockTree(
   metas: BlockNodeMeta[],
   opts: ProjectBlockTreeOptions,
-): HamSurfaceSnapshot {
+): HiermarkSurfaceSnapshot {
   const { surfaceId, rootBlockId, rootTitle, rootType = "root", revision } = opts;
 
-  const blocks: Record<HamBlockId, HamBlockSnapshot> = {};
-  const known = new Set<HamBlockId>([rootBlockId, ...metas.map((m) => m.id)]);
+  const blocks: Record<HiermarkBlockId, HiermarkBlockSnapshot> = {};
+  const known = new Set<HiermarkBlockId>([rootBlockId, ...metas.map((m) => m.id)]);
 
   blocks[rootBlockId] = {
     id: rootBlockId,
@@ -70,7 +70,7 @@ export function projectBlockTree(
   const headingParents = inferBlockContainment(
     topLevel.map((e) => ({ headingDepth: e.m.headingLevel })),
   );
-  const parentByMetaIndex = new Map<number, HamBlockId>();
+  const parentByMetaIndex = new Map<number, HiermarkBlockId>();
   topLevel.forEach((e, k) => {
     const parentLocal = headingParents[k];
     const parentId =
@@ -80,7 +80,7 @@ export function projectBlockTree(
 
   // 2. Create a snapshot entry per meta, resolving its parent.
   metas.forEach((m, i) => {
-    let parentId: HamBlockId;
+    let parentId: HiermarkBlockId;
     if (m.literalParentId != null && known.has(m.literalParentId)) {
       parentId = m.literalParentId;
     } else {
@@ -115,9 +115,9 @@ export function projectBlockTree(
   }
 
   // 5. depth + preorder blockOrder via DFS from the root.
-  const blockOrder: HamBlockId[] = [];
-  const visited = new Set<HamBlockId>();
-  const visit = (id: HamBlockId, depth: number) => {
+  const blockOrder: HiermarkBlockId[] = [];
+  const visited = new Set<HiermarkBlockId>();
+  const visit = (id: HiermarkBlockId, depth: number) => {
     if (visited.has(id)) return; // defensive: never loop on a malformed cycle
     visited.add(id);
     const block = blocks[id]!;

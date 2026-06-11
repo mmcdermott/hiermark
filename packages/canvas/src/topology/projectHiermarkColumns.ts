@@ -1,14 +1,14 @@
 import { resolveLayout } from "../defaults";
 import type {
-  HamBranchEdge,
-  HamCanvasColumn,
-  HamCanvasItem,
-  HamProjectionInput,
-  HamSurfaceId,
-  HamSurfaceSnapshot,
+  HiermarkBranchEdge,
+  HiermarkCanvasColumn,
+  HiermarkCanvasItem,
+  HiermarkProjectionInput,
+  HiermarkSurfaceId,
+  HiermarkSurfaceSnapshot,
 } from "../types";
-import { buildIndices, collectDescendants, type HamTopologyIndices } from "./buildIndices";
-import { getHamActivePath } from "./getHamActivePath";
+import { buildIndices, collectDescendants, type HiermarkTopologyIndices } from "./buildIndices";
+import { getHiermarkActivePath } from "./getHiermarkActivePath";
 import { buildPathStateContext, computePathState, pickDisplayMode } from "./pathState";
 
 /**
@@ -20,9 +20,9 @@ import { buildPathStateContext, computePathState, pickDisplayMode } from "./path
  * snapshot-driven ordering ({@link projectColumnsFromContext}) when a snapshot
  * updates (e.g. on every keystroke's debounced snapshot).
  */
-export interface HamProjectionContext<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  indices: HamTopologyIndices<EdgeMeta>;
-  itemBySurface: Map<HamSurfaceId, HamCanvasItem<SurfaceMeta, EdgeMeta>>;
+export interface HiermarkProjectionContext<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  indices: HiermarkTopologyIndices<EdgeMeta>;
+  itemBySurface: Map<HiermarkSurfaceId, HiermarkCanvasItem<SurfaceMeta, EdgeMeta>>;
 }
 
 /**
@@ -31,8 +31,8 @@ export interface HamProjectionContext<SurfaceMeta = unknown, EdgeMeta = unknown>
  * lets a host memoize the context on a snapshot-free dependency list without
  * tripping exhaustive-deps lint.
  */
-export type HamProjectionContextInput<SurfaceMeta = unknown, EdgeMeta = unknown> = Omit<
-  HamProjectionInput<SurfaceMeta, EdgeMeta>,
+export type HiermarkProjectionContextInput<SurfaceMeta = unknown, EdgeMeta = unknown> = Omit<
+  HiermarkProjectionInput<SurfaceMeta, EdgeMeta>,
   "snapshotsBySurfaceId"
 >;
 
@@ -41,13 +41,13 @@ export type HamProjectionContextInput<SurfaceMeta = unknown, EdgeMeta = unknown>
  * read snapshots, so its result is stable across snapshot-only updates.
  */
 export function buildProjectionContext<SurfaceMeta = unknown, EdgeMeta = unknown>(
-  input: HamProjectionContextInput<SurfaceMeta, EdgeMeta>,
-): HamProjectionContext<SurfaceMeta, EdgeMeta> {
+  input: HiermarkProjectionContextInput<SurfaceMeta, EdgeMeta>,
+): HiermarkProjectionContext<SurfaceMeta, EdgeMeta> {
   const layout = resolveLayout(input.layout);
   const indices = buildIndices(input.branchEdges);
   const { childEdgesBySurface, incomingEdgeByToSurface } = indices;
 
-  const activePath = getHamActivePath({
+  const activePath = getHiermarkActivePath({
     rootSurfaceId: input.rootSurfaceId,
     activeSurfaceId: input.activeSurfaceId,
     activeBlockId: input.activeBlockId,
@@ -55,14 +55,14 @@ export function buildProjectionContext<SurfaceMeta = unknown, EdgeMeta = unknown
   });
   const descendantsOfActive = collectDescendants(input.activeSurfaceId, childEdgesBySurface);
   const pathCtx = buildPathStateContext(activePath, descendantsOfActive, indices);
-  const collapsed = input.collapsedSurfaceIds ?? new Set<HamSurfaceId>();
+  const collapsed = input.collapsedSurfaceIds ?? new Set<HiermarkSurfaceId>();
 
-  const itemBySurface = new Map<HamSurfaceId, HamCanvasItem<SurfaceMeta, EdgeMeta>>();
+  const itemBySurface = new Map<HiermarkSurfaceId, HiermarkCanvasItem<SurfaceMeta, EdgeMeta>>();
   for (const surfaceId of Object.keys(input.surfaces)) {
     const surface = input.surfaces[surfaceId];
     if (!surface) continue;
     const incomingEdge = incomingEdgeByToSurface.get(surfaceId) as
-      | HamBranchEdge<EdgeMeta>
+      | HiermarkBranchEdge<EdgeMeta>
       | undefined;
     const pathState = computePathState(surfaceId, pathCtx);
     const displayMode = pickDisplayMode(pathState, collapsed.has(surfaceId), layout);
@@ -84,9 +84,9 @@ export function buildProjectionContext<SurfaceMeta = unknown, EdgeMeta = unknown
  * parent snapshot — sort last rather than throwing.
  */
 function sortOutgoing<EdgeMeta>(
-  edges: HamBranchEdge<EdgeMeta>[],
-  snapshot: HamSurfaceSnapshot | undefined,
-): HamBranchEdge<EdgeMeta>[] {
+  edges: HiermarkBranchEdge<EdgeMeta>[],
+  snapshot: HiermarkSurfaceSnapshot | undefined,
+): HiermarkBranchEdge<EdgeMeta>[] {
   const blockRank = new Map<string, number>();
   snapshot?.blockOrder.forEach((id, i) => blockRank.set(id, i));
   return [...edges].sort((a, b) => {
@@ -105,9 +105,9 @@ function sortOutgoing<EdgeMeta>(
  * and ordered by the source block's preorder rank then edge order. Each item
  * carries its incoming edge, parentage, path state, and display mode.
  */
-export function projectHamColumns<SurfaceMeta = unknown, EdgeMeta = unknown>(
-  input: HamProjectionInput<SurfaceMeta, EdgeMeta>,
-): HamCanvasColumn<SurfaceMeta, EdgeMeta>[] {
+export function projectHiermarkColumns<SurfaceMeta = unknown, EdgeMeta = unknown>(
+  input: HiermarkProjectionInput<SurfaceMeta, EdgeMeta>,
+): HiermarkCanvasColumn<SurfaceMeta, EdgeMeta>[] {
   return projectColumnsFromContext(buildProjectionContext(input), input);
 }
 
@@ -119,24 +119,24 @@ export function projectHamColumns<SurfaceMeta = unknown, EdgeMeta = unknown>(
  * {@link buildProjectionContext}.
  */
 export function projectColumnsFromContext<SurfaceMeta = unknown, EdgeMeta = unknown>(
-  ctx: HamProjectionContext<SurfaceMeta, EdgeMeta>,
-  input: HamProjectionInput<SurfaceMeta, EdgeMeta>,
-): HamCanvasColumn<SurfaceMeta, EdgeMeta>[] {
+  ctx: HiermarkProjectionContext<SurfaceMeta, EdgeMeta>,
+  input: HiermarkProjectionInput<SurfaceMeta, EdgeMeta>,
+): HiermarkCanvasColumn<SurfaceMeta, EdgeMeta>[] {
   const { childEdgesBySurface } = ctx.indices;
 
-  const columns: HamCanvasColumn<SurfaceMeta, EdgeMeta>[] = [];
-  const visited = new Set<HamSurfaceId>();
-  let current: HamSurfaceId[] = input.surfaces[input.rootSurfaceId] ? [input.rootSurfaceId] : [];
+  const columns: HiermarkCanvasColumn<SurfaceMeta, EdgeMeta>[] = [];
+  const visited = new Set<HiermarkSurfaceId>();
+  let current: HiermarkSurfaceId[] = input.surfaces[input.rootSurfaceId] ? [input.rootSurfaceId] : [];
   for (const id of current) visited.add(id);
   let depth = 0;
 
   while (current.length > 0) {
     const items = current
       .map((id) => ctx.itemBySurface.get(id))
-      .filter((item): item is HamCanvasItem<SurfaceMeta, EdgeMeta> => item !== undefined);
+      .filter((item): item is HiermarkCanvasItem<SurfaceMeta, EdgeMeta> => item !== undefined);
     columns.push({ depth, items });
 
-    const next: HamSurfaceId[] = [];
+    const next: HiermarkSurfaceId[] = [];
     for (const surfaceId of current) {
       const outgoing = sortOutgoing(
         childEdgesBySurface.get(surfaceId) ?? [],
@@ -162,7 +162,7 @@ export function projectColumnsFromContext<SurfaceMeta = unknown, EdgeMeta = unkn
   );
   if (remaining.length > 0) {
     const remainingSet = new Set(remaining);
-    const reachedWithin = new Set<HamSurfaceId>();
+    const reachedWithin = new Set<HiermarkSurfaceId>();
     for (const fromId of remaining) {
       for (const edge of childEdgesBySurface.get(fromId) ?? []) {
         if (remainingSet.has(edge.toSurfaceId)) reachedWithin.add(edge.toSurfaceId);
@@ -177,10 +177,10 @@ export function projectColumnsFromContext<SurfaceMeta = unknown, EdgeMeta = unkn
     while (detachedCurrent.length > 0) {
       const items = detachedCurrent
         .map((id) => ctx.itemBySurface.get(id))
-        .filter((item): item is HamCanvasItem<SurfaceMeta, EdgeMeta> => item !== undefined);
+        .filter((item): item is HiermarkCanvasItem<SurfaceMeta, EdgeMeta> => item !== undefined);
       columns.push({ depth: depth + detachedDepth, items, detached: true });
 
-      const next: HamSurfaceId[] = [];
+      const next: HiermarkSurfaceId[] = [];
       for (const surfaceId of detachedCurrent) {
         const outgoing = sortOutgoing(
           childEdgesBySurface.get(surfaceId) ?? [],

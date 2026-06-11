@@ -4,38 +4,38 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
 import {
-  isHamBlockNode,
+  isHiermarkBlockNode,
   LIST_CONTAINER_TYPES,
   TEXT_AND_RECURSE_TYPES,
 } from "../snapshot/blockTreePolicy";
-import { surfaceSnapshotFromDoc } from "../snapshot/getHamSurfaceSnapshot";
+import { surfaceSnapshotFromDoc } from "../snapshot/getHiermarkSurfaceSnapshot";
 import type {
-  HamAnnotationHit,
-  HamAnnotationRegistry,
-  HamBlockSnapshot,
-  HamSurfaceId,
-  HamSurfaceSnapshot,
+  HiermarkAnnotationHit,
+  HiermarkAnnotationRegistry,
+  HiermarkBlockSnapshot,
+  HiermarkSurfaceId,
+  HiermarkSurfaceSnapshot,
 } from "../types";
 import { recognizeAnnotations } from "./recognize";
 
 export interface AnnotationLayerContext<Ctx = unknown> {
-  registry: HamAnnotationRegistry<Ctx>;
+  registry: HiermarkAnnotationRegistry<Ctx>;
   context: Ctx;
-  surfaceId: HamSurfaceId;
+  surfaceId: HiermarkSurfaceId;
   rootBlockId: string;
   /**
-   * Shared, per-doc-memoized snapshot projector (from HamEditor). Lets the
+   * Shared, per-doc-memoized snapshot projector (from HiermarkEditor). Lets the
    * annotation layer reuse the same projection the gutter/onUpdate already did
    * for this doc instead of walking it again. Falls back to a fresh projection.
    */
-  computeSnapshot?: (doc: PMNode) => HamSurfaceSnapshot;
+  computeSnapshot?: (doc: PMNode) => HiermarkSurfaceSnapshot;
   /** Called when an annotation with a render component is clicked. */
-  onOpen?: (hit: HamAnnotationHit, element: HTMLElement) => void;
+  onOpen?: (hit: HiermarkAnnotationHit, element: HTMLElement) => void;
 }
 
 interface AnnotationPluginValue {
   decoSet: DecorationSet;
-  hitsById: Map<string, HamAnnotationHit>;
+  hitsById: Map<string, HiermarkAnnotationHit>;
 }
 
 export interface AnnotationLayerOptions {
@@ -43,7 +43,7 @@ export interface AnnotationLayerOptions {
 }
 
 /** Plugin key — dispatch `tr.setMeta(annotationLayerKey, true)` to rebuild on ctx change. */
-export const annotationLayerKey = new PluginKey<AnnotationPluginValue>("hamAnnotations");
+export const annotationLayerKey = new PluginKey<AnnotationPluginValue>("hiermarkAnnotations");
 
 interface BlockTextIndex {
   /** The block's recognizable text (direct text only — nested lists excluded). */
@@ -77,9 +77,9 @@ function buildBlockTextIndex(node: PMNode, pos: number): BlockTextIndex {
   return { text, charToPos, end: pos + node.nodeSize };
 }
 
-function chipEl(hit: HamAnnotationHit): HTMLElement {
+function chipEl(hit: HiermarkAnnotationHit): HTMLElement {
   const span = document.createElement("span");
-  span.className = `ham-annotation-chip ham-annotation-chip-${hit.type}`;
+  span.className = `hiermark-annotation-chip hiermark-annotation-chip-${hit.type}`;
   span.contentEditable = "false";
   span.setAttribute("data-annotation-id", hit.id);
   span.setAttribute("data-annotation-type", hit.type);
@@ -89,7 +89,7 @@ function chipEl(hit: HamAnnotationHit): HTMLElement {
 
 function build(doc: PMNode, ctx: AnnotationLayerContext | null): AnnotationPluginValue {
   if (!ctx) return { decoSet: DecorationSet.empty, hitsById: new Map() };
-  const hitsById = new Map<string, HamAnnotationHit>();
+  const hitsById = new Map<string, HiermarkAnnotationHit>();
 
   const snapshot = ctx.computeSnapshot
     ? ctx.computeSnapshot(doc)
@@ -98,7 +98,7 @@ function build(doc: PMNode, ctx: AnnotationLayerContext | null): AnnotationPlugi
   const textByBlockId: Record<string, string> = {};
   const indexByBlockId = new Map<string, BlockTextIndex>();
   doc.descendants((node, pos, parent) => {
-    if (!isHamBlockNode(node, parent)) return;
+    if (!isHiermarkBlockNode(node, parent)) return;
     const id = (node.attrs?.dataBlockId as string | null) ?? null;
     if (!id) return;
     const index = buildBlockTextIndex(node, pos);
@@ -106,7 +106,7 @@ function build(doc: PMNode, ctx: AnnotationLayerContext | null): AnnotationPlugi
     indexByBlockId.set(id, index);
   });
 
-  const blocks: HamBlockSnapshot[] = snapshot.blockOrder
+  const blocks: HiermarkBlockSnapshot[] = snapshot.blockOrder
     .map((id) => snapshot.blocks[id]!)
     .filter((b) => b.id !== snapshot.rootBlockId);
 
@@ -138,7 +138,7 @@ function build(doc: PMNode, ctx: AnnotationLayerContext | null): AnnotationPlugi
       const lastChar = index.charToPos[hit.to - 1];
       if (from == null || lastChar == null) continue; // offset out of range
       const to = lastChar + 1;
-      const classes = ["ham-annotation", `ham-annotation-${hit.type}`];
+      const classes = ["hiermark-annotation", `hiermark-annotation-${hit.type}`];
       const extra = type?.inlineClass?.(hit, ctx.context);
       if (extra) classes.push(extra);
       decos.push(
@@ -171,7 +171,7 @@ function build(doc: PMNode, ctx: AnnotationLayerContext | null): AnnotationPlugi
  * derives block text/positions and builds decorations.
  */
 export const AnnotationLayer = Extension.create<AnnotationLayerOptions>({
-  name: "hamAnnotationLayer",
+  name: "hiermarkAnnotationLayer",
 
   addOptions() {
     return { getContext: () => null };

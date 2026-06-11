@@ -3,7 +3,7 @@ import { stripStableIds } from "./stable-id";
 /**
  * Projected heading containment (spec §5.11.1, §15.2).
  *
- * Markdown headings are normally *siblings*, not containers. HAM projects an
+ * Markdown headings are normally *siblings*, not containers. Hiermark projects an
  * outline tree on top of the flat block order: blocks after a heading belong
  * under that heading until a heading of equal-or-higher level appears. This is
  * the canonical implementation the snapshot builder grafts onto literal

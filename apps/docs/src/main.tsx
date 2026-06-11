@@ -1,8 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import "@ham/editor/styles.css";
-import "@ham/canvas/styles.css";
+import "@hiermark/editor/styles.css";
+import "@hiermark/canvas/styles.css";
 import "./styles.css";
 
 import { App } from "./App";

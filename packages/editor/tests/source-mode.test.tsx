@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll, afterEach, vi } from "vitest";
 import { render, waitFor, cleanup, fireEvent } from "@testing-library/react";
 import * as Y from "yjs";
-import { HamEditor } from "../src/HamEditor";
+import { HiermarkEditor } from "../src/HiermarkEditor";
 import type {
-  HamCollaborationProvider,
-  HamCollaborationRuntime,
-  HamEditorHandle,
+  HiermarkCollaborationProvider,
+  HiermarkCollaborationRuntime,
+  HiermarkEditorHandle,
 } from "../src/types";
 
 afterEach(() => cleanup());
@@ -15,10 +15,10 @@ beforeAll(() => {
 
 const TABLE_MD = "| A | B |\n| --- | --- |\n| 1 | 2 |\n";
 
-async function mount(markdown: string, extra: Partial<Parameters<typeof HamEditor>[0]> = {}) {
-  let handle: HamEditorHandle | null = null;
+async function mount(markdown: string, extra: Partial<Parameters<typeof HiermarkEditor>[0]> = {}) {
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown }}
@@ -37,14 +37,14 @@ describe("source mode (edit as table or markdown)", () => {
     const { container, getHandle } = await mount(TABLE_MD);
     await waitFor(() => expect(container.querySelector("table")).not.toBeNull());
     expect(getHandle().getMode()).toBe("rich");
-    expect(container.querySelector(".ham-source-editor")).toBeNull();
+    expect(container.querySelector(".hiermark-source-editor")).toBeNull();
   });
 
   it("toggles to a raw-markdown textarea exposing the table source", async () => {
     const { container, getHandle } = await mount(TABLE_MD);
     getHandle().setMode("source");
     const ta = await waitFor(() => {
-      const el = container.querySelector<HTMLTextAreaElement>(".ham-source-editor");
+      const el = container.querySelector<HTMLTextAreaElement>(".hiermark-source-editor");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -59,7 +59,7 @@ describe("source mode (edit as table or markdown)", () => {
     const { container, getHandle } = await mount(TABLE_MD);
     getHandle().setMode("source");
     const ta = await waitFor(() => {
-      const el = container.querySelector<HTMLTextAreaElement>(".ham-source-editor");
+      const el = container.querySelector<HTMLTextAreaElement>(".hiermark-source-editor");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -94,7 +94,7 @@ describe("source mode (edit as table or markdown)", () => {
 
     getHandle().setMode("source");
     const ta = await waitFor(() => {
-      const el = container.querySelector<HTMLTextAreaElement>(".ham-source-editor");
+      const el = container.querySelector<HTMLTextAreaElement>(".hiermark-source-editor");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -130,7 +130,7 @@ describe("source mode (edit as table or markdown)", () => {
     const { container, getHandle } = await mount("# Title\n\nOld paragraph.\n");
     getHandle().setMode("source");
     const ta = await waitFor(() => {
-      const el = container.querySelector<HTMLTextAreaElement>(".ham-source-editor");
+      const el = container.querySelector<HTMLTextAreaElement>(".hiermark-source-editor");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -148,7 +148,7 @@ describe("source mode (edit as table or markdown)", () => {
     const { container, getHandle } = await mount("# Title\n\nOld paragraph.\n");
     getHandle().setMode("source");
     const ta = await waitFor(() => {
-      const el = container.querySelector<HTMLTextAreaElement>(".ham-source-editor");
+      const el = container.querySelector<HTMLTextAreaElement>(".hiermark-source-editor");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -166,7 +166,7 @@ describe("source mode (edit as table or markdown)", () => {
     const { container, getHandle } = await mount("Hello.\n", { onChange });
     getHandle().setMode("source");
     const ta = await waitFor(() => {
-      const el = container.querySelector<HTMLTextAreaElement>(".ham-source-editor");
+      const el = container.querySelector<HTMLTextAreaElement>(".hiermark-source-editor");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -191,7 +191,7 @@ describe("source mode (edit as table or markdown)", () => {
 
     getHandle().setMode("source");
     const ta = await waitFor(() => {
-      const el = container.querySelector<HTMLTextAreaElement>(".ham-source-editor");
+      const el = container.querySelector<HTMLTextAreaElement>(".hiermark-source-editor");
       expect(el).not.toBeNull();
       return el!;
     });
@@ -211,17 +211,17 @@ describe("source mode (edit as table or markdown)", () => {
 
   it("is unavailable under collaboration (setMode is a no-op)", async () => {
     const ydoc = new Y.Doc();
-    const provider: HamCollaborationProvider = {
+    const provider: HiermarkCollaborationProvider = {
       synced: true,
       hasUnsyncedChanges: false,
       on() {},
       off() {},
       destroy() {},
     };
-    const runtime: HamCollaborationRuntime = { ydoc, connect: async () => provider };
-    let handle: HamEditorHandle | null = null;
+    const runtime: HiermarkCollaborationRuntime = { ydoc, connect: async () => provider };
+    let handle: HiermarkEditorHandle | null = null;
     render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s1"
         rootBlockId="blk_root"
         value={{ kind: "markdown", markdown: "Hello collab.\n" }}

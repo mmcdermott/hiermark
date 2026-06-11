@@ -11,7 +11,7 @@ import { Extension, InputRule } from "@tiptap/core";
 const TASK_INPUT = /^\s*\[([ xX]?)\]\s$/;
 
 export const TaskInputRules = Extension.create({
-  name: "hamTaskInputRules",
+  name: "hiermarkTaskInputRules",
 
   addInputRules() {
     return [

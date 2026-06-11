@@ -1,22 +1,22 @@
 import { useMemo, useRef, useState } from "react";
 import {
-  HamEditor,
+  HiermarkEditor,
   createExampleAnnotationRegistry,
-  type HamEditorHandle,
-  type HamEditorMode,
-  type HamEditorProps,
-} from "@ham/editor";
+  type HiermarkEditorHandle,
+  type HiermarkEditorMode,
+  type HiermarkEditorProps,
+} from "@hiermark/editor";
 
 import { LiveExample } from "../demos/LiveExample";
 import { annotationContext } from "../lib/examples";
 
-const SOURCE = `import { HamEditor, createExampleAnnotationRegistry } from "@ham/editor";
-import "@ham/editor/styles.css";
+const SOURCE = `import { HiermarkEditor, createExampleAnnotationRegistry } from "@hiermark/editor";
+import "@hiermark/editor/styles.css";
 
 // A surface is one markdown document — StarterKit marks, task lists, GFM
 // tables, fenced code (highlighted), and inline/display KaTeX math all parse
 // from markdown and round-trip back to it.
-<HamEditor
+<HiermarkEditor
   surfaceId="md-doc"
   rootBlockId="blk_md"
   value={{ kind: "markdown", markdown: SAMPLE }}
@@ -24,15 +24,15 @@ import "@ham/editor/styles.css";
   annotationContext={annotationContext}
 />;`;
 
-type Registry = HamEditorProps["annotations"];
+type Registry = HiermarkEditorProps["annotations"];
 
-const SAMPLE = `# Markdown in HAM
+const SAMPLE = `# Markdown in Hiermark
 
 A surface is **one markdown document**. Everything below is live — edit it.
 
 ## Inline marks
 
-**bold**, *italic*, ~~strikethrough~~, \`inline code\`, and a [link](https://github.com/mmcdermott/ham).
+**bold**, *italic*, ~~strikethrough~~, \`inline code\`, and a [link](https://github.com/mmcdermott/hiermark).
 Inline math renders with KaTeX: $E = mc^2$.
 
 ## Lists
@@ -75,7 +75,7 @@ const SYNTAX: { feature: string; syntax: string; renders: string }[] = [
   {
     feature: "Headings (1–6)",
     syntax: "# … ######",
-    renders: "<h1>…<h6>; a heading is a HAM block and a decomposition anchor",
+    renders: "<h1>…<h6>; a heading is a Hiermark block and a decomposition anchor",
   },
   {
     feature: "Bold / italic / strike",
@@ -129,13 +129,13 @@ const SYNTAX: { feature: string; syntax: string; renders: string }[] = [
 export function MarkdownPage() {
   const registry = useMemo(() => createExampleAnnotationRegistry() as Registry, []);
   const [key, setKey] = useState(0);
-  const handle = useRef<HamEditorHandle | null>(null);
-  const [mode, setMode] = useState<HamEditorMode>("rich");
+  const handle = useRef<HiermarkEditorHandle | null>(null);
+  const [mode, setMode] = useState<HiermarkEditorMode>("rich");
   return (
     <section className="page">
       <h2>Markdown &amp; rendering</h2>
       <p className="lede">
-        Each <code>@ham/editor</code> surface is a single markdown document (Tiptap StarterKit +
+        Each <code>@hiermark/editor</code> surface is a single markdown document (Tiptap StarterKit +
         task lists, tables, and KaTeX math). Markdown is the import/export format; the structured
         block tree is derived by parsing and re-serialized on structured edits, and the two
         round-trip. The example below is a <strong>live editor</strong> — what you see is exactly
@@ -173,7 +173,7 @@ export function MarkdownPage() {
           </>
         }
       >
-        <HamEditor
+        <HiermarkEditor
           key={key}
           surfaceId="md-doc"
           rootBlockId="blk_md"

@@ -10,23 +10,23 @@ import { Collaboration } from "@tiptap/extension-collaboration";
 import { CollaborationCaret } from "@tiptap/extension-collaboration-caret";
 
 import { BlockId } from "./block-id";
-import { HamCodeBlock } from "./code-block";
-import { HamBlockMath, HamInlineMath, type HamMathClick } from "./math";
+import { HiermarkCodeBlock } from "./code-block";
+import { HiermarkBlockMath, HiermarkInlineMath, type HiermarkMathClick } from "./math";
 import { ImageUpload, type ImageUploadContext } from "./image-upload";
 import { ImageEditor, type ImageEditorContext } from "./image-editor";
 import { LinkEditor, type LinkEditorContext } from "./link-editor";
 import { Sanitize, isSafeUri } from "./sanitize";
 import { TaskInputRules } from "./task-input-rules";
-import type { HamCollaborationProvider, HamCollaborationUser } from "../types";
+import type { HiermarkCollaborationProvider, HiermarkCollaborationUser } from "../types";
 
-export interface HamCollabBinding {
+export interface HiermarkCollabBinding {
   /** The shared Yjs document (typed loosely to avoid a hard yjs type here). */
   ydoc: unknown;
-  provider?: HamCollaborationProvider;
-  user?: HamCollaborationUser;
+  provider?: HiermarkCollaborationProvider;
+  user?: HiermarkCollaborationUser;
 }
 
-export interface HamEditorExtensionOptions {
+export interface HiermarkEditorExtensionOptions {
   /** Placeholder text shown in an empty editor. */
   placeholder?: string;
   /**
@@ -35,13 +35,13 @@ export interface HamEditorExtensionOptions {
    */
   collaboration?: boolean;
   /** Bind the editor to a shared Y.Doc (adds Collaboration + caret extensions). */
-  collab?: HamCollabBinding;
+  collab?: HiermarkCollabBinding;
   /** Node types that receive a stable block id. */
   blockIdTypes?: string[];
   /** Render `$…$` / `$$…$$` math with KaTeX. Default true. */
   math?: boolean;
   /** Fired when an editable math node is clicked (drives the LaTeX edit popover). */
-  onMathClick?: (info: HamMathClick) => void;
+  onMathClick?: (info: HiermarkMathClick) => void;
   /**
    * Wire image paste / drop / picker uploads to a host handler. When omitted,
    * the image node still renders/round-trips but no upload path is installed.
@@ -64,11 +64,11 @@ export interface HamEditorExtensionOptions {
 }
 
 /**
- * Build the standard HAM editor extension set: StarterKit, task lists,
+ * Build the standard Hiermark editor extension set: StarterKit, task lists,
  * placeholder, official Markdown import/export, optional math, and the stable
  * block-id extension.
  */
-export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}): Extensions {
+export function createHiermarkEditorExtensions(opts: HiermarkEditorExtensionOptions = {}): Extensions {
   const {
     placeholder = "Write…",
     blockIdTypes,
@@ -85,7 +85,7 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
 
   const extensions: Extensions = [
     StarterKit.configure({
-      // Replaced by HamCodeBlock (lowlight highlighting + copy button).
+      // Replaced by HiermarkCodeBlock (lowlight highlighting + copy button).
       codeBlock: false,
       // Restrict link schemes (stored-XSS): no javascript:/data: etc., and open
       // external links safely. The Sanitize extension below is the catch-all.
@@ -103,7 +103,7 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
       // Yjs provides collaborative history; StarterKit's would conflict.
       ...(collaboration ? { undoRedo: false } : {}),
     }),
-    HamCodeBlock,
+    HiermarkCodeBlock,
     TaskList,
     TaskItem.configure({ nested: true }),
     TaskInputRules,
@@ -142,7 +142,7 @@ export function createHamEditorExtensions(opts: HamEditorExtensionOptions = {}):
     // Markdown-aligned input rules ($…$ inline, $$…$$ block) + click-to-edit;
     // throwOnError:false renders malformed LaTeX as a red error token.
     const mathOpts = onMathClick ? { onClick: onMathClick } : {};
-    extensions.push(HamInlineMath(mathOpts), HamBlockMath(mathOpts));
+    extensions.push(HiermarkInlineMath(mathOpts), HiermarkBlockMath(mathOpts));
   }
 
   if (collab) {

@@ -1,7 +1,7 @@
 import type { DemoCanvasState } from "./demoHost";
-import type { HamExampleAnnotationContext } from "@ham/editor";
+import type { HiermarkExampleAnnotationContext } from "@hiermark/editor";
 
-export const annotationContext: HamExampleAnnotationContext = {
+export const annotationContext: HiermarkExampleAnnotationContext = {
   references: {
     vaswani2017: { title: "Attention Is All You Need", year: 2017 },
     eq2024: { title: "EQ-based forecasting on eICU", year: 2024 },

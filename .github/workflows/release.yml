@@ -11,6 +11,8 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  # Required for npm provenance (publishConfig.provenance: true) via OIDC.
+  id-token: write
 
 jobs:
   release:
@@ -23,6 +25,7 @@ jobs:
         with:
           node-version: "22"
           cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
       - run: pnpm install --frozen-lockfile
       # Gate releases on the build + test suite: a broken main can still open a
       # Version Packages PR, but it can never tag a release.
@@ -36,11 +39,13 @@ jobs:
           # `pnpm run` is required — bare `pnpm version` is an npm passthrough
           # that prints the version table and never executes the script.
           version: pnpm run version-packages
-          # Tag-only releases: `changeset tag` prints "New tag: …" lines that
-          # the action turns into git tags + GitHub Releases (changelog bodies).
-          # To publish to npm later: claim the scope, add an NPM_TOKEN secret,
-          # restore setup-node's registry-url + NODE_AUTH_TOKEN, and switch
-          # this to `publish: pnpm release`.
-          publish: pnpm changeset tag
+          # When a Version Packages PR merges, `pnpm release` builds and runs
+          # `changeset publish`, which publishes every package whose version is
+          # not yet on npm and creates the matching git tags + GitHub Releases.
+          # Already-published versions are skipped, so re-runs are safe.
+          # Prerequisites (one-time): create the npm org `hiermark`, mint a
+          # granular automation token, and add it as the NPM_TOKEN repo secret.
+          publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

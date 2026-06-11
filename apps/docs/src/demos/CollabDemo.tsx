@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
 import {
-  HamEditor,
-  type HamCollaborationConfig,
-  type HamCollaborationProvider,
-  type HamCollaborationRuntime,
-} from "@ham/editor";
+  HiermarkEditor,
+  type HiermarkCollaborationConfig,
+  type HiermarkCollaborationProvider,
+  type HiermarkCollaborationRuntime,
+} from "@hiermark/editor";
 
 import { DemoFrame } from "./DemoFrame";
 
@@ -59,7 +59,7 @@ function createPeers() {
   relayAwareness(awA, awB);
   relayAwareness(awB, awA);
 
-  const provider = (awareness: Awareness): HamCollaborationProvider => ({
+  const provider = (awareness: Awareness): HiermarkCollaborationProvider => ({
     synced: true,
     hasUnsyncedChanges: false,
     awareness,
@@ -67,7 +67,7 @@ function createPeers() {
     off() {},
     destroy() {},
   });
-  const runtime = (ydoc: Y.Doc, awareness: Awareness): HamCollaborationRuntime => ({
+  const runtime = (ydoc: Y.Doc, awareness: Awareness): HiermarkCollaborationRuntime => ({
     ydoc,
     connect: async () => provider(awareness),
   });
@@ -88,7 +88,7 @@ function createPeers() {
 
 export function CollabDemo() {
   const peers = useCollabPeers();
-  const configA = useMemo<HamCollaborationConfig | null>(
+  const configA = useMemo<HiermarkCollaborationConfig | null>(
     () =>
       peers && {
         enabled: true,
@@ -99,7 +99,7 @@ export function CollabDemo() {
       },
     [peers],
   );
-  const configB = useMemo<HamCollaborationConfig | null>(
+  const configB = useMemo<HiermarkCollaborationConfig | null>(
     () =>
       peers && {
         enabled: true,
@@ -117,7 +117,7 @@ export function CollabDemo() {
       <div className="demo-collab">
         <div className="demo-collab-pane">
           <h4>Alice&apos;s editor</h4>
-          <HamEditor
+          <HiermarkEditor
             surfaceId="collab-a"
             rootBlockId="blk_a"
             value={{ kind: "markdown", markdown: "# Shared notes\n\nType in either editor…" }}
@@ -126,7 +126,7 @@ export function CollabDemo() {
         </div>
         <div className="demo-collab-pane">
           <h4>Bob&apos;s editor</h4>
-          <HamEditor
+          <HiermarkEditor
             surfaceId="collab-b"
             rootBlockId="blk_b"
             value={{ kind: "markdown", markdown: "" }}

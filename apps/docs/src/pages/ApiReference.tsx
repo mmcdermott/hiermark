@@ -6,20 +6,20 @@ interface ApiEntry {
 
 const EDITOR_API: ApiEntry[] = [
   {
-    name: "HamEditor",
+    name: "HiermarkEditor",
     kind: "component",
     summary: "One editable markdown surface; local or collaborative.",
   },
   {
-    name: "createHamEditorExtensions",
+    name: "createHiermarkEditorExtensions",
     kind: "function",
     summary:
       "Build the standard Tiptap extension set (StarterKit, tasks, markdown, math, block-id, optional collab).",
   },
   {
-    name: "getHamSurfaceSnapshot",
+    name: "getHiermarkSurfaceSnapshot",
     kind: "function",
-    summary: "Tree-shaped HamSurfaceSnapshot from a live editor (heading + list containment).",
+    summary: "Tree-shaped HiermarkSurfaceSnapshot from a live editor (heading + list containment).",
   },
   {
     name: "createHocuspocusCollab",
@@ -56,12 +56,12 @@ const EDITOR_API: ApiEntry[] = [
       'Snapshot-driven branchability: "branch" | "add-sibling" | "none". The "smart" default branches leaves and real forks, suppressing redundant single-child intermediates.',
   },
   {
-    name: "HamEditorProps / HamEditorHandle / HamSurfaceSnapshot",
+    name: "HiermarkEditorProps / HiermarkEditorHandle / HiermarkSurfaceSnapshot",
     kind: "type",
     summary: "The core editor types.",
   },
   {
-    name: "HamBranchPolicy / HamBranchabilityRules / HamBranchMode",
+    name: "HiermarkBranchPolicy / HiermarkBranchabilityRules / HiermarkBranchMode",
     kind: "type",
     summary:
       'Branch policy: "smart" (default), the legacy string policies, a declarative rules object, or a custom predicate.',
@@ -70,22 +70,22 @@ const EDITOR_API: ApiEntry[] = [
 
 const CANVAS_API: ApiEntry[] = [
   {
-    name: "HamCanvas",
+    name: "HiermarkCanvas",
     kind: "component",
     summary: "The 2D canvas of surfaces linked by branch edges.",
   },
   {
-    name: "useHamCanvas",
+    name: "useHiermarkCanvas",
     kind: "hook",
     summary: "Headless orchestrator: projection, active path, pessimistic topology ops.",
   },
   {
-    name: "projectHamColumns",
+    name: "projectHiermarkColumns",
     kind: "function",
     summary: "Pure BFS projecting surfaces + edges into depth-banded columns.",
   },
   {
-    name: "getHamActivePath",
+    name: "getHiermarkActivePath",
     kind: "function",
     summary: "Root → active branch-edge lineage (with cycle guard).",
   },
@@ -95,7 +95,7 @@ const CANVAS_API: ApiEntry[] = [
     summary: "Same-anchor sibling reorder + its eligibility guard.",
   },
   {
-    name: "HamConnectorsOverlay / visibleEdges / geometryFor",
+    name: "HiermarkConnectorsOverlay / visibleEdges / geometryFor",
     kind: "function",
     summary:
       "Cross-column connector overlay + its pure helpers (mode filter, active-path state, block→card bezier geometry).",
@@ -107,30 +107,30 @@ const CANVAS_API: ApiEntry[] = [
       "Resolve a positioned sibling insert into a dense group: the new edge's order + the displaced siblings' renumber.",
   },
   {
-    name: "validateHamTopology",
+    name: "validateHiermarkTopology",
     kind: "function",
     summary:
       "Pure validator: reports missing/duplicate-incoming/cyclic/unreachable surfaces so a host can catch invalid topology the tolerant projection hides.",
   },
   {
-    name: "HamCanvasProps / HamCanvasHandlers / HamSurface / HamBranchEdge",
+    name: "HiermarkCanvasProps / HiermarkCanvasHandlers / HiermarkSurface / HiermarkBranchEdge",
     kind: "type",
     summary: "The core canvas types and the host handler contract.",
   },
   {
-    name: "HamCanvasLayoutConfig",
+    name: "HiermarkCanvasLayoutConfig",
     kind: "type",
     summary:
       'Layout: appearance ("card" | "flat" | "plain"), showConnectors, column/surface sizing, inactiveColumnMode, columnScroll (per-column vertical scroll), and showGroupHeaders.',
   },
   {
-    name: "HamCanvasSlots",
+    name: "HiermarkCanvasSlots",
     kind: "type",
     summary:
       "Replaceable chrome: SurfaceFrame / SurfaceHeader / SurfacePreview / ColumnHeader / EmptyColumn / GroupHeader / Connector / AddSiblingButton.",
   },
   {
-    name: "HamCanvasHandle (onReady)",
+    name: "HiermarkCanvasHandle (onReady)",
     kind: "type",
     summary:
       "Imperative canvas API: focusSurface / focusBlock / scrollSurfaceIntoView / revealChildren / getActivePath / getColumns.",
@@ -173,8 +173,8 @@ export function ApiReference() {
         </a>
         . The full contract also lives in <code>docs/design-spec.md</code> in the repository.
       </p>
-      <ApiTable title="Editor —" pkg="@ham/editor" entries={EDITOR_API} />
-      <ApiTable title="Canvas —" pkg="@ham/canvas" entries={CANVAS_API} />
+      <ApiTable title="Editor —" pkg="@hiermark/editor" entries={EDITOR_API} />
+      <ApiTable title="Canvas —" pkg="@hiermark/canvas" entries={CANVAS_API} />
     </section>
   );
 }

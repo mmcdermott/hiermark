@@ -1,4 +1,4 @@
-# Phase 2 — @ham/canvas MVP
+# Phase 2 — @hiermark/canvas MVP
 
 > **Goal (design spec §11):** the surface/edge data model; column projection
 > supporting multiple surfaces per column; active-path computation; default
@@ -11,11 +11,11 @@
 
 - `buildIndices` — recovers adjacency (`childEdgesBySurface`,
   `incomingEdgeByToSurface`) from the flat edge list; `collectDescendants` BFS.
-- `projectHamColumns` — the central BFS (spec §6.10): depth-banded columns where
+- `projectHiermarkColumns` — the central BFS (spec §6.10): depth-banded columns where
   a column holds surfaces branched from different blocks of different parents,
   ordered by **source-block preorder rank → fromBlockId → edge.order**, with a
   `visited` guard and stale-anchor tolerance (missing blocks sort last).
-- `getHamActivePath` — root→active lineage via an upward edge walk with a cycle
+- `getHiermarkActivePath` — root→active lineage via an upward edge walk with a cycle
   guard and orphan clamp.
 - `computePathState` / `pickDisplayMode` — active / ancestor / descendant /
   sibling (strict: same parent surface **and** anchor block) / unrelated, mapped
@@ -25,13 +25,13 @@
   splice/clamp/no-op-returns-same-reference semantics and dense `order`
   renormalization; `areSameAnchorSiblings` guards cross-anchor drops.
 
-**Headless `useHamCanvas`** — owns the active selection, the per-surface snapshot
+**Headless `useHiermarkCanvas`** — owns the active selection, the per-surface snapshot
 cache (drives child-column ordering), collapse state, and **pessimistic**
 topology operations (branch / add-sibling / reorder / delete) through the host
-`HamCanvasHandlers`; memoizes the projection and active path.
+`HiermarkCanvasHandlers`; memoizes the projection and active path.
 
-**`HamCanvas` component** — renders depth columns; the active surface mounts a
-full `HamEditor`, others render compact previews. Branch buttons flow to
+**`HiermarkCanvas` component** — renders depth columns; the active surface mounts a
+full `HiermarkEditor`, others render compact previews. Branch buttons flow to
 `createSurfaceFromBlock`; same-anchor siblings reorder via dnd-kit (pointer +
 keyboard sensors, sortable contexts scoped per anchor group so cross-group drops
 are impossible); add-sibling / delete buttons; debounced save through
@@ -46,13 +46,13 @@ are impossible); add-sibling / delete buttons; debounced save through
 - active path walk + orphan clamp + cycle guard; descendant collection;
 - **reorder only allows same-anchor siblings** (cross-anchor is a no-op);
   splice/clamp/no-op-same-reference semantics;
-- `HamCanvas`: editor mounts at root, two-block→two-item column, branch button
+- `HiermarkCanvas`: editor mounts at root, two-block→two-item column, branch button
   fires `createSurfaceFromBlock` with the right source, preview-open activates.
 
 ## Go/no-go gate — all green
 
 ```text
-pnpm build        ✓  @ham/canvas → dist + styles.css
+pnpm build        ✓  @hiermark/canvas → dist + styles.css
 pnpm typecheck    ✓  editor, canvas, docs
 pnpm lint         ✓
 pnpm test         ✓  editor 51, canvas 19
@@ -71,5 +71,5 @@ pnpm format:check ✓
 
 ## TODO(next)
 
-- Phase 3: Yjs/Hocuspocus collaboration in `@ham/editor` (mount→sync→seed→flush
+- Phase 3: Yjs/Hocuspocus collaboration in `@hiermark/editor` (mount→sync→seed→flush
   gating, collaborative carets), local mode preserved.

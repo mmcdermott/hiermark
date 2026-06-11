@@ -4,15 +4,15 @@ import {
   resolveBranchMode,
   branchModeFromSet,
 } from "../src/snapshot/blockTreePolicy";
-import type { HamBlockSnapshot, HamSurfaceSnapshot } from "../src/types";
+import type { HiermarkBlockSnapshot, HiermarkSurfaceSnapshot } from "../src/types";
 
 /**
  * Build a snapshot from a nested spec: `[id, type, children?]`. `childIds`,
  * `parentId`, `depth`, and `blockOrder` are derived. Everything is non-empty.
  */
 type Spec = [string, string, Spec[]?];
-function snap(rootType: string, children: Spec[]): HamSurfaceSnapshot {
-  const blocks: Record<string, HamBlockSnapshot> = {};
+function snap(rootType: string, children: Spec[]): HiermarkSurfaceSnapshot {
+  const blocks: Record<string, HiermarkBlockSnapshot> = {};
   const order: string[] = [];
   const add = (id: string, type: string, parentId: string | null, depth: number, kids: Spec[]) => {
     order.push(id);
@@ -32,7 +32,7 @@ function snap(rootType: string, children: Spec[]): HamSurfaceSnapshot {
   return { surfaceId: "s", rootBlockId: "root", blockOrder: order, blocks };
 }
 
-const points = (s: HamSurfaceSnapshot) => [...computeBranchPointSet(s, "bubble-up")].sort();
+const points = (s: HiermarkSurfaceSnapshot) => [...computeBranchPointSet(s, "bubble-up")].sort();
 
 describe("bubble-up branch policy (default)", () => {
   it("collapses a single linear chain onto the whole document (root)", () => {

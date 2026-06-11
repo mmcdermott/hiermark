@@ -1,12 +1,12 @@
 [
   {
-    "name": "@ham/editor ESM (gzip)",
+    "name": "@hiermark/editor ESM (gzip)",
     "path": "packages/editor/dist/index.js",
     "limit": "30 kB",
     "gzip": true
   },
   {
-    "name": "@ham/canvas ESM (gzip)",
+    "name": "@hiermark/canvas ESM (gzip)",
     "path": "packages/canvas/dist/index.js",
     "limit": "18 kB",
     "gzip": true

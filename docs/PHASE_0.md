@@ -1,7 +1,7 @@
-# Phase 0 — Scaffold standalone HAM monorepo
+# Phase 0 — Scaffold standalone Hiermark monorepo
 
-> **Goal (from the design spec §11):** a pnpm workspace with `@ham/editor` and
-> `@ham/canvas` packages, a Vite playground, Vitest setup, shared fixtures, a CSS
+> **Goal (from the design spec §11):** a pnpm workspace with `@hiermark/editor` and
+> `@hiermark/canvas` packages, a Vite playground, Vitest setup, shared fixtures, a CSS
 > build/export, and CI (typecheck, lint, test, build). Acceptance: `pnpm build`
 > emits installable package output, and the playground imports packages as
 > consumers — not via relative source paths.
@@ -20,14 +20,14 @@
 
 **Packages (installable, built artifacts)**
 
-- `@ham/editor` and `@ham/canvas` each ship a conditional `exports` map pointing
+- `@hiermark/editor` and `@hiermark/canvas` each ship a conditional `exports` map pointing
   at `dist/{index.js,index.d.ts}` plus `./styles.css`, with `sideEffects` so the
   stylesheet survives tree-shaking. Built by `tsup` (ESM + `.d.ts` + sourcemaps;
   a small `onSuccess` hook copies `src/styles.css` → `dist/styles.css`).
 - Runtime dependencies pinned per spec §4.1 (Tiptap 3, `@tiptap/markdown`, Yjs /
   Hocuspocus, KaTeX, Floating UI, nanoid for the editor; dnd-kit, TanStack
   Virtual, Floating UI, zod for the canvas). React 19 is a peer dependency.
-- `@ham/canvas` resolves `@ham/editor` to **source** for its own typecheck/test
+- `@hiermark/canvas` resolves `@hiermark/editor` to **source** for its own typecheck/test
   (tsconfig `paths` + vitest `alias`) so dev needs no prior build; the published
   artifact resolves the sibling via package `exports` (dist). pnpm's topological
   build order guarantees the editor's `.d.ts` exists before the canvas builds.
@@ -42,7 +42,7 @@
 **Docs app**
 
 - `apps/docs` — a Vite + React 19 site that imports both packages as a consumer
-  and renders their versions. `base: "/ham/"` for GitHub Pages. Fleshed out into
+  and renders their versions. `base: "/hiermark/"` for GitHub Pages. Fleshed out into
   the full interactive docs site in Phase 5.
 
 **Fixtures** — `fixtures/{simple-branching,multi-surface-column,nested-blocks,annotations}.json`
@@ -58,7 +58,7 @@ drive both unit tests and docs demos (spec §13).
 
 ## Verified end-to-end
 
-The docs app imports `@ham/editor` / `@ham/canvas` through their **built `dist`**
+The docs app imports `@hiermark/editor` / `@hiermark/canvas` through their **built `dist`**
 (package `exports`), not relative source paths — the Phase-0 acceptance criterion.
 `pnpm build` emits `dist/index.js`, `dist/index.d.ts`, and `dist/styles.css` for
 both packages.
@@ -71,7 +71,7 @@ pnpm typecheck    ✓  editor, canvas, docs
 pnpm lint         ✓
 pnpm test         ✓  editor (2), canvas (1)
 pnpm format:check ✓
-pnpm -F @ham/docs build  ✓  static site → apps/docs/dist
+pnpm -F @hiermark/docs build  ✓  static site → apps/docs/dist
 ```
 
 ## Deferred (with rationale)
@@ -85,5 +85,5 @@ pnpm -F @ham/docs build  ✓  static site → apps/docs/dist
 
 ## TODO(next)
 
-- Phase 1: real `@ham/editor` (block-id extension, tree-shaped snapshots, branch
+- Phase 1: real `@hiermark/editor` (block-id extension, tree-shaped snapshots, branch
   gutter, markdown round-trip, annotation registry).

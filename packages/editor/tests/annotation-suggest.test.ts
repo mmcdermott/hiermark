@@ -3,14 +3,14 @@ import { collectSuggestions } from "../src/annotations/suggest";
 import {
   createCitationAnnotation,
   createMentionAnnotation,
-  type HamExampleAnnotationContext,
+  type HiermarkExampleAnnotationContext,
 } from "../src/annotations/recognizers";
-import type { HamAnnotationRegistry } from "../src/types";
+import type { HiermarkAnnotationRegistry } from "../src/types";
 
-const registry: HamAnnotationRegistry<HamExampleAnnotationContext> = {
+const registry: HiermarkAnnotationRegistry<HiermarkExampleAnnotationContext> = {
   types: [createMentionAnnotation(), createCitationAnnotation()],
 };
-const context: HamExampleAnnotationContext = {
+const context: HiermarkExampleAnnotationContext = {
   references: {
     vaswani2017: { title: "Attention Is All You Need", year: 2017 },
     eq2024: { title: "EQ forecasting on eICU", year: 2024 },
@@ -52,7 +52,7 @@ describe("collectSuggestions", () => {
   });
 
   it("caps the result list at maxItems", () => {
-    const many: HamExampleAnnotationContext = {
+    const many: HiermarkExampleAnnotationContext = {
       references: Object.fromEntries(
         Array.from({ length: 20 }, (_, i) => [`ref${i}`, { title: `Paper ${i}` }]),
       ),

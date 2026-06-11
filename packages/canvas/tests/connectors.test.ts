@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { visibleEdges, connectorState, geometryFor } from "../src/connectors/connectors";
-import type { HamActivePath, HamBranchEdge } from "../src/types";
+import type { HiermarkActivePath, HiermarkBranchEdge } from "../src/types";
 
-const edges: HamBranchEdge[] = [
+const edges: HiermarkBranchEdge[] = [
   { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
   { id: "e_a2", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a2", order: 1 },
   { id: "e_b", fromSurfaceId: "s_root", fromBlockId: "blk_B", toSurfaceId: "s_b", order: 0 },
@@ -11,7 +11,7 @@ const edges: HamBranchEdge[] = [
 
 // Active path: root → s_a (via e_a), now focused on block blk_x in s_a, which
 // itself has a branch e_deep.
-const activePath: HamActivePath = {
+const activePath: HiermarkActivePath = {
   rootSurfaceId: "s_root",
   activeSurfaceId: "s_a",
   activeBlockId: "blk_x",
@@ -76,7 +76,7 @@ describe("connectorState", () => {
     expect(connectorState(edges[0]!, activePath)).toBe("active"); // e_a on path
     expect(connectorState(edges[1]!, activePath)).toBe("ancestor"); // from s_root (an ancestor)
     expect(connectorState(edges[3]!, activePath)).toBe("ancestor"); // from s_a (active surface)
-    const detached: HamBranchEdge = {
+    const detached: HiermarkBranchEdge = {
       id: "x",
       fromSurfaceId: "s_other",
       fromBlockId: "b",

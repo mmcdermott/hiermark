@@ -10,37 +10,37 @@
 
 export type StableIdKind = "block" | "task";
 
-const HAM_COMMENT = /<!--\s*ham:(block|task)=([A-Za-z0-9_-]+)\s*-->/g;
-const STANDALONE_HAM_LINE = /^\s*<!--\s*ham:(block|task)=([A-Za-z0-9_-]+)\s*-->\s*$/;
+const HIERMARK_COMMENT = /<!--\s*hiermark:(block|task)=([A-Za-z0-9_-]+)\s*-->/g;
+const STANDALONE_HIERMARK_LINE = /^\s*<!--\s*hiermark:(block|task)=([A-Za-z0-9_-]+)\s*-->\s*$/;
 
 /**
- * Remove every `ham:` id comment. Standalone comment lines are dropped entirely;
+ * Remove every `hiermark:` id comment. Standalone comment lines are dropped entirely;
  * trailing inline comments are stripped along with the whitespace before them.
  */
 export function stripStableIds(markdown: string): string {
   return markdown
     .split("\n")
-    .filter((line) => !STANDALONE_HAM_LINE.test(line))
-    .map((line) => line.replace(HAM_COMMENT, "").replace(/[ \t]+$/, ""))
+    .filter((line) => !STANDALONE_HIERMARK_LINE.test(line))
+    .map((line) => line.replace(HIERMARK_COMMENT, "").replace(/[ \t]+$/, ""))
     .join("\n");
 }
 
-/** Read the first `ham:<kind>` id present in `text`, or null. */
+/** Read the first `hiermark:<kind>` id present in `text`, or null. */
 export function readStableId(text: string, kind: StableIdKind): string | null {
-  HAM_COMMENT.lastIndex = 0;
+  HIERMARK_COMMENT.lastIndex = 0;
   let m: RegExpExecArray | null;
-  while ((m = HAM_COMMENT.exec(text)) !== null) {
+  while ((m = HIERMARK_COMMENT.exec(text)) !== null) {
     if (m[1] === kind) return m[2] ?? null;
   }
   return null;
 }
 
-/** Append an inline `ham:<kind>=<id>` comment to a line (trimming trailing ws). */
+/** Append an inline `hiermark:<kind>=<id>` comment to a line (trimming trailing ws). */
 export function injectInlineId(line: string, kind: StableIdKind, id: string): string {
-  return `${line.replace(/[ \t]+$/, "")} <!-- ham:${kind}=${id} -->`;
+  return `${line.replace(/[ \t]+$/, "")} <!-- hiermark:${kind}=${id} -->`;
 }
 
 /** A standalone block-id comment line. */
 export function blockIdLine(id: string): string {
-  return `<!-- ham:block=${id} -->`;
+  return `<!-- hiermark:block=${id} -->`;
 }

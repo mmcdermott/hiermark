@@ -1,4 +1,4 @@
-# @ham/canvas
+# @hiermark/canvas
 
 ## 0.2.0
 
@@ -18,7 +18,7 @@
   operation (save/branch/reorder/delete) is in flight, rather than only dimming.
 - 683f977: Render orphan / detached surfaces. Surfaces with no edge path from the root
   were silently invisible; they now project into trailing `detached` columns
-  (new optional `detached` flag on `HamCanvasColumn`) behind a "Not linked to
+  (new optional `detached` flag on `HiermarkCanvasColumn`) behind a "Not linked to
   root" divider, so data is never lost from view.
 - 656cb8d: Canvas-level undo/redo for sibling reorders. After a drag-reorder, Cmd/Ctrl+Z
   reverts it (Cmd/Ctrl+Shift+Z or Ctrl+Y redoes) when the canvas chrome is
@@ -33,9 +33,9 @@
 
 ### Patch Changes
 
-- 357328b: Packaging fixes: `@ham/editor`'s exports map no longer carries redundant
+- 357328b: Packaging fixes: `@hiermark/editor`'s exports map no longer carries redundant
   top-level `types` keys that resolved ESM-flavored declarations under the
   `require` condition (CJS TypeScript consumers now get `index.d.cts`), and
-  `@ham/canvas` declares its `@ham/editor` peer as an explicit `>=0.1.0 <1.0.0`
+  `@hiermark/canvas` declares its `@hiermark/editor` peer as an explicit `>=0.1.0 <1.0.0`
   range instead of `workspace:^` (which made changesets major-bump the canvas on
   every editor minor).

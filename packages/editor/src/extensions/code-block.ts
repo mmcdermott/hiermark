@@ -6,7 +6,7 @@ import { common, createLowlight } from "lowlight";
  * widely used languages: js/ts, python, rust, go, json, bash, css, html, sql,
  * yaml, markdown, …). Shared across every editor so the grammars load once.
  */
-export const hamLowlight = createLowlight(common);
+export const hiermarkLowlight = createLowlight(common);
 
 interface LowlightInstance {
   listLanguages: () => string[];
@@ -27,7 +27,7 @@ function prettyLang(lang: string): string {
 }
 
 /**
- * The HAM code block: {@link CodeBlockLowlight} (syntax highlighting via
+ * The Hiermark code block: {@link CodeBlockLowlight} (syntax highlighting via
  * highlight.js when the fence carries a language) plus a vanilla node view that
  * adds a header with a language picker and a copy-to-clipboard button.
  *
@@ -36,11 +36,11 @@ function prettyLang(lang: string): string {
  * the node) keep working, and mirrors the block-id / language attributes onto
  * the wrapper so the canvas connectors and CSS still resolve the block.
  */
-export const HamCodeBlock = CodeBlockLowlight.extend({
+export const HiermarkCodeBlock = CodeBlockLowlight.extend({
   addNodeView() {
     // Derive the picker from the *configured* lowlight instance, so a host that
     // registers extra grammars (e.g. `createLowlight(all)`) gets them in the menu.
-    const lowlight = (this.options.lowlight as LowlightInstance | undefined) ?? hamLowlight;
+    const lowlight = (this.options.lowlight as LowlightInstance | undefined) ?? hiermarkLowlight;
     const pickerLanguages = ["", ...lowlight.listLanguages().sort()];
 
     return ({ node, editor, getPos }) => {
@@ -48,14 +48,14 @@ export const HamCodeBlock = CodeBlockLowlight.extend({
       let wrapped = false;
 
       const dom = document.createElement("div");
-      dom.className = "ham-code-block";
+      dom.className = "hiermark-code-block";
 
       const header = document.createElement("div");
-      header.className = "ham-code-block-header";
+      header.className = "hiermark-code-block-header";
       header.contentEditable = "false";
 
       const select = document.createElement("select");
-      select.className = "ham-code-lang";
+      select.className = "hiermark-code-lang";
       select.setAttribute("aria-label", "Code language");
       for (const lang of pickerLanguages) {
         const opt = document.createElement("option");
@@ -81,7 +81,7 @@ export const HamCodeBlock = CodeBlockLowlight.extend({
 
       const copy = document.createElement("button");
       copy.type = "button";
-      copy.className = "ham-code-copy";
+      copy.className = "hiermark-code-copy";
       copy.textContent = "Copy";
       let copyTimer: ReturnType<typeof setTimeout> | undefined;
       copy.addEventListener("click", () => {
@@ -107,7 +107,7 @@ export const HamCodeBlock = CodeBlockLowlight.extend({
       // Soft-wrap toggle (view-local — long lines wrap instead of scrolling).
       const wrap = document.createElement("button");
       wrap.type = "button";
-      wrap.className = "ham-code-wrap";
+      wrap.className = "hiermark-code-wrap";
       wrap.title = "Toggle soft wrap";
       wrap.setAttribute("aria-pressed", "false");
       wrap.textContent = "↵";
@@ -167,4 +167,4 @@ export const HamCodeBlock = CodeBlockLowlight.extend({
       };
     };
   },
-}).configure({ lowlight: hamLowlight });
+}).configure({ lowlight: hiermarkLowlight });

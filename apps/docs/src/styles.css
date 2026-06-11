@@ -337,8 +337,8 @@ pre.block code {
     opacity 0.12s ease,
     transform 0.12s ease;
 }
-.ham-column:hover .gallery-add-labeled,
-.ham-column:hover .gallery-add-dot,
+.hiermark-column:hover .gallery-add-labeled,
+.hiermark-column:hover .gallery-add-dot,
 .gallery-add-labeled:focus-visible,
 .gallery-add-dot:focus-visible {
   opacity: 1;
@@ -488,14 +488,14 @@ pre.block code {
 /* Curated styled-example themes (applied via the canvas className) ----------- */
 /* Warm, serif manuscript. */
 .theme-manuscript {
-  --ham-canvas-bg: #fbf7f0;
-  --ham-surface-bg: #fffdf8;
-  --ham-surface-border: #e7dccb;
-  --ham-accent: #b5651d;
-  --ham-accent-soft: #f6ead9;
-  --ham-muted: #8a7a63;
+  --hiermark-canvas-bg: #fbf7f0;
+  --hiermark-surface-bg: #fffdf8;
+  --hiermark-surface-border: #e7dccb;
+  --hiermark-accent: #b5651d;
+  --hiermark-accent-soft: #f6ead9;
+  --hiermark-muted: #8a7a63;
 }
-.theme-manuscript .ham-editor .ProseMirror {
+.theme-manuscript .hiermark-editor .ProseMirror {
   font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
   font-size: 16px;
   line-height: 1.7;
@@ -503,18 +503,18 @@ pre.block code {
 
 /* Cool, dark topology map. */
 .theme-map {
-  --ham-canvas-bg: #0f1722;
-  --ham-surface-bg: transparent;
-  --ham-surface-border: #2a3a4d;
-  --ham-text: #d6e2f0;
-  --ham-muted: #8aa0b8;
-  --ham-accent: #37a0c4;
-  --ham-accent-soft: #16344a;
+  --hiermark-canvas-bg: #0f1722;
+  --hiermark-surface-bg: transparent;
+  --hiermark-surface-border: #2a3a4d;
+  --hiermark-text: #d6e2f0;
+  --hiermark-muted: #8aa0b8;
+  --hiermark-accent: #37a0c4;
+  --hiermark-accent-soft: #16344a;
   color: #d6e2f0;
 }
-.theme-map .ham-surface-header,
-.theme-map .ham-outline-link,
-.theme-map .ham-editor {
+.theme-map .hiermark-surface-header,
+.theme-map .hiermark-outline-link,
+.theme-map .hiermark-editor {
   color: #d6e2f0;
 }
 

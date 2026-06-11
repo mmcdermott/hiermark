@@ -1,11 +1,11 @@
 const TOKENS: { name: string; what: string }[] = [
-  { name: "--ham-accent", what: "Primary accent (active surface, links, focus)." },
-  { name: "--ham-accent-soft", what: "Soft accent fill (hover, selection)." },
-  { name: "--ham-text / --ham-muted", what: "Body and secondary text." },
-  { name: "--ham-surface-bg / --ham-surface-border", what: "Card background + border." },
-  { name: "--ham-canvas-bg", what: "Canvas backdrop (@ham/canvas)." },
-  { name: "--ham-inline-code-bg / --ham-th-bg", what: "Inline code + table header fills." },
-  { name: "--ham-radius", what: "Corner radius for cards / popovers." },
+  { name: "--hiermark-accent", what: "Primary accent (active surface, links, focus)." },
+  { name: "--hiermark-accent-soft", what: "Soft accent fill (hover, selection)." },
+  { name: "--hiermark-text / --hiermark-muted", what: "Body and secondary text." },
+  { name: "--hiermark-surface-bg / --hiermark-surface-border", what: "Card background + border." },
+  { name: "--hiermark-canvas-bg", what: "Canvas backdrop (@hiermark/canvas)." },
+  { name: "--hiermark-inline-code-bg / --hiermark-th-bg", what: "Inline code + table header fills." },
+  { name: "--hiermark-radius", what: "Corner radius for cards / popovers." },
 ];
 
 const COLLAB_SERVER = `// server.ts — a minimal Hocuspocus server (host-deployed).
@@ -31,9 +31,9 @@ const server = Server.configure({
 });
 server.listen();`;
 
-const COLLAB_CLIENT = `import { HamEditor } from "@ham/editor";
+const COLLAB_CLIENT = `import { HiermarkEditor } from "@hiermark/editor";
 
-<HamEditor
+<HiermarkEditor
   surfaceId="doc-1"
   value={{ kind: "markdown", markdown: "" }}
   collaboration={{
@@ -53,7 +53,7 @@ export function ProductionPage() {
     <section className="page">
       <h2>Production notes</h2>
       <p className="lede">
-        What to know before adopting HAM in a real app: current limitations, the theming tokens
+        What to know before adopting Hiermark in a real app: current limitations, the theming tokens
         (including dark mode), and how to stand up a real collaboration server.
       </p>
 

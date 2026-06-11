@@ -95,11 +95,11 @@ export function MathPopover({
       <div
         ref={refs.setFloating}
         style={floatingStyles}
-        className="ham-math-popover"
+        className="hiermark-math-popover"
         {...getFloatingProps()}
       >
         <textarea
-          className="ham-math-input"
+          className="hiermark-math-input"
           aria-label="Edit LaTeX"
           placeholder="LaTeX…"
           autoFocus
@@ -116,11 +116,11 @@ export function MathPopover({
             }
           }}
         />
-        <div className="ham-math-popover-actions">
-          <span className="ham-math-hint">Enter to save · Esc to cancel</span>
+        <div className="hiermark-math-popover-actions">
+          <span className="hiermark-math-hint">Enter to save · Esc to cancel</span>
           <button
             type="button"
-            className="ham-math-btn ham-math-del"
+            className="hiermark-math-btn hiermark-math-del"
             // Keep the textarea's value from committing on blur before this fires.
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => {

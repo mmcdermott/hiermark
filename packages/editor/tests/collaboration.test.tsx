@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
 import * as Y from "yjs";
-import { HamEditor } from "../src/HamEditor";
+import { HiermarkEditor } from "../src/HiermarkEditor";
 import type {
-  HamCollaborationConfig,
-  HamCollaborationProvider,
-  HamCollaborationRuntime,
-  HamEditorHandle,
+  HiermarkCollaborationConfig,
+  HiermarkCollaborationProvider,
+  HiermarkCollaborationRuntime,
+  HiermarkEditorHandle,
 } from "../src/types";
 
 afterEach(() => cleanup());
@@ -15,8 +15,8 @@ beforeAll(() => {
 });
 
 /** An always-synced, no-network provider/runtime sharing a given Y.Doc. */
-function fakeRuntime(ydoc: Y.Doc): HamCollaborationRuntime {
-  const provider: HamCollaborationProvider = {
+function fakeRuntime(ydoc: Y.Doc): HiermarkCollaborationRuntime {
+  const provider: HiermarkCollaborationProvider = {
     synced: true,
     hasUnsyncedChanges: false,
     on() {},
@@ -26,19 +26,19 @@ function fakeRuntime(ydoc: Y.Doc): HamCollaborationRuntime {
   return { ydoc, connect: async () => provider };
 }
 
-function collabConfig(ydoc: Y.Doc, runtime: HamCollaborationRuntime): HamCollaborationConfig {
+function collabConfig(ydoc: Y.Doc, runtime: HiermarkCollaborationRuntime): HiermarkCollaborationConfig {
   return { enabled: true, documentName: "doc", ydoc, runtime };
 }
 
 async function mountCollab(
   ydoc: Y.Doc,
-  runtime: HamCollaborationRuntime,
+  runtime: HiermarkCollaborationRuntime,
   surfaceId: string,
   markdown: string,
 ) {
-  let handle: HamEditorHandle | null = null;
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId={surfaceId}
       rootBlockId={`blk_root_${surfaceId}`}
       value={{ kind: "markdown", markdown }}
@@ -85,9 +85,9 @@ describe("collaboration", () => {
   it("does not resurrect deleted content when the parent re-renders", async () => {
     const shared = new Y.Doc();
     const rt = fakeRuntime(shared);
-    let handle: HamEditorHandle | null = null;
+    let handle: HiermarkEditorHandle | null = null;
     const view = (activeBlockId: string | null) => (
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s"
         rootBlockId="blk_root"
         value={{ kind: "markdown", markdown: "# Keep\n\nme." }}
@@ -136,7 +136,7 @@ describe("collaboration", () => {
     const ydoc = new Y.Doc();
     const calls = { on: 0, off: 0, destroy: 0 };
     let syncedHandler: (() => void) | null = null;
-    const provider: HamCollaborationProvider = {
+    const provider: HiermarkCollaborationProvider = {
       synced: false, // starts unsynced, so the gate registers a "synced" listener
       hasUnsyncedChanges: false,
       on(event, handler) {
@@ -152,10 +152,10 @@ describe("collaboration", () => {
         calls.destroy++;
       },
     };
-    const runtime: HamCollaborationRuntime = { ydoc, connect: async () => provider };
-    let handle: HamEditorHandle | null = null;
+    const runtime: HiermarkCollaborationRuntime = { ydoc, connect: async () => provider };
+    let handle: HiermarkEditorHandle | null = null;
     const { unmount } = render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="c"
         rootBlockId="blk_c"
         value={{ kind: "markdown", markdown: "" }}

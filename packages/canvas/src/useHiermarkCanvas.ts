@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import type { HamBlockId, HamBranchRequestEvent, HamSurfaceSnapshot } from "@ham/editor";
+import type { HiermarkBlockId, HiermarkBranchRequestEvent, HiermarkSurfaceSnapshot } from "@hiermark/editor";
 
 import { resolveBehavior, resolveLayout } from "./defaults";
 import { devWarn } from "./devWarn";
-import { getHamActivePath } from "./topology/getHamActivePath";
-import { buildProjectionContext, projectColumnsFromContext } from "./topology/projectHamColumns";
+import { getHiermarkActivePath } from "./topology/getHiermarkActivePath";
+import { buildProjectionContext, projectColumnsFromContext } from "./topology/projectHiermarkColumns";
 import {
   areSameAnchorSiblings,
   buildReorderEvent,
@@ -12,21 +12,21 @@ import {
   siblingEdges,
 } from "./topology/reorderBranchSiblings";
 import type {
-  HamActivePath,
-  HamCanvasColumn,
-  HamCanvasOperationType,
-  HamCanvasProps,
-  HamSurfaceId,
+  HiermarkActivePath,
+  HiermarkCanvasColumn,
+  HiermarkCanvasOperationType,
+  HiermarkCanvasProps,
+  HiermarkSurfaceId,
 } from "./types";
 
-export interface HamCanvasActions {
-  activate(surfaceId: HamSurfaceId, blockId?: HamBlockId | null): void;
-  updateSnapshot(surfaceId: HamSurfaceId, snapshot: HamSurfaceSnapshot): void;
-  toggleCollapsed(surfaceId: HamSurfaceId): void;
-  branchFromBlock(event: HamBranchRequestEvent): Promise<void>;
+export interface HiermarkCanvasActions {
+  activate(surfaceId: HiermarkSurfaceId, blockId?: HiermarkBlockId | null): void;
+  updateSnapshot(surfaceId: HiermarkSurfaceId, snapshot: HiermarkSurfaceSnapshot): void;
+  toggleCollapsed(surfaceId: HiermarkSurfaceId): void;
+  branchFromBlock(event: HiermarkBranchRequestEvent): Promise<void>;
   addSibling(
-    fromSurfaceId: HamSurfaceId,
-    fromBlockId: HamBlockId,
+    fromSurfaceId: HiermarkSurfaceId,
+    fromBlockId: HiermarkBlockId,
     opts?: { insertOrder?: number; afterEdgeId?: string },
   ): Promise<void>;
   /**
@@ -35,23 +35,23 @@ export interface HamCanvasActions {
    * canvas undo stack) can keep their bookkeeping consistent.
    */
   reorderSiblings(
-    fromSurfaceId: HamSurfaceId,
-    fromBlockId: HamBlockId,
+    fromSurfaceId: HiermarkSurfaceId,
+    fromBlockId: HiermarkBlockId,
     orderedEdgeIds: string[],
   ): Promise<boolean>;
-  removeSurface(surfaceId: HamSurfaceId): Promise<void>;
+  removeSurface(surfaceId: HiermarkSurfaceId): Promise<void>;
 }
 
-export interface UseHamCanvasResult<SurfaceMeta = unknown, EdgeMeta = unknown> {
-  columns: HamCanvasColumn<SurfaceMeta, EdgeMeta>[];
-  activePath: HamActivePath;
-  activeSurfaceId: HamSurfaceId;
-  activeBlockId: HamBlockId | null;
-  collapsedSurfaceIds: Set<HamSurfaceId>;
-  snapshotsBySurfaceId: Record<HamSurfaceId, HamSurfaceSnapshot | undefined>;
+export interface UseHiermarkCanvasResult<SurfaceMeta = unknown, EdgeMeta = unknown> {
+  columns: HiermarkCanvasColumn<SurfaceMeta, EdgeMeta>[];
+  activePath: HiermarkActivePath;
+  activeSurfaceId: HiermarkSurfaceId;
+  activeBlockId: HiermarkBlockId | null;
+  collapsedSurfaceIds: Set<HiermarkSurfaceId>;
+  snapshotsBySurfaceId: Record<HiermarkSurfaceId, HiermarkSurfaceSnapshot | undefined>;
   /** Surfaces with an in-flight topology operation (pessimistic UI). */
-  pendingSurfaceIds: Set<HamSurfaceId>;
-  actions: HamCanvasActions;
+  pendingSurfaceIds: Set<HiermarkSurfaceId>;
+  actions: HiermarkCanvasActions;
 }
 
 /**
@@ -61,29 +61,29 @@ export interface UseHamCanvasResult<SurfaceMeta = unknown, EdgeMeta = unknown> {
  * still owns `surfaces`/`branchEdges` (passed as props); topology handlers are
  * awaited before the result is reflected — the host updates the props.
  */
-export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
-  props: HamCanvasProps<SurfaceMeta, EdgeMeta>,
-): UseHamCanvasResult<SurfaceMeta, EdgeMeta> {
+export function useHiermarkCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
+  props: HiermarkCanvasProps<SurfaceMeta, EdgeMeta>,
+): UseHiermarkCanvasResult<SurfaceMeta, EdgeMeta> {
   const layout = useMemo(() => resolveLayout(props.layout), [props.layout]);
   const behavior = useMemo(() => resolveBehavior(props.behavior), [props.behavior]);
 
-  const [internalActiveSurface, setInternalActiveSurface] = useState<HamSurfaceId>(
+  const [internalActiveSurface, setInternalActiveSurface] = useState<HiermarkSurfaceId>(
     props.activeSurfaceId ?? props.rootSurfaceId,
   );
-  const [internalActiveBlock, setInternalActiveBlock] = useState<HamBlockId | null>(
+  const [internalActiveBlock, setInternalActiveBlock] = useState<HiermarkBlockId | null>(
     props.activeBlockId ?? null,
   );
   const activeSurfaceId = props.activeSurfaceId ?? internalActiveSurface;
   const activeBlockId =
     props.activeBlockId !== undefined ? props.activeBlockId : internalActiveBlock;
 
-  const [snapshots, setSnapshots] = useState<Record<HamSurfaceId, HamSurfaceSnapshot | undefined>>(
+  const [snapshots, setSnapshots] = useState<Record<HiermarkSurfaceId, HiermarkSurfaceSnapshot | undefined>>(
     {},
   );
-  const [collapsedSurfaceIds, setCollapsed] = useState<Set<HamSurfaceId>>(new Set());
+  const [collapsedSurfaceIds, setCollapsed] = useState<Set<HiermarkSurfaceId>>(new Set());
   // Pending ops are COUNTED per surface (not a Set) so two overlapping ops on
   // one surface don't clear its pending state when the first settles.
-  const [pendingCounts, setPendingCounts] = useState<Record<HamSurfaceId, number>>({});
+  const [pendingCounts, setPendingCounts] = useState<Record<HiermarkSurfaceId, number>>({});
   const pendingSurfaceIds = useMemo(() => new Set(Object.keys(pendingCounts)), [pendingCounts]);
   const onActiveChange = props.onActiveChange;
   // Keep live refs so async callbacks don't read stale edges / active id.
@@ -93,7 +93,7 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   activeRef.current = activeSurfaceId;
 
   const activate = useCallback(
-    (surfaceId: HamSurfaceId, blockId: HamBlockId | null = null) => {
+    (surfaceId: HiermarkSurfaceId, blockId: HiermarkBlockId | null = null) => {
       setInternalActiveSurface(surfaceId);
       setInternalActiveBlock(blockId);
       onActiveChange?.({ surfaceId, blockId });
@@ -103,7 +103,7 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   const onOperationError = props.onOperationError;
   const updateSnapshot = useCallback(
-    (surfaceId: HamSurfaceId, snapshot: HamSurfaceSnapshot) => {
+    (surfaceId: HiermarkSurfaceId, snapshot: HiermarkSurfaceSnapshot) => {
       setSnapshots((prev) =>
         prev[surfaceId] === snapshot ? prev : { ...prev, [surfaceId]: snapshot },
       );
@@ -120,7 +120,7 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     [props.handlers, onOperationError],
   );
 
-  const toggleCollapsed = useCallback((surfaceId: HamSurfaceId) => {
+  const toggleCollapsed = useCallback((surfaceId: HiermarkSurfaceId) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
       if (next.has(surfaceId)) next.delete(surfaceId);
@@ -131,8 +131,8 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   const withPending = useCallback(
     async (
-      surfaceId: HamSurfaceId,
-      type: HamCanvasOperationType,
+      surfaceId: HiermarkSurfaceId,
+      type: HiermarkCanvasOperationType,
       run: () => Promise<void>,
     ): Promise<boolean> => {
       setPendingCounts((prev) => ({ ...prev, [surfaceId]: (prev[surfaceId] ?? 0) + 1 }));
@@ -159,8 +159,8 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   const addSibling = useCallback(
     async (
-      fromSurfaceId: HamSurfaceId,
-      fromBlockId: HamBlockId,
+      fromSurfaceId: HiermarkSurfaceId,
+      fromBlockId: HiermarkBlockId,
       opts?: { insertOrder?: number; afterEdgeId?: string },
     ) => {
       if (!props.handlers.createSiblingSurface) return;
@@ -205,7 +205,7 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   );
 
   const branchFromBlock = useCallback(
-    async (event: HamBranchRequestEvent) => {
+    async (event: HiermarkBranchRequestEvent) => {
       // A block that already has a branch child presents an "add sibling"
       // affordance — route it to the sibling path (append) when the host
       // supports it, so the two affordances hit the handlers the design
@@ -260,8 +260,8 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   const reorderSiblings = useCallback(
     async (
-      fromSurfaceId: HamSurfaceId,
-      fromBlockId: HamBlockId,
+      fromSurfaceId: HiermarkSurfaceId,
+      fromBlockId: HiermarkBlockId,
       orderedEdgeIds: string[],
     ): Promise<boolean> => {
       if (!props.handlers.reorderBranchSiblings) return false;
@@ -283,15 +283,15 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   );
 
   const removeSurface = useCallback(
-    async (surfaceId: HamSurfaceId) => {
+    async (surfaceId: HiermarkSurfaceId) => {
       if (!props.handlers.deleteSurface) return;
       const edgesBefore = edgesRef.current;
       const parentSurfaceId = edgesBefore.find((e) => e.toSurfaceId === surfaceId)?.fromSurfaceId;
       const incomingEdgeId = edgesBefore.find((e) => e.toSurfaceId === surfaceId)?.id;
       // Collect the deleted subtree (surface + descendants) for the host to
       // validate against its delete policy, and to drive re-activation/eviction.
-      const descendantSurfaceIds: HamSurfaceId[] = [];
-      const removedSet = new Set<HamSurfaceId>([surfaceId]);
+      const descendantSurfaceIds: HiermarkSurfaceId[] = [];
+      const removedSet = new Set<HiermarkSurfaceId>([surfaceId]);
       const queue = [surfaceId];
       while (queue.length) {
         const cur = queue.shift()!;
@@ -351,7 +351,7 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
 
   const activePath = useMemo(
     () =>
-      getHamActivePath({
+      getHiermarkActivePath({
         rootSurfaceId: props.rootSurfaceId,
         activeSurfaceId,
         activeBlockId,
@@ -400,7 +400,7 @@ export function useHamCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
     [projectionContext, topologyInput, snapshots],
   );
 
-  const actions = useMemo<HamCanvasActions>(
+  const actions = useMemo<HiermarkCanvasActions>(
     () => ({
       activate,
       updateSnapshot,

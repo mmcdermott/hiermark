@@ -2,7 +2,7 @@ import { axe } from "vitest-axe";
 import * as axeMatchers from "vitest-axe/matchers";
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import { HamEditor } from "../src/HamEditor";
+import { HiermarkEditor } from "../src/HiermarkEditor";
 
 expect.extend(axeMatchers);
 
@@ -23,7 +23,7 @@ const axeOpts = { rules: { "color-contrast": { enabled: false } } };
 describe("editor a11y (axe)", () => {
   it("a populated editor surface has no axe violations", async () => {
     const { container } = render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s1"
         rootBlockId="blk_root"
         value={{

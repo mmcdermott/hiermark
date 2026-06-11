@@ -2,9 +2,9 @@ import type { Editor } from "@tiptap/core";
 import type { Node as PMNode } from "@tiptap/pm/model";
 
 import { generateBlockId } from "../id";
-import type { HamBlockId, HamSurfaceId, HamSurfaceSnapshot } from "../types";
+import type { HiermarkBlockId, HiermarkSurfaceId, HiermarkSurfaceSnapshot } from "../types";
 import {
-  DEFAULT_HAM_BLOCK_TYPES,
+  DEFAULT_HIERMARK_BLOCK_TYPES,
   LEAF_CONTAINER_TYPES,
   LIST_CONTAINER_TYPES,
   TEXT_AND_RECURSE_TYPES,
@@ -12,8 +12,8 @@ import {
 import { projectBlockTree, type BlockNodeMeta } from "./projectBlockTree";
 
 export interface SurfaceSnapshotOptions {
-  surfaceId: HamSurfaceId;
-  rootBlockId?: HamBlockId;
+  surfaceId: HiermarkSurfaceId;
+  rootBlockId?: HiermarkBlockId;
   title?: string;
   revision?: string | number;
   blockTypes?: ReadonlySet<string>;
@@ -29,7 +29,7 @@ function directItemText(node: PMNode): string {
 }
 
 /**
- * Build a tree-shaped {@link HamSurfaceSnapshot} directly from the ProseMirror
+ * Build a tree-shaped {@link HiermarkSurfaceSnapshot} directly from the ProseMirror
  * document (spec §5.10) — never by serializing to markdown. List/task items
  * keep their literal nesting; top-level flow blocks are organized by projected
  * heading containment.
@@ -40,21 +40,21 @@ function directItemText(node: PMNode): string {
  *
  * A block node without a `dataBlockId` attr gets a freshly generated id in the
  * snapshot, but this does **not** write the id back into the document — it's a
- * pure fallback. Use the live `BlockId` extension (inside `HamEditor`) for ids
+ * pure fallback. Use the live `BlockId` extension (inside `HiermarkEditor`) for ids
  * that persist on the doc.
  */
 export function surfaceSnapshotFromDoc(
   doc: PMNode,
   opts: SurfaceSnapshotOptions,
-): HamSurfaceSnapshot {
-  const blockTypes = opts.blockTypes ?? DEFAULT_HAM_BLOCK_TYPES;
+): HiermarkSurfaceSnapshot {
+  const blockTypes = opts.blockTypes ?? DEFAULT_HIERMARK_BLOCK_TYPES;
   const rootBlockId = opts.rootBlockId ?? "blk_root";
   const metas: BlockNodeMeta[] = [];
 
-  const idOf = (node: PMNode): HamBlockId =>
+  const idOf = (node: PMNode): HiermarkBlockId =>
     (node.attrs?.dataBlockId as string | null) ?? generateBlockId();
 
-  const walk = (node: PMNode, itemAncestorId: HamBlockId | null) => {
+  const walk = (node: PMNode, itemAncestorId: HiermarkBlockId | null) => {
     node.forEach((child) => {
       const type = child.type.name;
       if (TEXT_AND_RECURSE_TYPES.has(type)) {
@@ -133,9 +133,9 @@ function attrsOf(node: PMNode): { attrs?: Record<string, unknown> } {
 }
 
 /** Build a surface snapshot from a live Tiptap editor (spec export). */
-export function getHamSurfaceSnapshot(
+export function getHiermarkSurfaceSnapshot(
   editor: Editor,
   opts: SurfaceSnapshotOptions,
-): HamSurfaceSnapshot {
+): HiermarkSurfaceSnapshot {
   return surfaceSnapshotFromDoc(editor.state.doc, opts);
 }

@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
 import { useState } from "react";
 import { render, waitFor, cleanup, fireEvent } from "@testing-library/react";
-import { HamCanvas } from "../src/HamCanvas";
+import { HiermarkCanvas } from "../src/HiermarkCanvas";
 import type {
-  HamBranchEdge,
-  HamCanvasHandle,
-  HamCanvasHandlers,
-  HamCreateSiblingSurfaceEvent,
-  HamSurface,
-  HamSurfaceId,
+  HiermarkBranchEdge,
+  HiermarkCanvasHandle,
+  HiermarkCanvasHandlers,
+  HiermarkCreateSiblingSurfaceEvent,
+  HiermarkSurface,
+  HiermarkSurfaceId,
 } from "../src/types";
 
 afterEach(() => cleanup());
@@ -16,18 +16,18 @@ beforeAll(() => {
   (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = () => {};
 });
 
-const surface = (id: string, markdown: string, title?: string): HamSurface => ({
+const surface = (id: string, markdown: string, title?: string): HiermarkSurface => ({
   id,
   rootBlockId: `${id}_root`,
   ...(title ? { title } : {}),
   content: { kind: "markdown", markdown },
 });
 
-function makeHandlers(over: Partial<HamCanvasHandlers> = {}): HamCanvasHandlers {
+function makeHandlers(over: Partial<HiermarkCanvasHandlers> = {}): HiermarkCanvasHandlers {
   return {
     createSurfaceFromBlock: vi.fn(async (event) => {
       const newSurface = surface("s_new", "# New branch", "New branch");
-      const edge: HamBranchEdge = {
+      const edge: HiermarkBranchEdge = {
         id: "e_new",
         fromSurfaceId: event.sourceSurfaceId,
         fromBlockId: event.sourceBlockId,
@@ -40,11 +40,11 @@ function makeHandlers(over: Partial<HamCanvasHandlers> = {}): HamCanvasHandlers 
   };
 }
 
-describe("HamCanvas", () => {
+describe("HiermarkCanvas", () => {
   it("mounts the active surface as an editor and renders one column at root", async () => {
     const handlers = makeHandlers();
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root\n\nBody text.", "Root") }}
         branchEdges={[]}
@@ -52,9 +52,9 @@ describe("HamCanvas", () => {
       />,
     );
     await waitFor(() => {
-      expect(container.querySelector(".ham-editor")).not.toBeNull();
+      expect(container.querySelector(".hiermark-editor")).not.toBeNull();
     });
-    expect(container.querySelectorAll(".ham-column")).toHaveLength(1);
+    expect(container.querySelectorAll(".hiermark-column")).toHaveLength(1);
     expect(container.querySelector('[data-surface-id="s_root"]')).not.toBeNull();
   });
 
@@ -64,12 +64,12 @@ describe("HamCanvas", () => {
       s_a: surface("s_a", "# A branch", "A branch"),
       s_b: surface("s_b", "# B branch", "B branch"),
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
       { id: "e_b", fromSurfaceId: "s_root", fromBlockId: "blk_B", toSurfaceId: "s_b", order: 0 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -77,8 +77,8 @@ describe("HamCanvas", () => {
         handlers={makeHandlers()}
       />,
     );
-    await waitFor(() => expect(container.querySelectorAll(".ham-column")).toHaveLength(2));
-    const col2 = container.querySelectorAll(".ham-column")[1]!;
+    await waitFor(() => expect(container.querySelectorAll(".hiermark-column")).toHaveLength(2));
+    const col2 = container.querySelectorAll(".hiermark-column")[1]!;
     const ids = [...col2.querySelectorAll("[data-surface-id]")].map((el) =>
       el.getAttribute("data-surface-id"),
     );
@@ -88,7 +88,7 @@ describe("HamCanvas", () => {
   it("calls createSurfaceFromBlock when a branch button is clicked", async () => {
     const handlers = makeHandlers();
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root\n\nBranch me.", "Root") }}
         branchEdges={[]}
@@ -98,7 +98,7 @@ describe("HamCanvas", () => {
     );
     let button: HTMLElement | null = null;
     await waitFor(() => {
-      button = container.querySelector<HTMLElement>(".ham-branch-button");
+      button = container.querySelector<HTMLElement>(".hiermark-branch-button");
       expect(button).not.toBeNull();
     });
     fireEvent.click(button!);
@@ -115,7 +115,7 @@ describe("HamCanvas", () => {
 
   it("renders a rail-mode surface as header-only (no body)", async () => {
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{
           s_root: surface("s_root", "# Root\n\n## A", "Root"),
@@ -137,10 +137,10 @@ describe("HamCanvas", () => {
     );
     await waitFor(() => {
       const card = container.querySelector('[data-surface-id="s_a"]');
-      expect(card?.classList.contains("ham-surface-mode-rail")).toBe(true);
+      expect(card?.classList.contains("hiermark-surface-mode-rail")).toBe(true);
       // Rail collapses to just the header — no body wrapper at all.
-      expect(card?.querySelector(".ham-surface-body")).toBeNull();
-      expect(card?.querySelector(".ham-surface-header")).not.toBeNull();
+      expect(card?.querySelector(".hiermark-surface-body")).toBeNull();
+      expect(card?.querySelector(".hiermark-surface-header")).not.toBeNull();
     });
   });
 
@@ -153,7 +153,7 @@ describe("HamCanvas", () => {
       recorded.push({ id: this.getAttribute("data-surface-id"), inline: opts?.inline });
     };
     try {
-      let handle: HamCanvasHandle | null = null;
+      let handle: HiermarkCanvasHandle | null = null;
       const rootJson = {
         type: "doc",
         content: [
@@ -170,7 +170,7 @@ describe("HamCanvas", () => {
         ],
       };
       render(
-        <HamCanvas
+        <HiermarkCanvas
           rootSurfaceId="s_root"
           surfaces={{
             s_root: {
@@ -223,12 +223,12 @@ describe("HamCanvas", () => {
     // surface) must not leave B as an unreachable orphan.
     const onActiveChange = vi.fn();
     function Host() {
-      const [surfaces, setSurfaces] = useState<Record<HamSurfaceId, HamSurface>>({
+      const [surfaces, setSurfaces] = useState<Record<HiermarkSurfaceId, HiermarkSurface>>({
         s_root: surface("s_root", "# Root\n\n## A", "Root"),
         s_a: surface("s_a", "# A\n\n## inner", "A"),
         s_b: surface("s_b", "# B branch", "B"),
       });
-      const [edges, setEdges] = useState<HamBranchEdge[]>([
+      const [edges, setEdges] = useState<HiermarkBranchEdge[]>([
         { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
         { id: "e_b", fromSurfaceId: "s_a", fromBlockId: "blk_inner", toSurfaceId: "s_b", order: 0 },
       ]);
@@ -244,7 +244,7 @@ describe("HamCanvas", () => {
         },
       });
       return (
-        <HamCanvas
+        <HiermarkCanvas
           rootSurfaceId="s_root"
           surfaces={surfaces}
           branchEdges={edges}
@@ -260,25 +260,25 @@ describe("HamCanvas", () => {
 
     // Navigate to B (root -> open A -> open B) so B is the active surface.
     await waitFor(() => {
-      const a = container.querySelector('[data-surface-id="s_a"] .ham-surface-open');
+      const a = container.querySelector('[data-surface-id="s_a"] .hiermark-surface-open');
       expect(a).not.toBeNull();
     });
     fireEvent.click(
-      container.querySelector<HTMLElement>('[data-surface-id="s_a"] .ham-surface-open')!,
+      container.querySelector<HTMLElement>('[data-surface-id="s_a"] .hiermark-surface-open')!,
     );
     await waitFor(() => {
-      const b = container.querySelector('[data-surface-id="s_b"] .ham-surface-open');
+      const b = container.querySelector('[data-surface-id="s_b"] .hiermark-surface-open');
       expect(b).not.toBeNull();
     });
     fireEvent.click(
-      container.querySelector<HTMLElement>('[data-surface-id="s_b"] .ham-surface-open')!,
+      container.querySelector<HTMLElement>('[data-surface-id="s_b"] .hiermark-surface-open')!,
     );
     await waitFor(() =>
       expect(onActiveChange).toHaveBeenLastCalledWith({ surfaceId: "s_b", blockId: null }),
     );
 
     // Delete A (ancestor of active B).
-    const del = container.querySelector<HTMLElement>('[data-surface-id="s_a"] .ham-surface-delete');
+    const del = container.querySelector<HTMLElement>('[data-surface-id="s_a"] .hiermark-surface-delete');
     expect(del).not.toBeNull();
     fireEvent.click(del!);
 
@@ -294,11 +294,11 @@ describe("HamCanvas", () => {
       s_root: surface("s_root", "# Root\n\n## A", "Root"),
       s_a: surface("s_a", "# A branch", "A"),
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -306,8 +306,8 @@ describe("HamCanvas", () => {
         onActiveChange={onActiveChange}
       />,
     );
-    await waitFor(() => expect(container.querySelector(".ham-editor")).not.toBeNull());
-    const canvasEl = container.querySelector<HTMLElement>(".ham-canvas")!;
+    await waitFor(() => expect(container.querySelector(".hiermark-editor")).not.toBeNull());
+    const canvasEl = container.querySelector<HTMLElement>(".hiermark-canvas")!;
 
     fireEvent.keyDown(canvasEl, { key: "ArrowRight", altKey: true });
     expect(onActiveChange).toHaveBeenLastCalledWith({ surfaceId: "s_a", blockId: null });
@@ -321,11 +321,11 @@ describe("HamCanvas", () => {
       s_root: surface("s_root", "# Root\n\n## A", "Root"),
       s_a: surface("s_a", "# A branch", "A"),
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -336,14 +336,14 @@ describe("HamCanvas", () => {
     let collapseBtn: HTMLElement | null = null;
     await waitFor(() => {
       collapseBtn = container.querySelector<HTMLElement>(
-        '[data-surface-id="s_a"] .ham-surface-collapse',
+        '[data-surface-id="s_a"] .hiermark-surface-collapse',
       );
       expect(collapseBtn).not.toBeNull();
     });
     expect(collapseBtn!.getAttribute("aria-expanded")).toBe("true");
     fireEvent.click(collapseBtn!);
     await waitFor(() => {
-      const btn = container.querySelector('[data-surface-id="s_a"] .ham-surface-collapse')!;
+      const btn = container.querySelector('[data-surface-id="s_a"] .hiermark-surface-collapse')!;
       expect(btn.getAttribute("aria-expanded")).toBe("false");
     });
   });
@@ -354,11 +354,11 @@ describe("HamCanvas", () => {
       s_root: surface("s_root", "# Root\n\n## A", "Root"),
       s_a: surface("s_a", "# A branch", "A"),
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -368,7 +368,7 @@ describe("HamCanvas", () => {
     );
     let editorEl: Element | null = null;
     await waitFor(() => {
-      editorEl = container.querySelector(".ham-editor .ProseMirror");
+      editorEl = container.querySelector(".hiermark-editor .ProseMirror");
       expect(editorEl).not.toBeNull();
     });
     // Alt+ArrowRight from inside the editor must not jump surfaces (word nav).
@@ -382,11 +382,11 @@ describe("HamCanvas", () => {
       s_root: surface("s_root", "# Root\n\n## A", "Root"),
       s_a: surface("s_a", "# A branch", "A"),
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -396,15 +396,15 @@ describe("HamCanvas", () => {
       />,
     );
     // In expanded mode, both surfaces mount full editors.
-    await waitFor(() => expect(container.querySelectorAll(".ham-editor").length).toBe(2));
-    const body = container.querySelector<HTMLElement>('[data-surface-id="s_a"] .ham-surface-body')!;
+    await waitFor(() => expect(container.querySelectorAll(".hiermark-editor").length).toBe(2));
+    const body = container.querySelector<HTMLElement>('[data-surface-id="s_a"] .hiermark-surface-body')!;
     fireEvent.mouseDown(body);
     expect(onActiveChange).toHaveBeenLastCalledWith({ surfaceId: "s_a", blockId: null });
   });
 
   it("applies the appearance class on the canvas root", async () => {
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root", "Root") }}
         branchEdges={[]}
@@ -412,12 +412,12 @@ describe("HamCanvas", () => {
         layout={{ appearance: "flat" }}
       />,
     );
-    await waitFor(() => expect(container.querySelector(".ham-canvas")).not.toBeNull());
-    expect(container.querySelector(".ham-canvas.ham-appearance-flat")).not.toBeNull();
+    await waitFor(() => expect(container.querySelector(".hiermark-canvas")).not.toBeNull());
+    expect(container.querySelector(".hiermark-canvas.hiermark-appearance-flat")).not.toBeNull();
   });
 
   it("renders a positioned add-sibling rail and inserts at the clicked gap", async () => {
-    const createSiblingSurface = vi.fn(async (_event: HamCreateSiblingSurfaceEvent) => ({
+    const createSiblingSurface = vi.fn(async (_event: HiermarkCreateSiblingSurfaceEvent) => ({
       surface: surface("s_new", "# New", "New"),
       edge: {
         id: "e_new",
@@ -425,7 +425,7 @@ describe("HamCanvas", () => {
         fromBlockId: "blk_A",
         toSurfaceId: "s_new",
         order: 1,
-      } as HamBranchEdge,
+      } as HiermarkBranchEdge,
       activate: true as const,
     }));
     const surfaces = {
@@ -434,12 +434,12 @@ describe("HamCanvas", () => {
       s_a2: surface("s_a2", "# A2", "A2"),
     };
     // Two children of the SAME block → a sibling group with insert gaps.
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a1", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a1", order: 0 },
       { id: "e_a2", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a2", order: 1 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -451,8 +451,8 @@ describe("HamCanvas", () => {
     await waitFor(() => {
       rails = [
         ...container
-          .querySelectorAll<HTMLElement>(".ham-column")[1]!
-          .querySelectorAll<HTMLElement>(".ham-add-sibling"),
+          .querySelectorAll<HTMLElement>(".hiermark-column")[1]!
+          .querySelectorAll<HTMLElement>(".hiermark-add-sibling"),
       ];
       expect(rails).toHaveLength(3); // top, between, append
     });
@@ -469,7 +469,7 @@ describe("HamCanvas", () => {
   it("routes the gutter add-sibling affordance to createSiblingSurface", async () => {
     // After a block has one branch child, its gutter "+" becomes an add-sibling
     // "⊕" — clicking it must hit createSiblingSurface, not createSurfaceFromBlock.
-    const createSiblingSurface = vi.fn(async (event: HamCreateSiblingSurfaceEvent) => ({
+    const createSiblingSurface = vi.fn(async (event: HiermarkCreateSiblingSurfaceEvent) => ({
       surface: surface("s_sib", "# Sibling", "Sibling"),
       edge: {
         id: "e_sib",
@@ -477,21 +477,21 @@ describe("HamCanvas", () => {
         fromBlockId: event.fromBlockId,
         toSurfaceId: "s_sib",
         order: event.order ?? 1,
-      } as HamBranchEdge,
+      } as HiermarkBranchEdge,
       activate: false as const,
     }));
     let n = 0;
     function Host() {
-      const [surfaces, setSurfaces] = useState<Record<HamSurfaceId, HamSurface>>({
+      const [surfaces, setSurfaces] = useState<Record<HiermarkSurfaceId, HiermarkSurface>>({
         s_root: surface("s_root", "# Root\n\nBranch me.", "Root"),
       });
-      const [edges, setEdges] = useState<HamBranchEdge[]>([]);
+      const [edges, setEdges] = useState<HiermarkBranchEdge[]>([]);
       const handlers = makeHandlers({
         // Branch the first time → first child; keep root active so its gutter stays mounted.
         createSurfaceFromBlock: async (event) => {
           const id = `s_c${n++}`;
           const newSurface = surface(id, "# Child", "Child");
-          const edge: HamBranchEdge = {
+          const edge: HiermarkBranchEdge = {
             id: `e_${id}`,
             fromSurfaceId: event.sourceSurfaceId,
             fromBlockId: event.sourceBlockId,
@@ -505,7 +505,7 @@ describe("HamCanvas", () => {
         createSiblingSurface,
       });
       return (
-        <HamCanvas
+        <HiermarkCanvas
           rootSurfaceId="s_root"
           surfaces={surfaces}
           branchEdges={edges}
@@ -520,7 +520,7 @@ describe("HamCanvas", () => {
     let branchBtn: HTMLElement | null = null;
     await waitFor(() => {
       branchBtn = container.querySelector<HTMLElement>(
-        '.ham-branch-button[data-ham-branch-mode="branch"]',
+        '.hiermark-branch-button[data-hiermark-branch-mode="branch"]',
       );
       expect(branchBtn).not.toBeNull();
     });
@@ -530,7 +530,7 @@ describe("HamCanvas", () => {
     let sibBtn: HTMLElement | null = null;
     await waitFor(() => {
       sibBtn = container.querySelector<HTMLElement>(
-        '.ham-branch-button[data-ham-branch-mode="add-sibling"]',
+        '.hiermark-branch-button[data-hiermark-branch-mode="add-sibling"]',
       );
       expect(sibBtn).not.toBeNull();
     });
@@ -549,12 +549,12 @@ describe("HamCanvas", () => {
       s_a: surface("s_a", "# A\n\n## inner", "A"),
       s_b: surface("s_b", "# B", "B"),
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
       { id: "e_b", fromSurfaceId: "s_a", fromBlockId: "blk_inner", toSurfaceId: "s_b", order: 0 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -566,7 +566,7 @@ describe("HamCanvas", () => {
     // s_a has a child (s_b); deleting it must be refused package-side.
     let del: HTMLElement | null = null;
     await waitFor(() => {
-      del = container.querySelector<HTMLElement>('[data-surface-id="s_a"] .ham-surface-delete');
+      del = container.querySelector<HTMLElement>('[data-surface-id="s_a"] .hiermark-surface-delete');
       expect(del).not.toBeNull();
     });
     fireEvent.click(del!);
@@ -583,11 +583,11 @@ describe("HamCanvas", () => {
       s_root: surface("s_root", "# Root\n\n## A", "Root"),
       s_a: surface("s_a", "# A", "A"),
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -597,12 +597,12 @@ describe("HamCanvas", () => {
       />,
     );
     await waitFor(() => expect(container.querySelector('[data-surface-id="s_a"]')).not.toBeNull());
-    expect(container.querySelector(".ham-surface-delete")).toBeNull();
+    expect(container.querySelector(".hiermark-surface-delete")).toBeNull();
   });
 
   it("hides every branch affordance when enableBranchCreation is false", async () => {
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root\n\nBranch me.", "Root") }}
         branchEdges={[]}
@@ -611,15 +611,15 @@ describe("HamCanvas", () => {
         behavior={{ enableBranchCreation: false }}
       />,
     );
-    await waitFor(() => expect(container.querySelector(".ham-editor")).not.toBeNull());
+    await waitFor(() => expect(container.querySelector(".hiermark-editor")).not.toBeNull());
     // Give the gutter a tick to settle, then assert no branch buttons exist.
     await new Promise((r) => setTimeout(r, 50));
-    expect(container.querySelector(".ham-branch-button")).toBeNull();
+    expect(container.querySelector(".hiermark-branch-button")).toBeNull();
   });
 
   it("passes editorDefaults through to the child editor (custom branch button)", async () => {
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root\n\nBranch me.", "Root") }}
         branchEdges={[]}
@@ -637,11 +637,11 @@ describe("HamCanvas", () => {
       />,
     );
     await waitFor(() => expect(container.querySelector(".my-branch")).not.toBeNull());
-    expect(container.querySelector(".ham-branch-button")).toBeNull();
+    expect(container.querySelector(".hiermark-branch-button")).toBeNull();
   });
 
   it("shows a non-blank preview for a surface persisted as tiptap-json", async () => {
-    const jsonSurface: HamSurface = {
+    const jsonSurface: HiermarkSurface = {
       id: "s_a",
       rootBlockId: "s_a_root",
       title: "A",
@@ -653,11 +653,11 @@ describe("HamCanvas", () => {
         },
       },
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root\n\n## A", "Root"), s_a: jsonSurface }}
         branchEdges={edges}
@@ -669,7 +669,7 @@ describe("HamCanvas", () => {
     let preview: HTMLElement | null = null;
     await waitFor(() => {
       preview = container.querySelector<HTMLElement>(
-        '[data-surface-id="s_a"] .ham-surface-preview',
+        '[data-surface-id="s_a"] .hiermark-surface-preview',
       );
       expect(preview).not.toBeNull();
     });
@@ -677,9 +677,9 @@ describe("HamCanvas", () => {
   });
 
   it("publishes an imperative canvas handle via onReady", async () => {
-    let handle: HamCanvasHandle | null = null;
+    let handle: HiermarkCanvasHandle | null = null;
     render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root", "Root") }}
         branchEdges={[]}
@@ -702,12 +702,12 @@ describe("HamCanvas", () => {
       s_a1: surface("s_a1", "# A1", "A1"),
       s_a2: surface("s_a2", "# A2", "A2"),
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a1", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a1", order: 0 },
       { id: "e_a2", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a2", order: 1 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -718,15 +718,15 @@ describe("HamCanvas", () => {
     );
     let header: HTMLElement | null = null;
     await waitFor(() => {
-      header = container.querySelector<HTMLElement>(".ham-group-header");
+      header = container.querySelector<HTMLElement>(".hiermark-group-header");
       expect(header).not.toBeNull();
     });
-    expect(header!.querySelector(".ham-group-header-parent")?.textContent).toBe("Root");
+    expect(header!.querySelector(".hiermark-group-header-parent")?.textContent).toBe("Root");
   });
 
   it("adds the column-scroll class when layout.columnScroll is set", async () => {
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root", "Root") }}
         branchEdges={[]}
@@ -734,8 +734,8 @@ describe("HamCanvas", () => {
         layout={{ columnScroll: true }}
       />,
     );
-    await waitFor(() => expect(container.querySelector(".ham-canvas")).not.toBeNull());
-    expect(container.querySelector(".ham-canvas.ham-columns-scroll")).not.toBeNull();
+    await waitFor(() => expect(container.querySelector(".hiermark-canvas")).not.toBeNull());
+    expect(container.querySelector(".hiermark-canvas.hiermark-columns-scroll")).not.toBeNull();
   });
 
   it("tags each column with its widest display mode (so rail columns are compact)", async () => {
@@ -743,11 +743,11 @@ describe("HamCanvas", () => {
       s_root: surface("s_root", "# Root\n\n## A", "Root"),
       s_a: surface("s_a", "# A", "A"),
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -756,19 +756,19 @@ describe("HamCanvas", () => {
         layout={{ inactiveColumnMode: "rail" }}
       />,
     );
-    await waitFor(() => expect(container.querySelectorAll(".ham-column").length).toBe(2));
+    await waitFor(() => expect(container.querySelectorAll(".hiermark-column").length).toBe(2));
     // Active root column hosts the editor (expanded); the inactive child is a rail.
     expect(
-      container.querySelector('.ham-column[data-depth="0"]')?.getAttribute("data-col-mode"),
+      container.querySelector('.hiermark-column[data-depth="0"]')?.getAttribute("data-col-mode"),
     ).toBe("expanded");
     expect(
-      container.querySelector('.ham-column[data-depth="1"]')?.getAttribute("data-col-mode"),
+      container.querySelector('.hiermark-column[data-depth="1"]')?.getAttribute("data-col-mode"),
     ).toBe("rail");
   });
 
   it("renders custom SurfaceFrame and ColumnHeader slots", async () => {
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={{ s_root: surface("s_root", "# Root", "Root") }}
         branchEdges={[]}
@@ -779,7 +779,7 @@ describe("HamCanvas", () => {
         }}
       />,
     );
-    await waitFor(() => expect(container.querySelector(".ham-editor")).not.toBeNull());
+    await waitFor(() => expect(container.querySelector(".hiermark-editor")).not.toBeNull());
     expect(container.querySelector(".custom-frame")).not.toBeNull();
     expect(container.querySelector(".custom-col-header")?.textContent).toBe("cols:1");
   });
@@ -790,11 +790,11 @@ describe("HamCanvas", () => {
       s_root: surface("s_root", "# Root\n\n## A", "Root"),
       s_a: surface("s_a", "# A branch", "A branch"),
     };
-    const edges: HamBranchEdge[] = [
+    const edges: HiermarkBranchEdge[] = [
       { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
     ];
     const { container } = render(
-      <HamCanvas
+      <HiermarkCanvas
         rootSurfaceId="s_root"
         surfaces={surfaces}
         branchEdges={edges}
@@ -805,7 +805,7 @@ describe("HamCanvas", () => {
     let open: HTMLElement | null = null;
     await waitFor(() => {
       const item = container.querySelector('[data-surface-id="s_a"]');
-      open = item?.querySelector<HTMLElement>(".ham-surface-open") ?? null;
+      open = item?.querySelector<HTMLElement>(".hiermark-surface-open") ?? null;
       expect(open).not.toBeNull();
     });
     fireEvent.click(open!);

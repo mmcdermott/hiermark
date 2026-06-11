@@ -1,6 +1,6 @@
 ---
-"@ham/canvas": minor
-"@ham/editor": patch
+"@hiermark/canvas": minor
+"@hiermark/editor": patch
 ---
 
 Canvas correctness batch — autosave can no longer lose edits, and behavior
@@ -25,10 +25,10 @@ flags are enforced at the action layer:
 - `reorderSiblings` resolves `true`/`false` for success/failure, and the
   reorder undo/redo stacks only commit their bookkeeping on success — a
   rejected handler no longer desynchronizes undo history.
-- `validateHamTopology` reports a new `duplicate-sibling-order` issue;
+- `validateHiermarkTopology` reports a new `duplicate-sibling-order` issue;
   add-sibling inserters are keyed by visual gap (duplicate orders no longer
   drop an inserter); `revealBranchFromBlock`'s parameter is typed
-  `HamBlockId`.
+  `HiermarkBlockId`.
 - The active block id is passed only to the active surface's editor (block
   ids are surface-scoped; a colliding id in another expanded surface no longer
   lights up as active).

@@ -2,7 +2,7 @@ import { InputRule } from "@tiptap/core";
 import { BlockMath, InlineMath } from "@tiptap/extension-mathematics";
 
 /** What a math node click reports so the host can open a LaTeX editor. */
-export interface HamMathClick {
+export interface HiermarkMathClick {
   /** The node's document position (where `updateInlineMath`/`updateBlockMath` write). */
   pos: number;
   /** Current LaTeX source. */
@@ -11,9 +11,9 @@ export interface HamMathClick {
   kind: "inline" | "block";
 }
 
-export interface HamMathOptions {
+export interface HiermarkMathOptions {
   /** Fired when an editable math node is clicked (drives the edit popover). */
-  onClick?: (info: HamMathClick) => void;
+  onClick?: (info: HiermarkMathClick) => void;
 }
 
 const KATEX_BASE = { throwOnError: false } as const;
@@ -24,7 +24,7 @@ const KATEX_BASE = { throwOnError: false } as const;
  * math typed mid-sentence never converted. We override `addInputRules` with a
  * single-`$` rule (and keep `$$…$$` for block math, below).
  */
-export const HamInlineMath = (opts: HamMathOptions = {}) =>
+export const HiermarkInlineMath = (opts: HiermarkMathOptions = {}) =>
   InlineMath.extend({
     addInputRules() {
       return [
@@ -49,7 +49,7 @@ export const HamInlineMath = (opts: HamMathOptions = {}) =>
  * this fires on `$$…$$` and lifts the whole host paragraph into the block node
  * when the rule consumes it entirely (mirrors the extension's own logic).
  */
-export const HamBlockMath = (opts: HamMathOptions = {}) =>
+export const HiermarkBlockMath = (opts: HiermarkMathOptions = {}) =>
   BlockMath.extend({
     addInputRules() {
       return [

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { projectBlockTree, type BlockNodeMeta } from "../src/snapshot/projectBlockTree";
 import { resolveBranchMode, isBranchable, SMART_RULES } from "../src/snapshot/blockTreePolicy";
-import type { HamBranchabilityRules, HamSurfaceSnapshot } from "../src/types";
+import type { HiermarkBranchabilityRules, HiermarkSurfaceSnapshot } from "../src/types";
 
 const OPTS = { surfaceId: "s1", rootBlockId: "root", rootTitle: "Root" };
 
@@ -16,7 +16,7 @@ function meta(p: Partial<BlockNodeMeta> & { id: string }): BlockNodeMeta {
   };
 }
 
-const block = (snap: HamSurfaceSnapshot, id: string) => snap.blocks[id]!;
+const block = (snap: HiermarkSurfaceSnapshot, id: string) => snap.blocks[id]!;
 
 describe("resolveBranchMode — smart default", () => {
   // root → h1(Method) → p1 leaf ; h1 also forks: h1 → h2(Data) → p2 leaf
@@ -104,20 +104,20 @@ describe("resolveBranchMode — rules variants", () => {
   );
 
   it("delegate-down keeps only the chain tail branchable", () => {
-    const rules: HamBranchabilityRules = { kind: "rules", passThrough: "delegate-down" };
+    const rules: HiermarkBranchabilityRules = { kind: "rules", passThrough: "delegate-down" };
     expect(resolveBranchMode(block(chain, "liA"), chain, rules)).toBe("none");
     expect(resolveBranchMode(block(chain, "liA1"), chain, rules)).toBe("none");
     expect(resolveBranchMode(block(chain, "liA1a"), chain, rules)).toBe("branch");
   });
 
   it("singleChildContainers:true branches every container in the chain", () => {
-    const rules: HamBranchabilityRules = { kind: "rules", singleChildContainers: true };
+    const rules: HiermarkBranchabilityRules = { kind: "rules", singleChildContainers: true };
     expect(resolveBranchMode(block(chain, "liA"), chain, rules)).toBe("branch");
     expect(resolveBranchMode(block(chain, "liA1"), chain, rules)).toBe("branch");
   });
 
   it("maxDepth caps branchability by projected depth", () => {
-    const rules: HamBranchabilityRules = { kind: "rules", maxDepth: 1 };
+    const rules: HiermarkBranchabilityRules = { kind: "rules", maxDepth: 1 };
     // liA at depth 1 branchable; liA1a deeper than 1 → none.
     expect(block(chain, "liA").depth).toBe(1);
     expect(resolveBranchMode(block(chain, "liA"), chain, rules)).toBe("branch");

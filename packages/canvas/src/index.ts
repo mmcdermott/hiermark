@@ -1,27 +1,27 @@
-// @ham/canvas — a 2D canvas of editable HAM surfaces linked by branch edges.
+// @hiermark/canvas — a 2D canvas of editable Hiermark surfaces linked by branch edges.
 
-export const HAM_CANVAS_VERSION = "0.1.0";
+export const HIERMARK_CANVAS_VERSION = "0.1.0";
 
 // Component + hook
-export { HamCanvas } from "./HamCanvas";
-export { useHamCanvas, siblingEdges, buildReorderEvent } from "./useHamCanvas";
+export { HiermarkCanvas } from "./HiermarkCanvas";
+export { useHiermarkCanvas, siblingEdges, buildReorderEvent } from "./useHiermarkCanvas";
 export { computeSiblingInsert } from "./topology/reorderBranchSiblings";
 export type { SiblingInsert } from "./topology/reorderBranchSiblings";
 export { siblingEdgeOrder } from "./topology/siblingOrder";
-export type { UseHamCanvasResult, HamCanvasActions } from "./useHamCanvas";
+export type { UseHiermarkCanvasResult, HiermarkCanvasActions } from "./useHiermarkCanvas";
 
 // Pure topology
 export {
-  projectHamColumns,
+  projectHiermarkColumns,
   buildProjectionContext,
   projectColumnsFromContext,
-} from "./topology/projectHamColumns";
-export type { HamProjectionContext, HamProjectionContextInput } from "./topology/projectHamColumns";
-export { getHamActivePath } from "./topology/getHamActivePath";
+} from "./topology/projectHiermarkColumns";
+export type { HiermarkProjectionContext, HiermarkProjectionContextInput } from "./topology/projectHiermarkColumns";
+export { getHiermarkActivePath } from "./topology/getHiermarkActivePath";
 export { buildIndices, collectDescendants } from "./topology/buildIndices";
-export type { HamTopologyIndices } from "./topology/buildIndices";
-export { validateHamTopology } from "./topology/validateHamTopology";
-export type { HamTopologyIssue, HamTopologyIssueKind } from "./topology/validateHamTopology";
+export type { HiermarkTopologyIndices } from "./topology/buildIndices";
+export { validateHiermarkTopology } from "./topology/validateHiermarkTopology";
+export type { HiermarkTopologyIssue, HiermarkTopologyIssueKind } from "./topology/validateHiermarkTopology";
 export { computePathState, pickDisplayMode, buildPathStateContext } from "./topology/pathState";
 export type { PathStateContext } from "./topology/pathState";
 export {
@@ -34,9 +34,9 @@ export {
 export { defaultLayout, defaultBehavior, resolveLayout, resolveBehavior } from "./defaults";
 
 // Connectors (cross-column edge overlay)
-export { HamConnectorsOverlay, DefaultConnector } from "./connectors/HamConnectorsOverlay";
+export { HiermarkConnectorsOverlay, DefaultConnector } from "./connectors/HiermarkConnectorsOverlay";
 export { visibleEdges, connectorState, geometryFor } from "./connectors/connectors";
-export type { EdgeGeometry, HamHoverTarget } from "./connectors/connectors";
+export type { EdgeGeometry, HiermarkHoverTarget } from "./connectors/connectors";
 
 // Public types
 export type * from "./types";

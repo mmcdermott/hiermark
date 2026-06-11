@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 
-// The demos mount real HAM editors/canvas; jsdom needs these shims.
+// The demos mount real Hiermark editors/canvas; jsdom needs these shims.
 if (!globalThis.ResizeObserver) {
   globalThis.ResizeObserver = class {
     observe() {}

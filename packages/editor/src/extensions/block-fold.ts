@@ -3,12 +3,12 @@ import type { Node as PMNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
-import type { HamBlockId } from "../types";
+import type { HiermarkBlockId } from "../types";
 
 export interface FoldNodeMeta {
   /** Heading level 1–6, or null for a body block. */
   level: number | null;
-  id: HamBlockId | null;
+  id: HiermarkBlockId | null;
 }
 
 export interface FoldResult {
@@ -24,7 +24,7 @@ export interface FoldResult {
  * section. A heading is hidden only by a *folded ancestor*, never by its own
  * fold (its toggle must stay visible). Reused almost verbatim from the reference.
  */
-export function computeFold(nodes: FoldNodeMeta[], folded: Set<HamBlockId>): FoldResult {
+export function computeFold(nodes: FoldNodeMeta[], folded: Set<HiermarkBlockId>): FoldResult {
   const hidden = new Array<boolean>(nodes.length).fill(false);
   const toggleCollapsed = new Array<boolean | null>(nodes.length).fill(null);
   const stack: { level: number; hidden: boolean }[] = [];
@@ -48,9 +48,9 @@ export function computeFold(nodes: FoldNodeMeta[], folded: Set<HamBlockId>): Fol
 }
 
 export interface BlockFoldContext {
-  folded: Set<HamBlockId>;
+  folded: Set<HiermarkBlockId>;
   editable: boolean;
-  onToggle: (blockId: HamBlockId) => void;
+  onToggle: (blockId: HiermarkBlockId) => void;
 }
 
 export interface BlockFoldOptions {
@@ -58,16 +58,16 @@ export interface BlockFoldOptions {
 }
 
 /** Plugin key — dispatch `tr.setMeta(blockFoldKey, true)` to rebuild on fold change. */
-export const blockFoldKey = new PluginKey<DecorationSet>("hamBlockFold");
+export const blockFoldKey = new PluginKey<DecorationSet>("hiermarkBlockFold");
 
-function foldToggle(blockId: HamBlockId, collapsed: boolean, onToggle: () => void): HTMLElement {
+function foldToggle(blockId: HiermarkBlockId, collapsed: boolean, onToggle: () => void): HTMLElement {
   const btn = document.createElement("button");
   btn.type = "button";
-  btn.className = "ham-fold-toggle" + (collapsed ? " ham-fold-collapsed" : "");
+  btn.className = "hiermark-fold-toggle" + (collapsed ? " hiermark-fold-collapsed" : "");
   btn.textContent = collapsed ? "▸" : "▾";
   btn.setAttribute("aria-label", collapsed ? "Expand section" : "Collapse section");
   btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
-  btn.setAttribute("data-ham-fold-for", blockId);
+  btn.setAttribute("data-hiermark-fold-for", blockId);
   btn.addEventListener("mousedown", (e) => e.preventDefault());
   btn.addEventListener("click", (e) => {
     e.preventDefault();
@@ -94,7 +94,7 @@ function build(doc: PMNode, getContext: () => BlockFoldContext | null): Decorati
   metas.forEach((meta, i) => {
     const { pos, size } = positions[i]!;
     if (hidden[i]) {
-      decos.push(Decoration.node(pos, pos + size, { class: "ham-folded" }));
+      decos.push(Decoration.node(pos, pos + size, { class: "hiermark-folded" }));
     }
     const collapsed = toggleCollapsed[i];
     if (collapsed != null && meta.id) {
@@ -122,7 +122,7 @@ function build(doc: PMNode, getContext: () => BlockFoldContext | null): Decorati
  * headings. Fold state is supplied by the host through `getContext`.
  */
 export const BlockFold = Extension.create<BlockFoldOptions>({
-  name: "hamBlockFold",
+  name: "hiermarkBlockFold",
 
   addOptions() {
     return { getContext: () => null };

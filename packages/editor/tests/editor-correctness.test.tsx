@@ -2,20 +2,20 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, waitFor, cleanup, act, fireEvent } from "@testing-library/react";
 import type { Editor } from "@tiptap/core";
 import * as Y from "yjs";
-import { HamEditor } from "../src/HamEditor";
+import { HiermarkEditor } from "../src/HiermarkEditor";
 import type {
-  HamCollaborationProvider,
-  HamCollaborationRuntime,
-  HamEditorHandle,
-  HamEditorProps,
+  HiermarkCollaborationProvider,
+  HiermarkCollaborationRuntime,
+  HiermarkEditorHandle,
+  HiermarkEditorProps,
 } from "../src/types";
 
 afterEach(() => cleanup());
 
-async function mount(props: Partial<HamEditorProps> = {}) {
-  let handle: HamEditorHandle | null = null;
+async function mount(props: Partial<HiermarkEditorProps> = {}) {
+  let handle: HiermarkEditorHandle | null = null;
   const utils = render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown: "Hello world.\n" }}
@@ -41,7 +41,7 @@ describe("popovers close on document change (stale-position protection)", () => 
       return el!;
     });
     fireEvent.click(mathEl);
-    await waitFor(() => expect(document.querySelector(".ham-math-popover")).not.toBeNull());
+    await waitFor(() => expect(document.querySelector(".hiermark-math-popover")).not.toBeNull());
 
     // Any doc change (here: a programmatic insert standing in for a remote
     // collab edit or an upload resolving) must close the popover — its captured
@@ -49,15 +49,15 @@ describe("popovers close on document change (stale-position protection)", () => 
     act(() => {
       editor.commands.insertContentAt(1, "X");
     });
-    await waitFor(() => expect(document.querySelector(".ham-math-popover")).toBeNull());
+    await waitFor(() => expect(document.querySelector(".hiermark-math-popover")).toBeNull());
   });
 });
 
 describe("snapshot cache invalidation", () => {
   it("does not serve a stale snapshot after surfaceId changes for the same doc", async () => {
-    let handle: HamEditorHandle | null = null;
+    let handle: HiermarkEditorHandle | null = null;
     const view = render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s1"
         rootBlockId="blk_root"
         value={{ kind: "markdown", markdown: "Same doc.\n" }}
@@ -70,7 +70,7 @@ describe("snapshot cache invalidation", () => {
     expect(handle!.getSnapshot().surfaceId).toBe("s1");
 
     view.rerender(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s2"
         rootBlockId="blk_root"
         value={{ kind: "markdown", markdown: "Same doc.\n" }}
@@ -87,9 +87,9 @@ describe("snapshot cache invalidation", () => {
 
 describe("revision swap while in source mode", () => {
   it("resyncs the source textarea to the new revision", async () => {
-    let handle: HamEditorHandle | null = null;
+    let handle: HiermarkEditorHandle | null = null;
     const view = render(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s1"
         rootBlockId="blk_root"
         value={{ kind: "markdown", markdown: "Version one.\n" }}
@@ -104,14 +104,14 @@ describe("revision swap while in source mode", () => {
       handle!.setMode("source");
     });
     const ta = await waitFor(() => {
-      const el = document.querySelector<HTMLTextAreaElement>(".ham-source-editor");
+      const el = document.querySelector<HTMLTextAreaElement>(".hiermark-source-editor");
       expect(el).not.toBeNull();
       return el!;
     });
     expect(ta.value).toContain("Version one.");
 
     view.rerender(
-      <HamEditor
+      <HiermarkEditor
         surfaceId="s1"
         rootBlockId="blk_root"
         value={{ kind: "markdown", markdown: "Version two.\n" }}
@@ -133,17 +133,17 @@ describe("collab gate timeout", () => {
     vi.useFakeTimers();
     try {
       const ydoc = new Y.Doc();
-      const provider: HamCollaborationProvider = {
+      const provider: HiermarkCollaborationProvider = {
         synced: true, // pre-synced (e.g. a custom runtime reusing a live socket)
         hasUnsyncedChanges: false,
         on() {},
         off() {},
         destroy() {},
       };
-      const runtime: HamCollaborationRuntime = { ydoc, connect: async () => provider };
+      const runtime: HiermarkCollaborationRuntime = { ydoc, connect: async () => provider };
       const statuses: string[] = [];
       render(
-        <HamEditor
+        <HiermarkEditor
           surfaceId="s1"
           rootBlockId="blk_root"
           value={{ kind: "markdown", markdown: "Hi.\n" }}

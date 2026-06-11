@@ -59,7 +59,7 @@ pnpm format:check ✓
 - **Pixel-precise SVG branch connectors** — relationships are conveyed by the
   column layout, path-state borders, the outline mode, and per-block child chips
   (in the editor gutter). A drawn connector line is a visual nicety left for the
-  docs polish; the `.ham-branch-connector` style hook exists.
+  docs polish; the `.hiermark-branch-connector` style hook exists.
 - **Mod+Enter keyboard branch** — branching from the keyboard needs the active
   editor's handle; Arrow navigation covers the core "navigate by keyboard"
   requirement. Wired opportunistically in the docs demo.
@@ -67,5 +67,5 @@ pnpm format:check ✓
 ## TODO(next)
 
 - Phase 5: the interactive documentation site (`apps/docs`) on GitHub Pages —
-  what-is-HAM, getting-started, live demos (simple branching, multi-surface
+  what-is-Hiermark, getting-started, live demos (simple branching, multi-surface
   column, annotations, progressive-decomposition paper), API reference.

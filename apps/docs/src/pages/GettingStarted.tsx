@@ -12,17 +12,17 @@ export function GettingStarted() {
       <h2>Getting started</h2>
 
       <h3>Install</h3>
-      <Code>{`pnpm add @ham/editor @ham/canvas react react-dom`}</Code>
+      <Code>{`pnpm add @hiermark/editor @hiermark/canvas react react-dom`}</Code>
       <p>Import each package's stylesheet once (they ship CSS variables you can override):</p>
-      <Code>{`import "@ham/editor/styles.css";
-import "@ham/canvas/styles.css";`}</Code>
+      <Code>{`import "@hiermark/editor/styles.css";
+import "@hiermark/canvas/styles.css";`}</Code>
 
       <h3>A single editable surface</h3>
-      <Code>{`import { HamEditor, createExampleAnnotationRegistry } from "@ham/editor";
+      <Code>{`import { HiermarkEditor, createExampleAnnotationRegistry } from "@hiermark/editor";
 
 export function MySurface() {
   return (
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       branchPolicy="off"
@@ -39,14 +39,14 @@ export function MySurface() {
         The canvas is controlled: you own <code>surfaces</code> and <code>branchEdges</code>, and
         you implement handlers that create/reorder/delete them. The packages never persist for you.
       </p>
-      <Code>{`import { HamCanvas } from "@ham/canvas";
+      <Code>{`import { HiermarkCanvas } from "@hiermark/canvas";
 
 function App() {
   const [surfaces, setSurfaces] = useState(initialSurfaces);
   const [edges, setEdges] = useState([]);
 
   return (
-    <HamCanvas
+    <HiermarkCanvas
       rootSurfaceId="s_root"
       surfaces={surfaces}
       branchEdges={edges}
@@ -72,9 +72,9 @@ function App() {
       <h3>Customizing the branch affordance</h3>
       <p>
         The branch button (a full-height <code>+</code> on each block's right) and the branch-child
-        chips are replaceable via <code>HamEditorSlots</code> — pass any component you like.
+        chips are replaceable via <code>HiermarkEditorSlots</code> — pass any component you like.
       </p>
-      <Code>{`<HamEditor
+      <Code>{`<HiermarkEditor
   surfaceId="s1"
   value={{ kind: "markdown", markdown }}
   slots={{
@@ -89,10 +89,10 @@ function App() {
 
       <h3>Collaboration</h3>
       <p>
-        Pass a <code>collaboration</code> config to <code>HamEditor</code>. The editor owns the
+        Pass a <code>collaboration</code> config to <code>HiermarkEditor</code>. The editor owns the
         Y.Doc and only mounts after the provider syncs, so it never duplicates initial content.
       </p>
-      <Code>{`<HamEditor
+      <Code>{`<HiermarkEditor
   surfaceId="s1"
   value={{ kind: "markdown", markdown }}
   collaboration={{

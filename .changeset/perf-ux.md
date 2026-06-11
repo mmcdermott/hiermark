@@ -1,6 +1,6 @@
 ---
-"@ham/canvas": minor
-"@ham/editor": patch
+"@hiermark/canvas": minor
+"@hiermark/editor": patch
 ---
 
 Performance + keyboard-UX batch:

@@ -24,7 +24,7 @@ describe("LinkPopover", () => {
         onClose={onClose}
       />,
     );
-    const input = document.querySelector<HTMLInputElement>(".ham-link-input")!;
+    const input = document.querySelector<HTMLInputElement>(".hiermark-link-input")!;
     fireEvent.change(input, { target: { value: "https://example.com/x" } });
     fireEvent.keyDown(input, { key: "Enter" });
     expect(onApply).toHaveBeenCalledWith(1, 5, "https://example.com/x");
@@ -42,7 +42,7 @@ describe("LinkPopover", () => {
         onClose={() => {}}
       />,
     );
-    const input = document.querySelector<HTMLInputElement>(".ham-link-input")!;
+    const input = document.querySelector<HTMLInputElement>(".hiermark-link-input")!;
     fireEvent.change(input, { target: { value: "   " } });
     fireEvent.keyDown(input, { key: "Enter" });
     expect(onRemove).toHaveBeenCalledWith(1, 5);
@@ -59,15 +59,15 @@ describe("LinkPopover", () => {
         onClose={() => {}}
       />,
     );
-    const removeBtn = document.querySelector<HTMLButtonElement>(".ham-link-remove")!;
+    const removeBtn = document.querySelector<HTMLButtonElement>(".hiermark-link-remove")!;
     expect(removeBtn).not.toBeNull();
-    expect(document.querySelector("a.ham-link-btn")?.getAttribute("href")).toBe("https://x.com");
+    expect(document.querySelector("a.hiermark-link-btn")?.getAttribute("href")).toBe("https://x.com");
     fireEvent.click(removeBtn);
     expect(onRemove).toHaveBeenCalledWith(1, 5);
   });
 
   it("renders nothing when closed", () => {
     render(<LinkPopover open={null} onApply={() => {}} onRemove={() => {}} onClose={() => {}} />);
-    expect(document.querySelector(".ham-link-popover")).toBeNull();
+    expect(document.querySelector(".hiermark-link-popover")).toBeNull();
   });
 });

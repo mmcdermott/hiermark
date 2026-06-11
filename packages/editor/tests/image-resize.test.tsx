@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
 import type { Editor } from "@tiptap/core";
-import { HamEditor } from "../src/HamEditor";
-import type { HamEditorHandle } from "../src/types";
+import { HiermarkEditor } from "../src/HiermarkEditor";
+import type { HiermarkEditorHandle } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
@@ -10,9 +10,9 @@ beforeAll(() => {
 });
 
 async function mount(markdown: string) {
-  let handle: HamEditorHandle | null = null;
+  let handle: HiermarkEditorHandle | null = null;
   render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown }}

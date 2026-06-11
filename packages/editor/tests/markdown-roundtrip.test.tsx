@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { render, waitFor, cleanup } from "@testing-library/react";
-import { HamEditor } from "../src/HamEditor";
-import type { HamEditorHandle } from "../src/types";
+import { HiermarkEditor } from "../src/HiermarkEditor";
+import type { HiermarkEditorHandle } from "../src/types";
 
 afterEach(() => cleanup());
 beforeAll(() => {
@@ -10,9 +10,9 @@ beforeAll(() => {
 
 /** Mount an editor on `markdown`, then read its serialized markdown back out. */
 async function roundtrip(markdown: string): Promise<string> {
-  let handle: HamEditorHandle | null = null;
+  let handle: HiermarkEditorHandle | null = null;
   render(
-    <HamEditor
+    <HiermarkEditor
       surfaceId="s1"
       rootBlockId="blk_root"
       value={{ kind: "markdown", markdown }}
@@ -90,7 +90,7 @@ describe("markdown round-trip fidelity", () => {
     expect(md).toMatch(/\|\s*3\s*\|\s*4\s*\|/);
   });
 
-  it("preserves inline and block math (HAM single-$ convention)", async () => {
+  it("preserves inline and block math (Hiermark single-$ convention)", async () => {
     const inline = await roundtrip("Euler: $e^{i\\pi} + 1 = 0$ is neat.");
     expect(inline).toContain("$e^{i\\pi} + 1 = 0$");
 

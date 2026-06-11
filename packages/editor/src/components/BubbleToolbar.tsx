@@ -125,7 +125,7 @@ export function BubbleToolbar({ editor, enabled = true }: BubbleToolbarProps) {
       <div
         ref={refs.setFloating}
         style={floatingStyles}
-        className="ham-bubble-toolbar"
+        className="hiermark-bubble-toolbar"
         role="toolbar"
         aria-label="Text formatting"
         // Don't let clicking the toolbar collapse the selection.
@@ -135,7 +135,7 @@ export function BubbleToolbar({ editor, enabled = true }: BubbleToolbarProps) {
           <button
             key={b.name}
             type="button"
-            className={"ham-bubble-btn" + (b.active(editor) ? " ham-bubble-btn-active" : "")}
+            className={"hiermark-bubble-btn" + (b.active(editor) ? " hiermark-bubble-btn-active" : "")}
             data-mark={b.name}
             title={b.title}
             aria-label={b.title}

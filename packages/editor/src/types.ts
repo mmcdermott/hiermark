@@ -5,16 +5,16 @@ import type { ComponentType } from "react";
 // Core identity + block tree (spec §2.1, §2.2)
 // ---------------------------------------------------------------------------
 
-export type HamSurfaceId = string;
-export type HamBlockId = string;
-export type HamBranchEdgeId = string;
+export type HiermarkSurfaceId = string;
+export type HiermarkBlockId = string;
+export type HiermarkBranchEdgeId = string;
 
 /** A stable, addressable structural node inside a surface's content. */
-export interface HamBlockSnapshot {
-  id: HamBlockId;
+export interface HiermarkBlockSnapshot {
+  id: HiermarkBlockId;
   type: string;
-  parentId: HamBlockId | null;
-  childIds: HamBlockId[];
+  parentId: HiermarkBlockId | null;
+  childIds: HiermarkBlockId[];
   /** Index among siblings of the same parent. */
   order: number;
   /** Distance from the synthetic root (root = 0). */
@@ -26,17 +26,17 @@ export interface HamBlockSnapshot {
 }
 
 /** A tree-shaped snapshot of one surface's block structure. */
-export interface HamSurfaceSnapshot {
-  surfaceId: HamSurfaceId;
-  rootBlockId: HamBlockId;
-  blocks: Record<HamBlockId, HamBlockSnapshot>;
+export interface HiermarkSurfaceSnapshot {
+  surfaceId: HiermarkSurfaceId;
+  rootBlockId: HiermarkBlockId;
+  blocks: Record<HiermarkBlockId, HiermarkBlockSnapshot>;
   /** Preorder traversal of every block id, root first. */
-  blockOrder: HamBlockId[];
+  blockOrder: HiermarkBlockId[];
   revision?: string | number;
 }
 
 /** How a block may be branched at a given moment. */
-export type HamBranchMode = "branch" | "add-sibling" | "none";
+export type HiermarkBranchMode = "branch" | "add-sibling" | "none";
 
 /**
  * Declarative branchability evaluated against the projected snapshot tree.
@@ -44,7 +44,7 @@ export type HamBranchMode = "branch" | "add-sibling" | "none";
  * `{ kind: "rules", leaves: true, multiChildContainers: true,
  *    singleChildContainers: false, passThrough: "hoist-up", alwaysHeadings: true }`.
  */
-export interface HamBranchabilityRules {
+export interface HiermarkBranchabilityRules {
   kind: "rules";
   /** Branch leaf blocks (no children). Default true. */
   leaves?: boolean;
@@ -78,21 +78,21 @@ export interface HamBranchabilityRules {
  *   child chains, headings always (per-block, no whole-subtree bubble-up).
  * - `"any-nonempty-block"` / `"headings-only"` / `"root-only"` — simple rules.
  */
-export type HamBranchPolicy =
+export type HiermarkBranchPolicy =
   | "bubble-up"
   | "off"
   | "smart"
   | "any-nonempty-block"
   | "headings-only"
   | "root-only"
-  | HamBranchabilityRules
-  | ((block: HamBlockSnapshot, snapshot: HamSurfaceSnapshot) => boolean);
+  | HiermarkBranchabilityRules
+  | ((block: HiermarkBlockSnapshot, snapshot: HiermarkSurfaceSnapshot) => boolean);
 
 // ---------------------------------------------------------------------------
 // Content (spec §5.3)
 // ---------------------------------------------------------------------------
 
-export type HamEditorContent =
+export type HiermarkEditorContent =
   | { kind: "tiptap-json"; json: unknown }
   | { kind: "markdown"; markdown: string };
 
@@ -101,61 +101,61 @@ export type HamEditorContent =
 // ---------------------------------------------------------------------------
 
 /** A branch child of a block, passed by the canvas into the editor for indicators. */
-export interface HamBranchChildSummary {
-  edgeId: HamBranchEdgeId;
-  surfaceId: HamSurfaceId;
+export interface HiermarkBranchChildSummary {
+  edgeId: HiermarkBranchEdgeId;
+  surfaceId: HiermarkSurfaceId;
   title?: string;
   order: number;
   active?: boolean;
 }
 
-export interface HamEditorSavePayload {
-  surfaceId: HamSurfaceId;
+export interface HiermarkEditorSavePayload {
+  surfaceId: HiermarkSurfaceId;
   content: {
     tiptapJson: unknown;
     markdown: string;
   };
-  snapshot: HamSurfaceSnapshot;
+  snapshot: HiermarkSurfaceSnapshot;
 }
 
-export interface HamBranchRequestEvent {
-  surfaceId: HamSurfaceId;
-  blockId: HamBlockId;
-  blockSnapshot: HamBlockSnapshot;
-  surfaceSnapshot: HamSurfaceSnapshot;
+export interface HiermarkBranchRequestEvent {
+  surfaceId: HiermarkSurfaceId;
+  blockId: HiermarkBlockId;
+  blockSnapshot: HiermarkBlockSnapshot;
+  surfaceSnapshot: HiermarkSurfaceSnapshot;
   textPreview: string;
   /**
    * How the affordance was presented: `"branch"` (the block had no children) or
    * `"add-sibling"` (it already had a branch child). Lets the host route the two
    * to different handlers (create first child vs add a sibling).
    */
-  mode: HamBranchMode;
+  mode: HiermarkBranchMode;
   /** Persist the source surface (so the source block id exists) before branching. */
-  save: () => Promise<HamEditorSavePayload>;
+  save: () => Promise<HiermarkEditorSavePayload>;
 }
 
-export interface HamOpenBranchChildEvent {
-  surfaceId: HamSurfaceId;
-  blockId: HamBlockId;
-  edgeId: HamBranchEdgeId;
-  childSurfaceId: HamSurfaceId;
+export interface HiermarkOpenBranchChildEvent {
+  surfaceId: HiermarkSurfaceId;
+  blockId: HiermarkBlockId;
+  edgeId: HiermarkBranchEdgeId;
+  childSurfaceId: HiermarkSurfaceId;
 }
 
-export interface HamEditorChangeEvent {
-  surfaceId: HamSurfaceId;
-  content: HamEditorContent;
+export interface HiermarkEditorChangeEvent {
+  surfaceId: HiermarkSurfaceId;
+  content: HiermarkEditorContent;
 }
 
 // ---------------------------------------------------------------------------
 // Annotations (spec §5.13)
 // ---------------------------------------------------------------------------
 
-export type HamAnnotationPlacement = "inline" | "block-chip" | "gutter" | "popover" | "decoration";
+export type HiermarkAnnotationPlacement = "inline" | "block-chip" | "gutter" | "popover" | "decoration";
 
-export interface HamAnnotationHit {
+export interface HiermarkAnnotationHit {
   id: string;
   type: string;
-  blockId: HamBlockId;
+  blockId: HiermarkBlockId;
   /** Block-relative start offset (chars), for inline/popover/decoration placements. */
   from?: number;
   /** Block-relative end offset (chars). */
@@ -164,22 +164,22 @@ export interface HamAnnotationHit {
   data?: unknown;
 }
 
-export type HamAnnotationRecognizer<Ctx = unknown> = (args: {
-  surfaceId: HamSurfaceId;
-  block: HamBlockSnapshot;
+export type HiermarkAnnotationRecognizer<Ctx = unknown> = (args: {
+  surfaceId: HiermarkSurfaceId;
+  block: HiermarkBlockSnapshot;
   text: string;
   context: Ctx;
-}) => HamAnnotationHit[];
+}) => HiermarkAnnotationHit[];
 
-export interface HamAnnotationRenderProps<Ctx = unknown> {
-  hit: HamAnnotationHit;
+export interface HiermarkAnnotationRenderProps<Ctx = unknown> {
+  hit: HiermarkAnnotationHit;
   context: Ctx;
   /** Close an open popover/card, if this annotation opened one. */
   close?: () => void;
 }
 
 /** A candidate shown in the annotation search popover. */
-export interface HamAnnotationSuggestion {
+export interface HiermarkAnnotationSuggestion {
   /** Stable id (for React keys / dedup across types sharing a trigger). */
   id: string;
   /** Primary label shown in the list. */
@@ -199,104 +199,104 @@ export interface HamAnnotationSuggestion {
  * `insert` text, which the recognizers then pick up (e.g. an `@key` pill). Pure
  * over `context`, so the editor never interprets the domain.
  */
-export interface HamAnnotationSuggestConfig<Ctx = unknown> {
+export interface HiermarkAnnotationSuggestConfig<Ctx = unknown> {
   /** Single character that opens the search (e.g. `"@"`). */
   trigger: string;
   /** Allow spaces inside the query (default false — query ends at whitespace). */
   allowSpaces?: boolean;
   /** Ranked candidates for the current query. */
-  search: (query: string, context: Ctx) => HamAnnotationSuggestion[];
+  search: (query: string, context: Ctx) => HiermarkAnnotationSuggestion[];
 }
 
-/** Live type-ahead state passed to a {@link HamSuggestPopoverProps} renderer. */
-export interface HamSuggestState {
+/** Live type-ahead state passed to a {@link HiermarkSuggestPopoverProps} renderer. */
+export interface HiermarkSuggestState {
   active: boolean;
   trigger: string | null;
   query: string;
   /** Document range covering the trigger + query (what an insert replaces). */
   range: { from: number; to: number } | null;
-  items: HamAnnotationSuggestion[];
+  items: HiermarkAnnotationSuggestion[];
 }
 
-/** Props for a custom type-ahead popover (`HamEditorSlots.SuggestPopover`). */
-export interface HamSuggestPopoverProps {
-  state: HamSuggestState;
+/** Props for a custom type-ahead popover (`HiermarkEditorSlots.SuggestPopover`). */
+export interface HiermarkSuggestPopoverProps {
+  state: HiermarkSuggestState;
   /** Highlighted candidate index (host-owned; keep keyboard + render in sync). */
   index: number;
   editor: Editor | null;
   onHover: (index: number) => void;
-  onSelect: (item: HamAnnotationSuggestion) => void;
+  onSelect: (item: HiermarkAnnotationSuggestion) => void;
 }
 
-export interface HamAnnotationType<Ctx = unknown> {
+export interface HiermarkAnnotationType<Ctx = unknown> {
   name: string;
   priority?: number;
-  placement: HamAnnotationPlacement;
-  recognize: HamAnnotationRecognizer<Ctx>;
-  render?: ComponentType<HamAnnotationRenderProps<Ctx>>;
+  placement: HiermarkAnnotationPlacement;
+  recognize: HiermarkAnnotationRecognizer<Ctx>;
+  render?: ComponentType<HiermarkAnnotationRenderProps<Ctx>>;
   /** A block-level annotation that suppresses other block-level hits on the same block. */
   opaqueBlock?: boolean;
   /** Extra CSS class for inline/decoration placements. */
-  inlineClass?: (hit: HamAnnotationHit, context: Ctx) => string | undefined;
+  inlineClass?: (hit: HiermarkAnnotationHit, context: Ctx) => string | undefined;
   /** Type-ahead search for inserting this annotation (spec §5.13). */
-  suggest?: HamAnnotationSuggestConfig<Ctx>;
+  suggest?: HiermarkAnnotationSuggestConfig<Ctx>;
 }
 
-export interface HamAnnotationRegistry<Ctx = unknown> {
-  types: HamAnnotationType<Ctx>[];
+export interface HiermarkAnnotationRegistry<Ctx = unknown> {
+  types: HiermarkAnnotationType<Ctx>[];
 }
 
 // ---------------------------------------------------------------------------
 // Slots (spec §5.15)
 // ---------------------------------------------------------------------------
 
-export interface HamBlockSlotProps {
-  surfaceId: HamSurfaceId;
-  blockId: HamBlockId;
+export interface HiermarkBlockSlotProps {
+  surfaceId: HiermarkSurfaceId;
+  blockId: HiermarkBlockId;
   blockType: string;
   /**
    * How this block branches: `"branch"` creates a first child surface,
    * `"add-sibling"` adds another branch alongside existing children. A single
    * slot component can render both by switching on this.
    */
-  mode: HamBranchMode;
+  mode: HiermarkBranchMode;
   onBranch: () => void;
 }
 
-export interface HamBranchChildChipProps {
-  surfaceId: HamSurfaceId;
-  blockId: HamBlockId;
-  child: HamBranchChildSummary;
+export interface HiermarkBranchChildChipProps {
+  surfaceId: HiermarkSurfaceId;
+  blockId: HiermarkBlockId;
+  child: HiermarkBranchChildSummary;
   onOpen: () => void;
 }
 
-export interface HamEditorSlots {
-  BlockBranchButton?: ComponentType<HamBlockSlotProps>;
+export interface HiermarkEditorSlots {
+  BlockBranchButton?: ComponentType<HiermarkBlockSlotProps>;
   /**
    * Affordance shown when a block already has a branch child (mode
-   * `"add-sibling"`). Falls back to {@link HamEditorSlots.BlockBranchButton}
+   * `"add-sibling"`). Falls back to {@link HiermarkEditorSlots.BlockBranchButton}
    * with `mode === "add-sibling"` when omitted.
    */
-  BlockSiblingBranchButton?: ComponentType<HamBlockSlotProps>;
-  BranchChildChip?: ComponentType<HamBranchChildChipProps>;
-  LoadingState?: ComponentType<{ surfaceId: HamSurfaceId }>;
-  ErrorState?: ComponentType<{ surfaceId: HamSurfaceId; error: Error; retry?: () => void }>;
+  BlockSiblingBranchButton?: ComponentType<HiermarkBlockSlotProps>;
+  BranchChildChip?: ComponentType<HiermarkBranchChildChipProps>;
+  LoadingState?: ComponentType<{ surfaceId: HiermarkSurfaceId }>;
+  ErrorState?: ComponentType<{ surfaceId: HiermarkSurfaceId; error: Error; retry?: () => void }>;
   /** Replace the default annotation type-ahead popover (e.g. richer rows). */
-  SuggestPopover?: ComponentType<HamSuggestPopoverProps>;
+  SuggestPopover?: ComponentType<HiermarkSuggestPopoverProps>;
 }
 
 // ---------------------------------------------------------------------------
 // Collaboration (spec §5.14) — wired in Phase 3
 // ---------------------------------------------------------------------------
 
-export interface HamCollaborationUser {
+export interface HiermarkCollaborationUser {
   id?: string;
   name: string;
   color?: string;
 }
 
-/** A transport provider (e.g. Hocuspocus) — the subset HAM relies on. */
-export interface HamCollaborationProvider {
+/** A transport provider (e.g. Hocuspocus) — the subset Hiermark relies on. */
+export interface HiermarkCollaborationProvider {
   synced: boolean;
   hasUnsyncedChanges: boolean;
   awareness?: unknown;
@@ -306,17 +306,17 @@ export interface HamCollaborationProvider {
 }
 
 /** A collaboration runtime: a Y.Doc plus a way to open its transport. */
-export interface HamCollaborationRuntime {
+export interface HiermarkCollaborationRuntime {
   /** The Yjs document (typed as unknown to avoid leaking the yjs type here). */
   ydoc: unknown;
-  connect(): Promise<HamCollaborationProvider>;
+  connect(): Promise<HiermarkCollaborationProvider>;
 }
 
 /** Lifecycle of the collaboration connection (drives host spinners / analytics). */
-export type HamCollaborationStatus = "connecting" | "connected" | "synced" | "timedout" | "error";
+export type HiermarkCollaborationStatus = "connecting" | "connected" | "synced" | "timedout" | "error";
 
 /** What teardown managed to do with any unsynced changes. */
-export interface HamCollaborationFlushResult {
+export interface HiermarkCollaborationFlushResult {
   /** True if all pending changes drained to the server before destroy. */
   flushed: boolean;
   /** Best-effort count of changes that were still pending (on timeout). */
@@ -324,17 +324,17 @@ export interface HamCollaborationFlushResult {
 }
 
 /** Options shared by both collaboration transports. */
-export interface HamCollaborationCommonConfig {
+export interface HiermarkCollaborationCommonConfig {
   enabled: boolean;
   documentName: string;
-  user?: HamCollaborationUser;
+  user?: HiermarkCollaborationUser;
   initialSyncTimeoutMs?: number;
   /** Reuse an existing Y.Doc instead of creating one (e.g. for tests). */
   ydoc?: unknown;
   /** Bounded reconnect attempts on a failed `connect()` (default 3, backoff 1/2/4s). */
   maxRetries?: number;
   /** Observe the connection lifecycle (connecting → connected → synced / error). */
-  onStatusChange?: (status: HamCollaborationStatus) => void;
+  onStatusChange?: (status: HiermarkCollaborationStatus) => void;
   /** A connect failure that has exhausted all retries. */
   onError?: (error: Error) => void;
   /** A reconnect attempt is about to run (1-based). */
@@ -342,21 +342,21 @@ export interface HamCollaborationCommonConfig {
   /** The number of locally-pending (not-yet-synced) changes changed. */
   onUnsyncedChangesChange?: (count: number) => void;
   /** Reports the teardown flush outcome (so a host can warn about lost edits). */
-  onBeforeUnmount?: (result: HamCollaborationFlushResult) => void;
+  onBeforeUnmount?: (result: HiermarkCollaborationFlushResult) => void;
 }
 
 /** Built-in Hocuspocus transport: connect to `url` for `documentName`. */
-export interface HamCollaborationHocuspocusConfig extends HamCollaborationCommonConfig {
+export interface HiermarkCollaborationHocuspocusConfig extends HiermarkCollaborationCommonConfig {
   provider: "hocuspocus";
   url: string;
   token?: string;
   runtime?: never;
 }
 
-/** Custom transport: the host injects a {@link HamCollaborationRuntime}. */
-export interface HamCollaborationRuntimeConfig extends HamCollaborationCommonConfig {
+/** Custom transport: the host injects a {@link HiermarkCollaborationRuntime}. */
+export interface HiermarkCollaborationRuntimeConfig extends HiermarkCollaborationCommonConfig {
   /** A custom transport (or a test double) — no Hocuspocus fields required. */
-  runtime: HamCollaborationRuntime;
+  runtime: HiermarkCollaborationRuntime;
   provider?: never;
   url?: never;
   token?: never;
@@ -367,16 +367,16 @@ export interface HamCollaborationRuntimeConfig extends HamCollaborationCommonCon
  * built-in transport, or `runtime` for a custom one — never fake one to
  * satisfy the other.
  */
-export type HamCollaborationConfig =
-  | HamCollaborationHocuspocusConfig
-  | HamCollaborationRuntimeConfig;
+export type HiermarkCollaborationConfig =
+  | HiermarkCollaborationHocuspocusConfig
+  | HiermarkCollaborationRuntimeConfig;
 
 // ---------------------------------------------------------------------------
 // Images / figures (host-owned storage)
 // ---------------------------------------------------------------------------
 
 /** The resolved location of an image after the host has stored it. */
-export interface HamUploadedImage {
+export interface HiermarkUploadedImage {
   /** Anything usable as an `<img src>`: an uploaded URL, object URL, or data URI. */
   src: string;
   /** Alt text; falls back to the file name when omitted. */
@@ -392,10 +392,10 @@ export interface HamUploadedImage {
  * — so storage (server upload, S3, object URL, base64, …) stays entirely the
  * host's choice. Return `null` to skip a file (e.g. validation failed).
  */
-export type HamImageUploadHandler = (
+export type HiermarkImageUploadHandler = (
   file: File,
-  context: { surfaceId: HamSurfaceId },
-) => Promise<HamUploadedImage | null>;
+  context: { surfaceId: HiermarkSurfaceId },
+) => Promise<HiermarkUploadedImage | null>;
 
 /**
  * Which surface the editor presents: the rich WYSIWYG editor (`"rich"`) or a
@@ -406,40 +406,40 @@ export type HamImageUploadHandler = (
  * the handle is read (`save()`, `getMarkdown()`, …), so they persist even if
  * the surface saves or unmounts before switching back to rich.
  */
-export type HamEditorMode = "rich" | "source";
+export type HiermarkEditorMode = "rich" | "source";
 
 // ---------------------------------------------------------------------------
 // Imperative handle (spec §5.8)
 // ---------------------------------------------------------------------------
 
-export interface HamEditorHandle {
-  surfaceId: HamSurfaceId;
-  focusBlock(blockId: HamBlockId, opts?: { scroll?: boolean }): void;
-  scrollBlockIntoView(blockId: HamBlockId, opts?: ScrollIntoViewOptions): void;
+export interface HiermarkEditorHandle {
+  surfaceId: HiermarkSurfaceId;
+  focusBlock(blockId: HiermarkBlockId, opts?: { scroll?: boolean }): void;
+  scrollBlockIntoView(blockId: HiermarkBlockId, opts?: ScrollIntoViewOptions): void;
   /**
    * Reads are source-aware: while in source mode, edited markdown is first
    * committed (id-preserving) into the editor, so getSnapshot / getMarkdown /
    * getJSON / save always reflect the text visible to the user — source mode
    * is never an invisible draft buffer.
    */
-  getSnapshot(): HamSurfaceSnapshot;
+  getSnapshot(): HiermarkSurfaceSnapshot;
   getMarkdown(): string;
   getJSON(): unknown;
-  save(): Promise<HamEditorSavePayload>;
+  save(): Promise<HiermarkEditorSavePayload>;
   /**
    * Replace the editor's content (the escape hatch for hosts that need to swap
-   * in a new revision after mount — see {@link HamEditorProps.value}, which is
+   * in a new revision after mount — see {@link HiermarkEditorProps.value}, which is
    * mount-time only). `emitUpdate` defaults to true (fires onChange/snapshot).
    */
-  setContent(content: HamEditorContent, opts?: { emitUpdate?: boolean }): void;
+  setContent(content: HiermarkEditorContent, opts?: { emitUpdate?: boolean }): void;
   /**
-   * Upload image files through {@link HamEditorProps.onImageUpload} and insert
+   * Upload image files through {@link HiermarkEditorProps.onImageUpload} and insert
    * them at the cursor — the programmatic path for a host "insert image" button
    * / file picker. No-op (resolves immediately) when no upload handler is set.
    */
   uploadImages(files: FileList | File[]): Promise<void>;
   /** The current edit surface — `"rich"` or raw-markdown `"source"`. */
-  getMode(): HamEditorMode;
+  getMode(): HiermarkEditorMode;
   /**
    * Switch between the rich editor and the raw-markdown source `<textarea>`.
    * Switching to `"rich"` re-parses the edited markdown; block ids are restored
@@ -448,9 +448,9 @@ export interface HamEditorHandle {
    * collaboration (source mode would clobber the shared doc) — `getMode` then
    * stays `"rich"`.
    */
-  setMode(mode: HamEditorMode): void;
-  collapseBlock(blockId: HamBlockId): void;
-  expandBlock(blockId: HamBlockId): void;
+  setMode(mode: HiermarkEditorMode): void;
+  collapseBlock(blockId: HiermarkBlockId): void;
+  expandBlock(blockId: HiermarkBlockId): void;
   /**
    * Advanced escape hatch (spec §5.8): the underlying Tiptap editor. Prefer the
    * typed handle methods; reach for this only when no first-class API exists.
@@ -462,14 +462,14 @@ export interface HamEditorHandle {
 // Editor props (spec §5.4)
 // ---------------------------------------------------------------------------
 
-export interface HamEditorProps<AnnotationData = unknown> {
-  surfaceId: HamSurfaceId;
+export interface HiermarkEditorProps<AnnotationData = unknown> {
+  surfaceId: HiermarkSurfaceId;
   /**
    * Identity of the synthetic root block. Block ids are **surface-scoped**, so
    * the constant default (`"blk_root"`) is safe — don't treat block ids as
    * globally unique across surfaces.
    */
-  rootBlockId?: HamBlockId;
+  rootBlockId?: HiermarkBlockId;
 
   /**
    * **Mount-time content only** — captured once when the editor mounts; later
@@ -477,7 +477,7 @@ export interface HamEditorProps<AnnotationData = unknown> {
    * replace content after mount, remount with a new React `key`, or seed a fresh
    * surface. A controlled `value` / `defaultValue` split may arrive later.
    */
-  value: HamEditorContent;
+  value: HiermarkEditorContent;
   /**
    * Change this token to re-apply `value` after mount — a declarative revision
    * swap (history restore, server-pushed content) without remounting by `key`.
@@ -487,24 +487,24 @@ export interface HamEditorProps<AnnotationData = unknown> {
   revision?: string | number;
   title?: string;
   editable?: boolean;
-  autofocus?: boolean | "start" | "end" | HamBlockId;
+  autofocus?: boolean | "start" | "end" | HiermarkBlockId;
 
   /**
-   * Blocks to visually highlight (class `ham-block-highlighted`, themable via
-   * `--ham-highlight-bg`) — e.g. search hits or validation errors. Updates
+   * Blocks to visually highlight (class `hiermark-block-highlighted`, themable via
+   * `--hiermark-highlight-bg`) — e.g. search hits or validation errors. Updates
    * re-decorate in place without remounting.
    */
-  highlightedBlockIds?: Iterable<HamBlockId>;
-  activeBlockId?: HamBlockId | null;
-  collapsedBlockIds?: Iterable<HamBlockId>;
+  highlightedBlockIds?: Iterable<HiermarkBlockId>;
+  activeBlockId?: HiermarkBlockId | null;
+  collapsedBlockIds?: Iterable<HiermarkBlockId>;
 
-  branchChildren?: Record<HamBlockId, HamBranchChildSummary[]>;
-  branchPolicy?: HamBranchPolicy;
+  branchChildren?: Record<HiermarkBlockId, HiermarkBranchChildSummary[]>;
+  branchPolicy?: HiermarkBranchPolicy;
 
-  annotations?: HamAnnotationRegistry<AnnotationData>;
+  annotations?: HiermarkAnnotationRegistry<AnnotationData>;
   annotationContext?: AnnotationData;
 
-  collaboration?: HamCollaborationConfig;
+  collaboration?: HiermarkCollaborationConfig;
 
   /**
    * Enables image paste / drag-drop / picker insertion, routing each file
@@ -512,7 +512,7 @@ export interface HamEditorProps<AnnotationData = unknown> {
    * inert (pasting an image file does nothing); `![alt](src)` markdown still
    * renders regardless.
    */
-  onImageUpload?: HamImageUploadHandler;
+  onImageUpload?: HiermarkImageUploadHandler;
   /** Reports an image upload rejection (the handler threw). */
   onImageUploadError?: (error: unknown, file: File) => void;
   /**
@@ -530,7 +530,7 @@ export interface HamEditorProps<AnnotationData = unknown> {
   isAllowedLinkHref?: (href: string) => boolean;
 
   /** Fires when the edit surface toggles between rich and raw-markdown source. */
-  onModeChange?: (mode: HamEditorMode) => void;
+  onModeChange?: (mode: HiermarkEditorMode) => void;
 
   /**
    * Show a floating formatting toolbar (bold / italic / strikethrough / inline
@@ -546,18 +546,18 @@ export interface HamEditorProps<AnnotationData = unknown> {
    */
   ariaLabel?: string;
 
-  slots?: HamEditorSlots;
+  slots?: HiermarkEditorSlots;
   className?: string;
 
-  onReady?: (handle: HamEditorHandle) => void;
+  onReady?: (handle: HiermarkEditorHandle) => void;
   /**
    * Fires on every edit. The emitted content is `tiptap-json` (cheap); the
-   * markdown serialization is produced only by {@link HamEditorHandle.save} /
+   * markdown serialization is produced only by {@link HiermarkEditorHandle.save} /
    * the save payload, not on every keystroke.
    */
-  onChange?: (event: HamEditorChangeEvent) => void;
-  onSnapshotChange?: (snapshot: HamSurfaceSnapshot) => void;
-  onBranchRequest?: (event: HamBranchRequestEvent) => void;
-  onOpenBranchChild?: (event: HamOpenBranchChildEvent) => void;
-  onActiveBlockChange?: (blockId: HamBlockId | null) => void;
+  onChange?: (event: HiermarkEditorChangeEvent) => void;
+  onSnapshotChange?: (snapshot: HiermarkSurfaceSnapshot) => void;
+  onBranchRequest?: (event: HiermarkBranchRequestEvent) => void;
+  onOpenBranchChild?: (event: HiermarkOpenBranchChildEvent) => void;
+  onActiveBlockChange?: (blockId: HiermarkBlockId | null) => void;
 }

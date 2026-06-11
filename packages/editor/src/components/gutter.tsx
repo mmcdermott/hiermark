@@ -1,12 +1,12 @@
 import type { GutterEntry } from "../extensions/block-gutter";
 import type {
-  HamBlockSlotProps,
-  HamBranchChildChipProps,
-  HamBranchChildSummary,
-  HamBranchMode,
-  HamBlockId,
-  HamEditorSlots,
-  HamSurfaceId,
+  HiermarkBlockSlotProps,
+  HiermarkBranchChildChipProps,
+  HiermarkBranchChildSummary,
+  HiermarkBranchMode,
+  HiermarkBlockId,
+  HiermarkEditorSlots,
+  HiermarkSurfaceId,
 } from "../types";
 
 /**
@@ -15,7 +15,7 @@ import type {
  * child (mode `"add-sibling"`) — a clicked sibling-add creates another branch
  * alongside the existing ones.
  */
-export function DefaultBranchButton({ blockId, mode, onBranch }: HamBlockSlotProps) {
+export function DefaultBranchButton({ blockId, mode, onBranch }: HiermarkBlockSlotProps) {
   const sibling = mode === "add-sibling";
   const label = sibling
     ? "Add a sibling branch from this block"
@@ -23,11 +23,11 @@ export function DefaultBranchButton({ blockId, mode, onBranch }: HamBlockSlotPro
   return (
     <button
       type="button"
-      className={"ham-branch-button" + (sibling ? " ham-branch-button-sibling" : "")}
+      className={"hiermark-branch-button" + (sibling ? " hiermark-branch-button-sibling" : "")}
       title={label}
       aria-label={label}
-      data-ham-branch-for={blockId}
-      data-ham-branch-mode={mode}
+      data-hiermark-branch-for={blockId}
+      data-hiermark-branch-mode={mode}
       onMouseDown={(e) => e.preventDefault()}
       onClick={(e) => {
         e.preventDefault();
@@ -40,14 +40,14 @@ export function DefaultBranchButton({ blockId, mode, onBranch }: HamBlockSlotPro
 }
 
 /** Default branch-child chip: a pill linking to an existing child surface. */
-export function DefaultBranchChildChip({ child, onOpen }: HamBranchChildChipProps) {
+export function DefaultBranchChildChip({ child, onOpen }: HiermarkBranchChildChipProps) {
   return (
     <button
       type="button"
-      className={"ham-branch-child-chip" + (child.active ? " ham-branch-child-chip-active" : "")}
+      className={"hiermark-branch-child-chip" + (child.active ? " hiermark-branch-child-chip-active" : "")}
       // Lets the canvas connectors anchor an edge to this chip (the "bubble"
       // around the child's name) rather than the block's far right edge.
-      data-ham-branch-child={child.surfaceId}
+      data-hiermark-branch-child={child.surfaceId}
       aria-label={`Open branch child: ${child.title ?? "Untitled"}`}
       onMouseDown={(e) => e.preventDefault()}
       onClick={(e) => {
@@ -62,18 +62,18 @@ export function DefaultBranchChildChip({ child, onOpen }: HamBranchChildChipProp
 
 export interface BlockGutterAffordancesProps {
   entry: GutterEntry;
-  surfaceId: HamSurfaceId;
-  slots?: HamEditorSlots;
-  branchChildren: HamBranchChildSummary[];
-  onBranch: (blockId: HamBlockId, mode: HamBranchMode) => void;
-  onOpenChild: (child: HamBranchChildSummary, blockId: HamBlockId) => void;
+  surfaceId: HiermarkSurfaceId;
+  slots?: HiermarkEditorSlots;
+  branchChildren: HiermarkBranchChildSummary[];
+  onBranch: (blockId: HiermarkBlockId, mode: HiermarkBranchMode) => void;
+  onOpenChild: (child: HiermarkBranchChildSummary, blockId: HiermarkBlockId) => void;
 }
 
 /**
  * The contents React renders into a block's gutter overlay: any existing
  * branch-child chips, then the branch button — laid out on the block's right
  * (children appear to the right). Both default components are replaceable via
- * `HamEditorSlots.BlockBranchButton` / `BranchChildChip`.
+ * `HiermarkEditorSlots.BlockBranchButton` / `BranchChildChip`.
  */
 export function BlockGutterAffordances({
   entry,
@@ -93,9 +93,9 @@ export function BlockGutterAffordances({
   const Affordance = entry.mode === "add-sibling" ? SiblingButton : BranchButton;
 
   return (
-    <div className="ham-block-gutter-affordances">
+    <div className="hiermark-block-gutter-affordances">
       {sorted.length > 0 && (
-        <span className="ham-branch-children">
+        <span className="hiermark-branch-children">
           {sorted.map((child) => (
             <Chip
               key={child.edgeId}

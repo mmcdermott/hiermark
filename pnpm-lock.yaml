@@ -56,10 +56,10 @@ importers:
 
   apps/docs:
     dependencies:
-      '@ham/canvas':
+      '@hiermark/canvas':
         specifier: workspace:^
         version: link:../../packages/canvas
-      '@ham/editor':
+      '@hiermark/editor':
         specifier: workspace:^
         version: link:../../packages/editor
       react:
@@ -124,7 +124,7 @@ importers:
         specifier: ^19
         version: 19.2.7(react@19.2.7)
     devDependencies:
-      '@ham/editor':
+      '@hiermark/editor':
         specifier: workspace:^
         version: link:../editor
       '@testing-library/dom':
