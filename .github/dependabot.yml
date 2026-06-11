@@ -19,11 +19,16 @@ updates:
         update-types:
           - minor
           - patch
-      # All dev-dependency bumps (any level) into one PR.
-      dev:
+      # Dev-dependency minor/patch bumps into one PR. Majors are deliberately
+      # excluded so breaking tooling upgrades (e.g. ESLint 9→10) arrive as their
+      # own PRs to be migrated on purpose, instead of poisoning the batch.
+      dev-minor-patch:
         dependency-type: development
-    # Major bumps fall outside every group above, so they still arrive as
-    # individual PRs and get reviewed one at a time.
+        update-types:
+          - minor
+          - patch
+    # Major bumps (prod or dev) fall outside every group above, so they still
+    # arrive as individual PRs and get reviewed one at a time.
     ignore:
       # tsup's dts build injects `baseUrl` internally, which TypeScript 6
       # hard-errors on (TS5101) — unblock when tsup ships TS 6 support.
