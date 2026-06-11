@@ -9,7 +9,7 @@ sections top → down).
 pnpm add @ham/canvas @ham/editor react react-dom
 ```
 
-> **ESM + CJS.** Ships dual builds; React 19 is a peer dependency.
+> **ESM + CJS.** Ships dual builds; React 18.3+ or 19 is a peer dependency.
 
 ```tsx
 import { HamCanvas } from "@ham/canvas";

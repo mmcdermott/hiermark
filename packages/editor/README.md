@@ -9,7 +9,7 @@ source mode. Pairs with [`@ham/canvas`](https://www.npmjs.com/package/@ham/canva
 pnpm add @ham/editor react react-dom
 ```
 
-> **ESM + CJS.** Ships dual builds; React 19 is a peer dependency.
+> **ESM + CJS.** Ships dual builds; React 18.3+ or 19 is a peer dependency.
 
 ```tsx
 import { HamEditor } from "@ham/editor";

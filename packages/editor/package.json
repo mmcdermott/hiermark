@@ -85,8 +85,8 @@
     "yjs": "^13"
   },
   "peerDependencies": {
-    "react": "^19",
-    "react-dom": "^19"
+    "react": "^18.3.0 || ^19",
+    "react-dom": "^18.3.0 || ^19"
   },
   "devDependencies": {
     "@testing-library/dom": "^10",
@@ -101,8 +101,5 @@
     "tsup": "^8",
     "typescript": "^5",
     "vitest": "^4"
-  },
-  "engines": {
-    "node": ">=22.13.0"
   }
 }

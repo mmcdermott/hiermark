@@ -33,7 +33,7 @@ function typeChar(editor: Editor, ch: string) {
   });
   const at = pos ?? editor.state.selection.from;
   editor.commands.setTextSelection(at);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   editor.view.someProp("handleTextInput", (f: any) => f(editor.view, at, at, ch));
 }
 

@@ -53,7 +53,7 @@ const EDITOR_API: ApiEntry[] = [
     name: "resolveBranchMode / isBranchable",
     kind: "function",
     summary:
-      'Snapshot-driven branchability: "branch" | "add-sibling" | "none". The "smart" default branches leaves and real forks, suppressing redundant single-child intermediates.',
+      'Snapshot-driven branchability: "branch" | "add-sibling" | "none". The "bubble-up" default shows one affordance per meaningful branch point (a single nested branch point bubbles up to its container); "smart" is the legacy per-block policy.',
   },
   {
     name: "HamEditorProps / HamEditorHandle / HamSurfaceSnapshot",
@@ -64,7 +64,7 @@ const EDITOR_API: ApiEntry[] = [
     name: "HamBranchPolicy / HamBranchabilityRules / HamBranchMode",
     kind: "type",
     summary:
-      'Branch policy: "smart" (default), the legacy string policies, a declarative rules object, or a custom predicate.',
+      'Branch policy: "bubble-up" (default), "off", "smart" and the other string policies, a declarative rules object, or a custom predicate.',
   },
 ];
 

@@ -11,6 +11,14 @@ updates:
       dev:
         dependency-type: development
     open-pull-requests-limit: 8
+    ignore:
+      # tsup's dts build injects `baseUrl` internally, which TypeScript 6
+      # hard-errors on (TS5101) — unblock when tsup ships TS 6 support.
+      - dependency-name: "typescript"
+        versions: [">=6.0.0"]
+      # @tiptap/extension-mathematics peers `katex ^0.16.4`; 0.17 violates it.
+      - dependency-name: "katex"
+        versions: [">=0.17.0"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:

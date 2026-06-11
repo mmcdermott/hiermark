@@ -61,9 +61,6 @@ import type {
   HamSurfaceSnapshot,
 } from "./types";
 
-// react re-exports `useCallback`; alias to keep imports terse and lint-clean.
-const useStable = useCallback;
-
 function findBlockPos(doc: Editor["state"]["doc"], blockId: HamBlockId): number | null {
   let found: number | null = null;
   doc.descendants((node, pos) => {
@@ -229,7 +226,7 @@ function HamEditorInner<AnnotationData = unknown>(
   useEffect(() => {
     snapshotCacheRef.current = null;
   }, [surfaceId, rootBlockId, title]);
-  const computeSnapshot = useStable(
+  const computeSnapshot = useCallback(
     (doc: PMNode): HamSurfaceSnapshot => {
       const cached = snapshotCacheRef.current;
       if (cached && cached.doc === doc) return cached.snap;
@@ -244,7 +241,7 @@ function HamEditorInner<AnnotationData = unknown>(
     [surfaceId, rootBlockId, title],
   );
 
-  const snapshotOf = useStable(
+  const snapshotOf = useCallback(
     (editor: Editor): HamSurfaceSnapshot => computeSnapshot(editor.state.doc),
     [computeSnapshot],
   );
@@ -258,7 +255,7 @@ function HamEditorInner<AnnotationData = unknown>(
     return counts;
   }, [props.branchChildren]);
 
-  const buildSavePayload = useStable(
+  const buildSavePayload = useCallback(
     (editor: Editor): HamEditorSavePayload => ({
       surfaceId,
       content: { tiptapJson: editor.getJSON(), markdown: editor.getMarkdown() },
@@ -374,7 +371,7 @@ function HamEditorInner<AnnotationData = unknown>(
       if (editor?.isEditable) setOpenImage(target);
     },
   };
-  const applyImage = useStable(
+  const applyImage = useCallback(
     (pos: number, attrs: { alt: string; title: string }) => {
       if (!editor) return;
       editor
@@ -394,7 +391,7 @@ function HamEditorInner<AnnotationData = unknown>(
     },
     [editor],
   );
-  const applyLink = useStable(
+  const applyLink = useCallback(
     (from: number, to: number, href: string) => {
       editor
         ?.chain()
@@ -406,7 +403,7 @@ function HamEditorInner<AnnotationData = unknown>(
     },
     [editor],
   );
-  const removeLink = useStable(
+  const removeLink = useCallback(
     (from: number, to: number) => {
       editor
         ?.chain()
@@ -420,7 +417,7 @@ function HamEditorInner<AnnotationData = unknown>(
   );
 
   // Write edited LaTeX back to / delete a math node by position (drives MathPopover).
-  const setMathLatex = useStable(
+  const setMathLatex = useCallback(
     (pos: number, latex: string) => {
       if (!editor) return;
       editor
@@ -436,7 +433,7 @@ function HamEditorInner<AnnotationData = unknown>(
     },
     [editor],
   );
-  const deleteMath = useStable(
+  const deleteMath = useCallback(
     (pos: number) => {
       if (!editor) return;
       editor
@@ -459,7 +456,7 @@ function HamEditorInner<AnnotationData = unknown>(
   // the read path, the text visible in the textarea is what gets read and
   // persisted, never the stale pre-source document. No-op when unchanged, so a
   // "peek at source" round-trip never re-stamps ids.
-  const commitSourceText = useStable(
+  const commitSourceText = useCallback(
     (opts?: { emitUpdate?: boolean }) => {
       if (!editor) return;
       if (sourceTextRef.current === sourceEnteredRef.current) return;
@@ -511,7 +508,7 @@ function HamEditorInner<AnnotationData = unknown>(
   };
 
   // Branch handler: capture the snapshot synchronously (spec §5.7), then emit.
-  const handleBranch = useStable(
+  const handleBranch = useCallback(
     (blockId: HamBlockId, mode: HamBranchMode = "branch") => {
       if (!editor) return;
       const surfaceSnapshot = snapshotOf(editor);
@@ -534,7 +531,7 @@ function HamEditorInner<AnnotationData = unknown>(
     [editor, surfaceId, snapshotOf, buildSavePayload, onBranchRequest, commitSourceText],
   );
 
-  const handleOpenChild = useStable(
+  const handleOpenChild = useCallback(
     (child: HamBranchChildSummary, blockId: HamBlockId) => {
       onOpenBranchChild?.({
         surfaceId,
@@ -546,7 +543,7 @@ function HamEditorInner<AnnotationData = unknown>(
     [surfaceId, onOpenBranchChild],
   );
 
-  const toggleFold = useStable((blockId: HamBlockId) => {
+  const toggleFold = useCallback((blockId: HamBlockId) => {
     setFoldedSet((prev) => {
       const next = new Set(prev);
       if (next.has(blockId)) next.delete(blockId);
@@ -619,7 +616,7 @@ function HamEditorInner<AnnotationData = unknown>(
 
   // Set the highlighted index in both the ref (for the keyboard handler) and
   // React state (for the render) so they can't diverge.
-  const setSuggestHighlight = useStable((next: number | ((i: number) => number)) => {
+  const setSuggestHighlight = useCallback((next: number | ((i: number) => number)) => {
     setSuggestIndex((i) => {
       const v = typeof next === "function" ? next(i) : next;
       suggestIndexRef.current = v;
@@ -631,7 +628,7 @@ function HamEditorInner<AnnotationData = unknown>(
   // then let the recognizers turn it into an annotation (e.g. an @key pill). The
   // range is read from the live plugin state — never a captured (possibly stale)
   // React value.
-  const commitSuggestion = useStable(
+  const commitSuggestion = useCallback(
     (item: HamAnnotationSuggestion) => {
       if (!editor) return;
       const range = annotationSuggestKey.getState(editor.state)?.suggest.range;
@@ -652,7 +649,7 @@ function HamEditorInner<AnnotationData = unknown>(
   // A STABLE keyboard handler: it reads the live items/range from plugin state
   // and the index from a ref, so it's immune to React-render lag under rapid
   // keystrokes (the plugin forwards keys to it while the popover is open).
-  const onSuggestKeyDown = useStable(
+  const onSuggestKeyDown = useCallback(
     (event: KeyboardEvent): boolean => {
       if (!editor) return false;
       // Never act on keys while an IME composition is in progress (CJK input):

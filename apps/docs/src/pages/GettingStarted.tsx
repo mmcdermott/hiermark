@@ -59,9 +59,16 @@ function App() {
           return { surface, edge, activate: true };
         },
         async saveSurface(payload) {
+          // Store BOTH representations: tiptap-json is the lossless editor
+          // state to reload from; markdown is what search indexes, git
+          // serialization, and external exports read. The snapshot carries the
+          // block tree (ids/structure) your branch edges anchor to.
           setSurfaces((s) => ({ ...s, [payload.surfaceId]: {
             ...s[payload.surfaceId],
             content: { kind: "tiptap-json", json: payload.content.tiptapJson },
+            markdown: payload.content.markdown,
+            snapshot: payload.snapshot,
+            updatedAt: Date.now(),
           }}));
         },
       }}

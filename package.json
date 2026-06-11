@@ -24,7 +24,7 @@
     "test": "pnpm -r --no-bail test",
     "test:run": "pnpm -r --no-bail test:run",
     "typecheck": "pnpm -r --no-bail typecheck",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "docs:api": "typedoc",

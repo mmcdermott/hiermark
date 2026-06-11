@@ -49,3 +49,24 @@ jobs:
         run: pnpm -r --filter "./packages/*" exec publint --strict
       - name: Bundle size budgets (size-limit)
         run: pnpm size
+
+  # Guards the widened `^18.3.0 || ^19` peer range: build + run both packages'
+  # suites with React 18 actually installed (overrides pin the whole tree).
+  react18:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "pnpm"
+      - name: Pin React 18 via pnpm overrides
+        run: |
+          npm pkg set 'pnpm.overrides.react=18.3.1' 'pnpm.overrides.react-dom=18.3.1' 'pnpm.overrides.@types/react=^18' 'pnpm.overrides.@types/react-dom=^18'
+          pnpm install --no-frozen-lockfile
+      - name: Build packages (React 18)
+        run: pnpm build
+      - name: Test (React 18)
+        run: pnpm test
