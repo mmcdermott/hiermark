@@ -38,15 +38,21 @@ pnpm changeset     # pick the packages + bump type, write a summary
 
 Commit the generated `.changeset/*.md` with your PR. On merge to `main` the
 release workflow opens a **Version Packages** PR that bumps versions and
-updates changelogs; merging _that_ PR publishes to npm and creates the git tags
-and GitHub Releases. Because the bump lands as a committed PR before it is
-tagged, `main` is never stale. `@hiermark/docs` is never published.
+updates changelogs; merging _that_ PR releases the new versions. Because the
+bump lands as a committed PR before it is tagged, `main` is never stale.
+`@hiermark/docs` is never published.
 
-Publishing uses **npm trusted publishing (OIDC)** — no `NPM_TOKEN` secret. The
-one-time setup is to create the `hiermark` npm org and add a trusted publisher
-for each package on npmjs.com (Settings → Trusted Publishers) pointing at
-`mmcdermott/hiermark` and the `Release` workflow. See
-`.github/workflows/release.yml`.
+Publishing uses **npm trusted publishing (OIDC)** — no `NPM_TOKEN` secret.
+Until it is armed, releases are **tag-only** (git tags + GitHub Releases, no
+npm), so `main` stays green before the npm org exists. To arm npm publishing:
+
+1. Create the `hiermark` npm org, and add a trusted publisher for each package
+   on npmjs.com (Settings → Trusted Publishers) pointing at
+   `mmcdermott/hiermark` and the `Release` workflow.
+2. Set the repository variable `NPM_PUBLISH=true`
+   (`gh variable set NPM_PUBLISH --body true`).
+
+See `.github/workflows/release.yml`.
 
 ## PRs
 

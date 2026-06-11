@@ -47,12 +47,15 @@ jobs:
           # `pnpm run` is required — bare `pnpm version` is an npm passthrough
           # that prints the version table and never executes the script.
           version: pnpm run version-packages
-          # When a Version Packages PR merges, `pnpm release` builds and runs
-          # `changeset publish`, which publishes every package whose version is
-          # not yet on npm and creates the matching git tags + GitHub Releases.
-          # Already-published versions are skipped, so re-runs are safe.
-          # Auth is OIDC trusted publishing (no NPM_TOKEN) — see the id-token
-          # note above and CONTRIBUTING.md. Provenance is attached automatically.
-          publish: pnpm release
+          # Releases stay tag-only (`changeset tag` → git tags + GitHub
+          # Releases, no npm) until npm publishing is armed by setting the repo
+          # variable NPM_PUBLISH=true. Arm it only AFTER the one-time npm setup
+          # (create the `hiermark` org + a trusted publisher per package on
+          # npmjs.com); flipping it switches to `pnpm release`, which runs
+          # `changeset publish` to publish every not-yet-published version via
+          # OIDC trusted publishing (no NPM_TOKEN; provenance is automatic).
+          # This keeps `main` green before the org exists instead of failing an
+          # unauthorized publish on the first push.
+          publish: ${{ vars.NPM_PUBLISH == 'true' && 'pnpm release' || 'pnpm changeset tag' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
