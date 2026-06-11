@@ -21,19 +21,31 @@ product that consumes them.
   operations through host handlers.
 - **`apps/docs`** — a Vite SPA doubling as a live playground, with concept guides and
   "</> Source"-toggle demos. Deployed to GitHub Pages.
-- **Tests:** ~192 green (editor 122, canvas 65, docs 5), all jsdom. CI is a single
-  ubuntu / Node 22 job: build → format → typecheck → lint → test → docs build.
+- **Tests:** ~300 green, all jsdom. CI runs a Node 22 + 24 matrix
+  (build → format → typecheck → lint(--max-warnings 0) → test → coverage →
+  TypeDoc → docs build → publint --strict → size-limit) plus a React 18
+  compatibility leg. Releases are tag-only via Changesets (git tags + GitHub
+  Releases; **v0.2.0** is the current baseline — npm publishing waits on the
+  scope/token decision below).
 
-> **Recently shipped (UX / bug-fix batch).** Code-block language dropdown fix; single-`$`
-> inline + `$$` block math input rules and a click-to-edit LaTeX popover; the **bubble-up**
-> branch-affordance policy (single nested branch point bubbles up; default) plus `"off"` and a
-> whole-document affordance; compact-card sizing (no min-height in outline/rail; rail collapses
-> to its header) and scroll-only-on-overflow; hover connectors in **both** directions and
-> anchored to the child chip; **scroll-to-reveal** (select a block → its branch scrolls into
-> view; click an editor → it aligns to the canvas start); the docs now disable branch
-> buttons on standalone editors and surface "Edit as markdown" (source mode) as a general
-> capability; and **source-mode edits now preserve block ids** (content+position alignment on
-> re-parse), so branch edges / annotations survive editing the raw markdown.
+> **Recently shipped (2026-06-10/11 audit + hardening, PRs #55–66).** A deep
+> scan (an external LLM review adversarially verified finding-by-finding, plus
+> a 9-dimension internal audit — structured results in the session memory)
+> drove a fix loop: the release pipeline was repaired end to end (version
+> script, peer-cascade that would have mis-released canvas as 1.0.0, tag-only
+> publishing, /api on Pages) and **v0.2.0 tagged**; source-mode edits now
+> persist on every read path; block ids survive paste-above and
+> split-at-start; the URI sanitizer is a normalization-first allowlist with an
+> `isAllowedLinkHref` override; the bubble toolbar works in minified prod
+> builds; canvas autosave can no longer drop edits (de-expand flush, trailing
+> payload, no spurious saves); behavior flags are enforced at the action
+> layer; every declared prop is implemented or removed (autofocus variants,
+> `highlightedBlockIds`, collab config union, curated `editorDefaults`,
+> optional create handler, real `focusBlock`); branch-children are computed in
+> one pass with stable identity; connectors stopped re-subscribing observers
+> per cursor move; keyboard focus actually moves on activation/navigation;
+> the docs site's resize/expand/reset/hash-router defects are fixed; and
+> React 18.3+ is a supported peer with its own CI leg.
 
 The packages are intentionally **generic**. Application concepts — a document/project
 model, citation records, tasks reconciliation, LLM actions, final-text/LaTeX assembly,
@@ -51,36 +63,65 @@ boundary shapes the two tracks below.
 
 ---
 
-## P0 — Correctness & blockers (do these first)
+## Verified backlog — remaining items from the 2026-06 audit
 
-These are latent correctness bugs and adopter-blockers that should land before new
-features, in either track.
+All previously-tracked P0s are **cleared** (save serialization, source-mode id
+preservation, SSR gate, XSS hardening — plus everything in the "recently
+shipped" note above). What follows is the _remaining_ verified backlog from
+the audit, in priority order.
 
-- ~~**Serialize the per-surface debounced save**~~ `[P0 · M]` — **✅ DONE.** `SurfaceItem`
-  now serializes saves (`savingRef`/`pendingRef`): only one host `saveSurface` is in flight at
-  a time, and saves requested mid-flight coalesce into exactly one follow-up with the latest
-  content (newest snapshot wins). The unmount flush no longer chains a save through the
-  tearing-down editor. _(Deep-review rank 8.)_
-- ~~**Make source-mode round-trips id-preserving**~~ `[P0 · L]` — **✅ DONE.** Switching to
-  rich now captures the pre-edit block identities and, after the markdown re-parse, restores
-  ids onto matching blocks via content+position alignment (`snapshot/blockIdentity.ts`:
-  `collectBlockIdentities` + `planBlockIdRestore`, wired in `HamEditor.tsx` `applyModeRef`):
-  an exact (type+text) pass for unchanged/reordered blocks, then a positional-by-type pass for
-  edited-in-place blocks — so branch edges / annotations survive. (Chose content alignment over
-  embedding `<!-- ham:block= -->` comments to keep the source textarea clean; the comment
-  grammar still serves the separate git-export item in A2.)
-- ~~**Gate `immediatelyRender` for SSR**~~ `[P0 · S]` — **✅ DONE.** `useEditor` now sets
-  `immediatelyRender: typeof window !== "undefined"`, so it renders synchronously in the
-  browser but defers on the server (no Next.js/Remix hydration crash).
-- ~~**Harden image/link `src` validation (stored-XSS)**~~ `[P0 · M]` — **✅ DONE.** StarterKit's
-  Link is configured with a protocol allowlist (`http`/`https`/`mailto`) + `isAllowedUri` +
-  `rel="noopener noreferrer nofollow"`, and a new **`Sanitize`** extension
-  (`extensions/sanitize.ts`) strips dangerous link `href`s / image `src`s
-  (`javascript:`/`vbscript:`/`file:`/`data:text/html`) from **every** path — initial seed
-  (`onCreate`), typing, paste, markdown parse, `setContent`, collab — with an optional
-  `isAllowedImageSrc` host policy.
-
----
+- **Decide the npm scope, then enable publishing** `[P0-decision · S]` — the
+  `@ham` npm scope is unclaimed/unverified and only the maintainer can claim
+  it (npmjs.com/org/create) or choose a rename (~63 files reference `@ham/`).
+  Then add an `NPM_TOKEN` secret and flip `release.yml` from
+  `publish: pnpm changeset tag` back to `publish: pnpm release`. Until then,
+  releases are git tags + GitHub Releases (working, proven at v0.2.0).
+- **Collab gate: unreachable server spins forever** `[P2 · M]` — the
+  Hocuspocus provider's constructor auto-attaches and never rejects, so
+  `connect()` resolves instantly: the retry/backoff/error path is unreachable
+  and, without `initialSyncTimeoutMs`, an unreachable server leaves
+  "Connecting…" forever. Wire provider `status`/`close`/`authenticationFailed`
+  events into the gate (ideally inside `createHocuspocusCollab`) and consider
+  a default initial-sync timeout. _(The spurious "timedout"-after-"synced" half
+  is fixed.)_
+- **Async image uploads: map positions through concurrent edits** `[P2 · M]` —
+  `image-upload.ts` inserts at positions captured before the (async) host
+  upload resolves; concurrent edits shift them, and a resolved upload can
+  dispatch into a destroyed view. Track the insert position through
+  transactions (plugin mapping) and bail on destroyed views.
+- **Default visible feedback for rejected ops** `[P2 · M]` — a rejected host
+  handler only dims the spinner away and fires `onOperationError`; the
+  aria-live region announces progress but not failure. Add a polite failure
+  announcement + a minimal, dismissible error chip (slot-replaceable) so
+  default UX isn't silent.
+- **Touch support for hover-only affordances** `[P2 · M]` — branch buttons and
+  the add-sibling rail are `opacity: 0` until hover, i.e. invisible on touch
+  devices. Reveal on tap/focus-within (`@media (hover: none)`).
+- **Auto-scroll vs. user scroll** `[P2 · M]` — `autoScroll` fires two
+  `scrollIntoView` calls on every caret move and can fight the user's own
+  scrolling; debounce, and skip when the target is already in view.
+- **Playwright smoke layer** `[P2 · L]` — jsdom can't validate connector
+  geometry, real drag, caret visibility, KaTeX/lowlight rendering, or the
+  docs-site resize behaviors fixed this session. A handful of browser flows
+  against the built docs site would pin them.
+- **God-file decomposition** `[P2 · L]` — `HamEditor.tsx` (~1,050 lines) and
+  `HamCanvas.tsx` (~1,150) concentrate mode-switching/collab-gate/popovers and
+  autosave/undo/keyboard-nav respectively, held together by render-phase ref
+  mirrors. Extract cohesive modules (source-mode controller, autosave queue,
+  keyboard nav) — behavior-preserving, after the current fix wave settles.
+- **Version Packages PR runs no CI** `[P2 · S]` — GITHUB_TOKEN-created PRs
+  don't trigger `pull_request` workflows; the release commit is only tested on
+  main, racing the tag step's own build+test gate. Supply a PAT/GitHub-App
+  token to `changesets/action`, and consider branch protection with required
+  checks.
+- **Duplicate topology helpers** `[P3 · M]` — sibling/descendant/parenthood
+  logic exists in `siblingOrder.ts`, `reorderBranchSiblings.ts`,
+  `useHamCanvas.removeSurface`, and `HamCanvas.groupColumn`; consolidate onto
+  `buildIndices`.
+- **Source-textarea ergonomics** `[P3 · S]` — Tab inserts no indentation
+  (moves focus) and the box doesn't grow with content.
+- **CSS hygiene** `[P3 · S]` — a few dead tokens and magic widths flagged by
+  the audit (popover dark-theme tokens are fixed).
 
 ## Track A — Library hardening (toward `@ham/*` v1.0)
 
@@ -184,10 +225,10 @@ features, in either track.
   columns; the canvas renders a "Not linked to root" divider before them, so orphaned data is
   never silently invisible. _Duplicate-incoming-edge warning still open (the projection visits
   each surface once; `validateHamTopology` already detects the case for hosts that call it)._
-- **Harden drag-reorder** `[P2 · M]` — the reorder path has zero test coverage; invalid
-  cross-anchor drops are a silent no-op, and connectors only fade (don't track) during a drag.
-  Add clear rejection feedback, better in-drag connector behavior, and reorder tests (incl. the
-  keyboard sensor).
+- **Harden drag-reorder** `[P2 · M]` — _partly done (2026-06):_ undo/redo bookkeeping now
+  commits only when the host handler succeeds, `reorderSiblings` reports success, and the
+  success/failure path is tested. Still open: drag-path tests (incl. the keyboard sensor),
+  rejection feedback, and in-drag connector tracking.
 - ~~**`prefers-reduced-motion`**~~ `[P2 · S]` — **✅ DONE.** Auto-scroll uses `behavior:"auto"`
   under reduced-motion, and a `@media (prefers-reduced-motion: reduce)` block disables card /
   connector / add-sibling transitions.
@@ -251,16 +292,15 @@ features, in either track.
   Enable v8 coverage in the three vitest configs, run `--coverage` in CI, and gate (start
   informational). Target the pure utils first: `markdown/hash.ts`, `stable-id.ts`, `containment.ts`,
   `annotations/conflict.ts` + `recognize.ts`, `topology/*`, `connectors/connectors.ts`. _(Rank 19.)_
-- **Failure-mode tests for canvas handlers + collab** `[P1 · M]` — _partly done:_ a
-  createSurfaceFromBlock-rejection test (onOperationError + pending clears) + the collab
-  retry/flush tests landed. More handler-rejection cases remain. Original: — handler rejections
-  (create/sibling/reorder/delete/save) and the collab gate's failure paths (connect rejection,
-  flush timeout, unsync-then-sync) are untested; add `mockRejectedValueOnce` cases asserting
-  `onOperationError`, pending-state clearing, and no double-call. _(Ranks 17 + the collab subset;
-  guards the P0 save and A1 collab work.)_
-- **Branch-edge ordering edge cases** `[P2 · M]` — stale `insertAfterEdgeId`, concurrent same-position
-  inserts, hosts ignoring `shiftedSiblingOrders`, and non-dense order gaps after deletions.
-  _(Rank 18.)_
+- ~~**Failure-mode tests for canvas handlers + collab**~~ `[P1 · M]` — **✅ DONE (2026-06).**
+  The autosave suite covers debounce/flush/trailing-payload/spurious-save; behavior-flag
+  enforcement, update-snapshot rejection routing, reorder success/failure, sanitizer
+  obfuscation vectors, and the collab pre-synced-timeout path are all regression-tested.
+  _(Remaining collab failure path — unreachable server — is in the verified backlog above.)_
+- **Branch-edge ordering edge cases** `[P2 · M]` — _partly done (2026-06):_ sparse-order append
+  fixed (max+1), `duplicate-sibling-order` topology validation added, inserter keys are
+  gap-indexed. Still open: stale `insertAfterEdgeId`, concurrent same-position inserts, hosts
+  ignoring `shiftedSiblingOrders`. _(Rank 18.)_
 - **Real-browser smoke layer (Playwright)** `[P2 · L]` — jsdom can't validate layout, connector
   measurement, contenteditable selection, KaTeX/lowlight rendering, or real drag. Add a handful of
   browser smoke flows against the built docs site. _(Ranks 20 + the e2e gap; guards the caret-visibility
