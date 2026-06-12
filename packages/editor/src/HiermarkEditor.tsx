@@ -893,16 +893,17 @@ function HiermarkEditorInner<AnnotationData = unknown>(
         />
       )}
       {gutterEntries.map((entry) => {
-        // Portal into the LIVE gutter container in the editor DOM (looked up by
-        // its block id), not the cached `entry.container` object. The cached
-        // node can go stale — ProseMirror redraws or an editor remount (React
-        // StrictMode / concurrent rendering) can leave the entry pointing at a
-        // detached node while the real, in-DOM widget container is a different
-        // object — which silently dropped all gutter affordances. Fall back to
-        // the cached node when the lookup misses (e.g. mid-transition).
-        const live = editor?.view.dom.querySelector(
-          `[data-hiermark-gutter-for="${entry.blockId}"]`,
-        ) as HTMLElement | null;
+        // Usually portal straight into the cached container (fast — important on
+        // big docs). Only when that node has gone stale (a ProseMirror redraw or
+        // an editor remount under React StrictMode / concurrent rendering can
+        // leave the entry pointing at a DETACHED node while the real in-DOM
+        // widget container is a different object — which silently dropped every
+        // gutter affordance) do we look the live container up by block id.
+        const container = entry.container.isConnected
+          ? entry.container
+          : ((editor?.view.dom.querySelector(
+              `[data-hiermark-gutter-for="${entry.blockId}"]`,
+            ) as HTMLElement | null) ?? entry.container);
         return createPortal(
           <BlockGutterAffordances
             entry={entry}
@@ -912,7 +913,7 @@ function HiermarkEditorInner<AnnotationData = unknown>(
             onBranch={handleBranch}
             onOpenChild={handleOpenChild}
           />,
-          live ?? entry.container,
+          container,
           entry.blockId,
         );
       })}
