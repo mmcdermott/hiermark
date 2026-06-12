@@ -11,19 +11,15 @@ import { DemoFrame } from "./DemoFrame";
 // policies visibly light up different blocks in the right-hand branch gutter.
 const SOURCE_MD = `# Background
 
-Transformers replaced recurrence with self-attention.
+Transformers replaced recurrence with self-attention, and remain the backbone of modern sequence models.
 
-## Attention
+Positional information is injected explicitly rather than learned from order.
 
-Scaled dot-product attention weights every token against every other token.
+## Open questions
 
-## Limitations
-
-- Quadratic memory in sequence length
-  - Mitigated by sparse and linear attention
-- Positional encoding is bolted on
-
-Retrieval augmentation is a promising direction.`;
+- [ ] Why does attention scale quadratically with sequence length?
+- [ ] Can retrieval augmentation reduce hallucination?
+- [x] Confirm positional encodings are additive`;
 
 // "Only blocks that have no sub-blocks" — the recursive leaves-only filter,
 // expressed as a branchability rules object.
@@ -136,6 +132,7 @@ export function BranchPolicyDemo() {
       onReset={() => setReset((r) => r + 1)}
       source={SOURCE}
       height="auto"
+      fillWidth
     >
       <div className="demo-editor-wrap branch-policy-demo">
         <HiermarkEditor

@@ -13,6 +13,9 @@ export default tseslint.config(
       "**/*.tsbuildinfo",
       "apps/docs/dist/**",
       "apps/docs/public/api/**",
+      // Playwright e2e helpers mix Node + browser-eval contexts (document used
+      // inside page.evaluate); not part of the typechecked app source.
+      "apps/docs/e2e/**",
     ],
   },
   js.configs.recommended,

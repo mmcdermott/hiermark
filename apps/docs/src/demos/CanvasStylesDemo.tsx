@@ -117,6 +117,7 @@ export function CanvasStylesDemo() {
       title="@hiermark/canvas — appearances, connectors, swappable buttons & navigation"
       onReset={canvas.reset}
       height={560}
+      fillWidth
       controls={
         <span className="gallery-controls">
           <Segmented

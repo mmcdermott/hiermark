@@ -225,6 +225,19 @@ pre.block code {
   border-radius: 12px;
   overflow: hidden;
 }
+/* Control-heavy demos: give the figure a definite width and let the stage fill
+   it, so a wide caption no longer stretches the figure past the (fit-content)
+   stage and leaves a blank panel on the right. */
+.demo-fill-width {
+  width: min(100%, var(--demo-avail));
+}
+.demo-fill-width .demo-stage {
+  width: 100%;
+  /* Width is driven by the figure now; only let the user resize the height
+     (horizontal resize could shrink the stage narrower than the caption and
+     reintroduce the blank panel — ⛶ Expand covers "go bigger"). */
+  resize: vertical;
+}
 .demo-caption {
   display: flex;
   align-items: center;

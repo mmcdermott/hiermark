@@ -39,6 +39,7 @@
   "devDependencies": {
     "@changesets/cli": "^2",
     "@eslint/js": "^9",
+    "@playwright/test": "^1.60.0",
     "@size-limit/file": "^12.1.0",
     "@types/node": "^22",
     "axe-core": "^4.12.1",

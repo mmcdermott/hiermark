@@ -842,7 +842,14 @@ export function HiermarkCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
   useEffect(() => {
     if (!layout.autoScroll) return;
     scrollSurfaceIntoView(canvas.activeSurfaceId);
-    revealBranchFromBlock(canvas.activeSurfaceId, canvas.activeBlockId);
+    // Only reveal a child branch when a concrete block is selected. With no
+    // selected block (e.g. on initial mount), revealBranchFromBlock falls back
+    // to the surface's first child and scrolls it into view, which on a narrow
+    // canvas pans the active/root surface off the left edge — so the root looks
+    // clipped and connectors appear to come from off-screen.
+    if (canvas.activeBlockId) {
+      revealBranchFromBlock(canvas.activeSurfaceId, canvas.activeBlockId);
+    }
   }, [
     canvas.activeSurfaceId,
     canvas.activeBlockId,

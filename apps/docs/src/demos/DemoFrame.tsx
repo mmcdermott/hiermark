@@ -9,6 +9,7 @@ export function DemoFrame({
   controls,
   source,
   height = 460,
+  fillWidth = false,
 }: {
   title: string;
   children: ReactNode;
@@ -18,6 +19,13 @@ export function DemoFrame({
   /** When given, adds a "</> Source" toggle revealing this React snippet. */
   source?: string;
   height?: number | string;
+  /**
+   * Fill the available content width instead of the default ~900px stage. Use
+   * for control-heavy demos whose caption is wider than the stage — otherwise
+   * the figure grows to the caption and the stage leaves a blank panel beside
+   * it.
+   */
+  fillWidth?: boolean;
 }) {
   const [full, setFull] = useState(false);
   const [showSource, setShowSource] = useState(false);
@@ -37,7 +45,9 @@ export function DemoFrame({
   return (
     <>
       {full && <div className="demo-backdrop" onClick={() => setFull(false)} />}
-      <figure className={"demo" + (full ? " demo-full" : "")}>
+      <figure
+        className={"demo" + (full ? " demo-full" : "") + (fillWidth ? " demo-fill-width" : "")}
+      >
         <figcaption className="demo-caption">
           <span className="demo-title">{title}</span>
           <span className="demo-actions">
