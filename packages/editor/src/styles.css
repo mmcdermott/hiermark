@@ -18,6 +18,12 @@
   --hiermark-radius: 12px;
   --hiermark-column-gap: 24px;
   --hiermark-surface-gap: 16px;
+  /* The editor's base font size. The right/left gutter reservations below are
+     expressed in `em`, so the branch-affordance overlay MUST resolve those same
+     `em` values against THIS size — not the block's font — or a large-font block
+     (e.g. an h1 at 1.6em) pushes its affordance past the reserved gutter and
+     trips the host card's overflow:auto into a phantom scrollbar. */
+  --hiermark-base-font-size: 15px;
   --hiermark-gutter-right: 2em;
   --hiermark-gutter-left: 1.4em;
 }
@@ -56,7 +62,7 @@
   position: relative;
   color: var(--hiermark-text);
   font:
-    15px/1.6 system-ui,
+    var(--hiermark-base-font-size) / 1.6 system-ui,
     -apple-system,
     sans-serif;
 }
@@ -500,6 +506,13 @@
   right: calc(-1 * var(--hiermark-gutter-right));
   top: 0;
   height: 100%;
+  /* Resolve the `em`-based gutter offset (and the affordance/button sizes below)
+     against the editor base, NOT the block's inherited font. Otherwise a large
+     heading block scales `2em` up past the reserved gutter and pushes the marker
+     out through the host card's right padding — a phantom horizontal scrollbar.
+     Inheriting this base also keeps branch markers a uniform size across heading
+     levels instead of ballooning on h1/h2. */
+  font-size: var(--hiermark-base-font-size);
   display: flex;
   flex-direction: row;
   align-items: center;

@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hiermark/canvas": "workspace:^",

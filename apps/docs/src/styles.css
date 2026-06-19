@@ -4,8 +4,20 @@
   --doc-text: #1c1c22;
   --doc-muted: #6b6b78;
   --doc-accent: #6f5cff;
+  /* Link text. Separate from --doc-accent (which also fills buttons behind white
+     text), so dark mode can lighten links for contrast without washing out those
+     fills. */
+  --doc-link: var(--doc-accent);
   --doc-border: #e6e6ee;
   --doc-code-bg: #f5f4fb;
+  /* Lede (intro paragraph): slightly softer than body text. */
+  --doc-lede: #34343f;
+  /* Demo/live-example chrome. These were hardcoded light hex values that didn't
+     re-theme, so in dark mode the caption strips stayed near-white and their
+     text (themed light) became unreadable; the control chips were white tiles
+     with invisible labels. Tokenized so the dark block below can retheme them. */
+  --doc-caption-bg: #faf9ff;
+  --doc-chip-bg: #ffffff;
   color-scheme: light;
 }
 
@@ -112,7 +124,9 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 11px;
-  color: #6f6c89;
+  /* Lightened from #6f6c89 (3.65:1 on the dark sidebar) to clear WCAG AA for
+     this small-caps label. */
+  color: #9794b3;
   margin: 8px 8px 4px;
 }
 .nav-link {
@@ -171,10 +185,10 @@ body {
 }
 .lede {
   font-size: 17px;
-  color: #34343f;
+  color: var(--doc-lede);
 }
 a {
-  color: var(--doc-accent);
+  color: var(--doc-link);
 }
 code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
@@ -246,7 +260,7 @@ pre.block code {
      their options — the controls flow onto a second row instead. */
   flex-wrap: wrap;
   gap: 8px 14px;
-  background: #faf9ff;
+  background: var(--doc-caption-bg);
   border-bottom: 1px solid var(--doc-border);
   padding: 8px 14px;
   font-size: 13px;
@@ -269,7 +283,7 @@ pre.block code {
 }
 .demo-btn {
   border: 1px solid var(--doc-border);
-  background: #fff;
+  background: var(--doc-chip-bg);
   border-radius: 6px;
   padding: 2px 10px;
   cursor: pointer;
@@ -311,7 +325,7 @@ pre.block code {
 }
 .gallery-seg {
   border: 1px solid var(--doc-border);
-  background: #fff;
+  background: var(--doc-chip-bg);
   padding: 2px 8px;
   font: inherit;
   font-size: 12px;
@@ -539,7 +553,14 @@ pre.block code {
   --hiermark-surface-border: #e7dccb;
   --hiermark-accent: #b5651d;
   --hiermark-accent-soft: #f6ead9;
-  --hiermark-muted: #8a7a63;
+  /* Darkened from #8a7a63 (4.09:1 on the cream surface) to clear WCAG AA. */
+  --hiermark-muted: #776a52;
+  /* This is a LIGHT "paper" theme. Pin a dark warm ink (text + inherited header
+     color) so the cream surface stays readable even when the host site is in
+     dark mode — otherwise the editor's dark-theme light text leaks in and the
+     titles/headings wash out (mirrors how .theme-map pins its light text). */
+  --hiermark-text: #2c2418;
+  color: #2c2418;
 }
 .theme-manuscript .hiermark-editor .ProseMirror {
   font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
@@ -592,7 +613,7 @@ pre.block code {
   justify-content: space-between;
   gap: 8px;
   padding: 7px 14px;
-  background: #faf9ff;
+  background: var(--doc-caption-bg);
   border-bottom: 1px solid var(--doc-border);
   font-size: 12px;
   font-weight: 600;
@@ -683,5 +704,13 @@ pre.block code {
   --doc-muted: #9a9aab;
   --doc-border: #2c2c38;
   --doc-code-bg: #1b1b24;
+  /* Lightened accent for link text (#6f5cff is only 4.19:1 on the near-black
+     dark bg); the button-fill accent stays --doc-accent. */
+  --doc-link: #9c8cff;
+  /* Readable soft-grey lede instead of the near-black light-mode value, and
+     dark chrome for the demo/live caption strips and control chips. */
+  --doc-lede: #c7c7d2;
+  --doc-caption-bg: #1b1b24;
+  --doc-chip-bg: #24242f;
   color-scheme: dark;
 }
