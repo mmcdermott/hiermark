@@ -23,6 +23,7 @@
     "dev": "pnpm -F @hiermark/docs dev",
     "test": "pnpm -r --no-bail test",
     "test:run": "pnpm -r --no-bail test:run",
+    "test:e2e": "pnpm build && pnpm -F @hiermark/docs build && pnpm -F @hiermark/docs test:e2e",
     "typecheck": "pnpm -r --no-bail typecheck",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
