@@ -66,5 +66,10 @@ export function flushAndDestroy(
     };
     const timer = setTimeout(() => finalize(false), 3000);
     provider.on("unsyncedChanges", onChanges);
+    // Close the TOCTOU gap: if the changes drained between the initial
+    // `hasUnsyncedChanges` read and this subscription, the `unsyncedChanges`
+    // event already fired and won't fire again — re-check so we don't wait the
+    // full 3s and falsely report unflushed (potential-data-loss) changes.
+    if (!provider.hasUnsyncedChanges) finalize(true);
   });
 }

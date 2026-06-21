@@ -1,5 +1,10 @@
 import { defineConfig } from "tsup";
-import { copyFileSync, existsSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync } from "node:fs";
+
+// Single-source the published version from package.json so the exported
+// HIERMARK_CANVAS_VERSION constant can never drift (see src/index.ts). Mirrored
+// in vitest.config.ts for the test build.
+const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
 export default defineConfig({
   entry: ["src/index.ts"],
@@ -8,6 +13,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
+  define: { __HIERMARK_PKG_VERSION__: JSON.stringify(version) },
   external: ["react", "react-dom", "react/jsx-runtime", "@hiermark/editor"],
   onSuccess: async () => {
     if (existsSync("src/styles.css")) {

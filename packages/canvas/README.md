@@ -9,7 +9,10 @@ sections top → down).
 pnpm add @hiermark/canvas @hiermark/editor react react-dom
 ```
 
-> **ESM + CJS.** Ships dual builds; React 18.3+ or 19 is a peer dependency.
+> **ESM + CJS.** Ships dual builds. Peers: `@hiermark/editor`, `react`, and
+> `react-dom` (18.3+ or 19). The editor in turn peers `@tiptap/pm` and `yjs`
+> (auto-installed by `pnpm`/`npm 7+`) — see its README. Import **both**
+> stylesheets, editor first.
 
 ```tsx
 import { HiermarkCanvas } from "@hiermark/canvas";

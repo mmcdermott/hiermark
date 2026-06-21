@@ -22,6 +22,12 @@ export type {
   HiermarkBranchPolicy,
   HiermarkEditorContent,
   HiermarkEditorSavePayload,
+  // Re-exported so the canvas public surface is self-contained: both are
+  // referenced by canvas props (`editorDefaults` derives from HiermarkEditorProps,
+  // `annotationRegistry` is a HiermarkAnnotationRegistry) — a consumer shouldn't
+  // need a direct @hiermark/editor import to name them.
+  HiermarkEditorProps,
+  HiermarkAnnotationRegistry,
 };
 
 // ---------------------------------------------------------------------------
