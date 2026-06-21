@@ -1,9 +1,19 @@
 // @hiermark/editor — one collaborative, block-centric markdown surface.
 
-export const HIERMARK_EDITOR_VERSION = "0.1.0";
+// Injected at build time from package.json by tsup/vitest `define` (see
+// tsup.config.ts) so it can never drift from the published version.
+declare const __HIERMARK_PKG_VERSION__: string;
+export const HIERMARK_EDITOR_VERSION: string = __HIERMARK_PKG_VERSION__;
 
 // Component
 export { HiermarkEditor } from "./HiermarkEditor";
+
+// Tiptap interop: the one intentional Tiptap type on the public surface — the
+// `editor` prop of a custom SuggestPopover slot (HiermarkSuggestPopoverProps) is
+// a Tiptap Editor. Re-exported so consumers can name it without a direct
+// @tiptap/core import. (Most Tiptap/ProseMirror/Yjs internals stay behind
+// `unknown`; use `getUnsafeTiptapEditor()` for the escape hatch.)
+export type { Editor } from "@tiptap/core";
 
 // Extensions
 export { createHiermarkEditorExtensions } from "./extensions/createHiermarkEditorExtensions";

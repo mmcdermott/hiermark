@@ -1,6 +1,9 @@
 // @hiermark/canvas — a 2D canvas of editable Hiermark surfaces linked by branch edges.
 
-export const HIERMARK_CANVAS_VERSION = "0.1.0";
+// Injected at build time from package.json by tsup/vitest `define` (see
+// tsup.config.ts) so it can never drift from the published version.
+declare const __HIERMARK_PKG_VERSION__: string;
+export const HIERMARK_CANVAS_VERSION: string = __HIERMARK_PKG_VERSION__;
 
 // Component + hook
 export { HiermarkCanvas } from "./HiermarkCanvas";

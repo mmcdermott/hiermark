@@ -23,6 +23,26 @@ import "@hiermark/editor/styles.css";
 />;
 ```
 
+### Styling
+
+`import "@hiermark/editor/styles.css"` is required for the editor, code blocks,
+and math to render correctly. That stylesheet `@import`s `katex/dist/katex.min.css`
+(and its fonts) by bare specifier, so import it through a bundler that resolves
+CSS `@import`s from `node_modules` (Vite, webpack/css-loader, Next, etc.) — a
+plain `<link>` won't resolve the KaTeX import.
+
+### Peer dependencies
+
+`react` and `react-dom` (18.3+ or 19) are peers. **`@tiptap/pm` (ProseMirror) and
+`yjs` are also peers** so they stay single instances in your app — duplicate
+copies break ProseMirror `instanceof` checks and Yjs's CRDT (the editor accepts a
+host-supplied `Y.Doc`). Modern package managers (`pnpm`, `npm 7+`) auto-install
+peers; if yours doesn't, add them:
+
+```bash
+pnpm add @hiermark/editor react react-dom @tiptap/pm yjs
+```
+
 ## Highlights
 
 - **Stable block ids** on every structural block; a tree-shaped `snapshot`

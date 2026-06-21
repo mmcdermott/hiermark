@@ -1,6 +1,12 @@
 import { defineConfig } from "vitest/config";
+import { readFileSync } from "node:fs";
+
+// Mirror tsup's compile-time version injection so HIERMARK_CANVAS_VERSION
+// resolves to the real package.json version under test too.
+const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
 export default defineConfig({
+  define: { __HIERMARK_PKG_VERSION__: JSON.stringify(version) },
   test: {
     environment: "jsdom",
     globals: true,

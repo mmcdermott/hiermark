@@ -1,5 +1,10 @@
 import { defineConfig } from "tsup";
-import { copyFileSync, existsSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync } from "node:fs";
+
+// Single-source the published version from package.json so the exported
+// HIERMARK_EDITOR_VERSION constant can never drift (see src/index.ts). The same
+// define is mirrored in vitest.config.ts for the test build.
+const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
 export default defineConfig({
   // Named entries → `dist/index.*` and `dist/markdown.*`. The `markdown` entry is the
@@ -10,7 +15,9 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
-  // react / react-dom are peers; all `dependencies` are auto-externalized by tsup.
+  define: { __HIERMARK_PKG_VERSION__: JSON.stringify(version) },
+  // react / react-dom are peers; all `dependencies`/`peerDependencies` (incl.
+  // @tiptap/pm and yjs) are auto-externalized by tsup.
   external: ["react", "react-dom", "react/jsx-runtime"],
   onSuccess: async () => {
     if (existsSync("src/styles.css")) {

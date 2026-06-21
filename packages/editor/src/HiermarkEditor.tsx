@@ -715,7 +715,12 @@ function HiermarkEditorInner<AnnotationData = unknown>(
         if (opts?.scroll) this.scrollBlockIntoView(blockId);
       },
       scrollBlockIntoView(blockId, opts) {
-        const el = editor.view.dom.querySelector<HTMLElement>(`[data-block-id="${blockId}"]`);
+        // CSS.escape the id: a host-configured `BlockId.generate` (or an imported
+        // id) may contain quotes/other CSS-special chars that would otherwise
+        // throw a SyntaxError from querySelector.
+        const el = editor.view.dom.querySelector<HTMLElement>(
+          `[data-block-id="${CSS.escape(blockId)}"]`,
+        );
         el?.scrollIntoView(opts ?? { block: "nearest" });
       },
       // Every read path is source-aware: while in source mode, edited markdown
@@ -968,13 +973,20 @@ function CollabHiermarkEditor<AnnotationData = unknown>(
 ) {
   const config = props.collaboration!;
   // The editor must bind to the SAME Y.Doc the transport syncs. Prefer the
-  // injected runtime's doc, then config.ydoc, else create one.
-  const [ydoc] = useState<Y.Doc>(
-    () =>
-      (config.runtime?.ydoc as Y.Doc | undefined) ??
-      (config.ydoc as Y.Doc | undefined) ??
-      new Y.Doc(),
-  );
+  // injected runtime's doc, then config.ydoc, else create one — and remember
+  // whether WE created it, so unmount only destroys a doc the host doesn't own.
+  const ownsDocRef = useRef(false);
+  const [ydoc] = useState<Y.Doc>(() => {
+    const supplied =
+      (config.runtime?.ydoc as Y.Doc | undefined) ?? (config.ydoc as Y.Doc | undefined);
+    if (supplied) return supplied;
+    ownsDocRef.current = true;
+    return new Y.Doc();
+  });
+  // Flipped on real unmount (not a reconnect) so the connect effect's async
+  // flush chain can destroy our own doc only after the provider has torn down.
+  const unmountedRef = useRef(false);
+  useEffect(() => () => void (unmountedRef.current = true), []);
   const runtime = useMemo(
     () => config.runtime ?? createHocuspocusCollab(config, ydoc),
     // Build the runtime once for this doc/config.
@@ -1065,7 +1077,13 @@ function CollabHiermarkEditor<AnnotationData = unknown>(
       setTimedOut(false);
       const cleaning = created;
       if (cleaning) {
-        void flushAndDestroy(cleaning).then((result) => cbRef.current.onBeforeUnmount?.(result));
+        void flushAndDestroy(cleaning).then((result) => {
+          cbRef.current.onBeforeUnmount?.(result);
+          // Destroy the Y.Doc we created ourselves — only on real unmount (a
+          // reconnect reuses it) and only after the provider finished flushing,
+          // so teardown can't race the flush. A host-supplied doc is never ours.
+          if (unmountedRef.current && ownsDocRef.current) ydoc.destroy();
+        });
       }
     };
     // retryToken re-runs the whole connect cycle for a manual reconnect.
