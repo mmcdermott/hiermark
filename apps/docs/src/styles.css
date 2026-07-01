@@ -2,7 +2,10 @@
   --doc-bg: #ffffff;
   --doc-sidebar-bg: #15131f;
   --doc-text: #1c1c22;
-  --doc-muted: #6b6b78;
+  /* Secondary text (demo hints, live-block captions, labels). Darkened from
+     #6b6b78 (~5:1) to a comfortable ~7:1 on white so muted copy doesn't read as
+     washed-out; still clearly lighter than --doc-text. */
+  --doc-muted: #55555f;
   --doc-accent: #6f5cff;
   /* Link text. Separate from --doc-accent (which also fills buttons behind white
      text), so dark mode can lighten links for contrast without washing out those
@@ -77,6 +80,21 @@ body {
 }
 .content:focus {
   outline: none;
+}
+
+/* Visible keyboard focus for interactive chrome (the accent ring reads on both
+   the dark sidebar and the light content). Mouse clicks don't trigger it. */
+.nav-link:focus-visible,
+.brand:focus-visible,
+.theme-toggle:focus-visible,
+.demo-btn:focus-visible,
+.demo-toggle:focus-visible,
+.gallery-seg:focus-visible,
+.doc-source-copy:focus-visible,
+.repo-link:focus-visible {
+  outline: 2px solid var(--doc-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 /* Sidebar ------------------------------------------------------------------- */
@@ -161,6 +179,11 @@ body {
   /* Wide enough that demos have real room; prose is capped separately below so
      paragraphs stay readable. */
   max-width: 1400px;
+  /* This is a grid `1fr` track; without this it keeps `min-width: auto`, so a
+     wide code block / table forces the track past the viewport (horizontal
+     scroll, most visible on mobile). `min-width: 0` lets it shrink and lets
+     those `overflow-x: auto` children scroll internally instead. */
+  min-width: 0;
   /* Width available to a live preview that breaks out of this (max 1400px,
      left-aligned) column to use the wider track: viewport minus the sidebar
      (264px) minus this column's left+right padding (112px), leaving a 56px
@@ -489,6 +512,12 @@ pre.block code {
 }
 
 /* API table ----------------------------------------------------------------- */
+/* Monospace API names have long unbreakable tokens, so on a phone the table
+   can't shrink to fit. Let it scroll inside its group rather than pushing the
+   page sideways (no effect on desktop, where the table fits its column). */
+.api-group {
+  overflow-x: auto;
+}
 .api-table {
   width: 100%;
   border-collapse: collapse;
@@ -542,6 +571,13 @@ pre.block code {
   .cards,
   .demo-collab {
     grid-template-columns: 1fr;
+  }
+  /* The API name column is `nowrap` for tidy single-line rows on desktop, but
+     long slash-separated names would force the table wider than a phone. Let it
+     wrap here so the table fits instead of scrolling the page sideways. */
+  .api-table td:first-child {
+    white-space: normal;
+    width: auto;
   }
 }
 
