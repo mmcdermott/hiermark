@@ -926,6 +926,9 @@ export function HiermarkCanvas<SurfaceMeta = unknown, EdgeMeta = unknown>(
       revealChildren: (id) => liveRef.current.revealChildren(id),
       getActivePath: () => liveRef.current.canvas.activePath,
       getColumns: () => liveRef.current.canvas.columns,
+      // Surface the per-surface editor handle the canvas already tracks (used
+      // internally for focusBlock). Null when that surface isn't mounted.
+      getSurfaceEditor: (id) => editorHandlesRef.current.get(id) ?? null,
     });
   }, [onReady, focusEditor]);
 

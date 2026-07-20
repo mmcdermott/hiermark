@@ -11,7 +11,11 @@ import {
 } from "@floating-ui/react";
 import { useEffect } from "react";
 
-import type { HiermarkAnnotationHit, HiermarkAnnotationType } from "../types";
+import type {
+  HiermarkAnnotationEdit,
+  HiermarkAnnotationHit,
+  HiermarkAnnotationType,
+} from "../types";
 
 export interface OpenAnnotation {
   hit: HiermarkAnnotationHit;
@@ -24,6 +28,8 @@ export interface AnnotationPopoverProps<Ctx = unknown> {
   type: HiermarkAnnotationType<Ctx> | undefined;
   context: Ctx;
   onClose: () => void;
+  /** Apply a write-back for a hit (block attrs / range text) — see HiermarkEditor. */
+  update: (hit: HiermarkAnnotationHit, edit: HiermarkAnnotationEdit) => boolean;
 }
 
 /**
@@ -36,6 +42,7 @@ export function AnnotationPopover<Ctx = unknown>({
   type,
   context,
   onClose,
+  update,
 }: AnnotationPopoverProps<Ctx>) {
   const {
     refs,
@@ -70,7 +77,12 @@ export function AnnotationPopover<Ctx = unknown>({
         className="hiermark-annotation-popover"
         {...getFloatingProps()}
       >
-        <Render hit={open.hit} context={context} close={onClose} />
+        <Render
+          hit={open.hit}
+          context={context}
+          close={onClose}
+          update={(edit) => update(open.hit, edit)}
+        />
       </div>
     </FloatingPortal>
   );

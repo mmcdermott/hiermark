@@ -15,7 +15,12 @@ export interface HiermarkExampleAnnotationContext {
 
 type Ctx = HiermarkExampleAnnotationContext;
 
-/** A checklist item, rendered as a block chip carrying its sidecar task record. */
+/**
+ * A checklist item, rendered as a block chip. Clicking the chip opens a popover
+ * whose "Done" checkbox writes back to the block: `update({ setAttrs: { checked } })`
+ * flips the `taskItem`'s canonical `checked` attr (`- [ ]` ⇄ `- [x]`) as one
+ * transaction, so done-ness syncs via Yjs and survives save — no sidecar drift.
+ */
 export function createTaskAnnotation(): HiermarkAnnotationType<Ctx> {
   return {
     name: "task",
@@ -29,13 +34,29 @@ export function createTaskAnnotation(): HiermarkAnnotationType<Ctx> {
           type: "task",
           blockId: block.id,
           label: text,
-          data: context.tasksByBlockId?.[block.id] ?? null,
+          data: {
+            checked: !!block.attrs?.checked,
+            record: context.tasksByBlockId?.[block.id] ?? null,
+          },
         },
       ];
     },
-    render: ({ hit }) => (
-      <span className="hiermark-annotation-chip hiermark-task-chip">✓ {hit.label}</span>
-    ),
+    render: ({ hit, update, close }) => {
+      const checked = !!(hit.data as { checked?: boolean } | null)?.checked;
+      return (
+        <label className="hiermark-task-chip">
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={(e) => {
+              update({ setAttrs: { checked: e.target.checked } });
+              close?.();
+            }}
+          />
+          {hit.label}
+        </label>
+      );
+    },
   };
 }
 

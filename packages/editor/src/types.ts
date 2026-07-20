@@ -176,11 +176,37 @@ export type HiermarkAnnotationRecognizer<Ctx = unknown> = (args: {
   context: Ctx;
 }) => HiermarkAnnotationHit[];
 
+/**
+ * A surgical, identity-preserving edit to a block, applied as a single
+ * ProseMirror transaction — so it flows through Collaboration/Yjs to every
+ * client and to persistence (the only safe way to mutate the shared doc). The
+ * block's `dataBlockId` is protected: identity can't be changed through this,
+ * so branch edges and anchored annotations survive.
+ */
+export type HiermarkBlockEdit = {
+  /** Merge these attrs onto the block's node — e.g. `{ checked: true }` on a `taskItem`. */
+  setAttrs: Record<string, unknown>;
+};
+
+/**
+ * What an annotation's `render` component may write back, scoped to its hit.
+ * `setAttrs` targets the hit's block; `replaceText` targets the hit's inline
+ * range (`hit.from`..`hit.to`) — a no-op for block-level hits without a range.
+ */
+export type HiermarkAnnotationEdit = HiermarkBlockEdit | { replaceText: string };
+
 export interface HiermarkAnnotationRenderProps<Ctx = unknown> {
   hit: HiermarkAnnotationHit;
   context: Ctx;
   /** Close an open popover/card, if this annotation opened one. */
   close?: () => void;
+  /**
+   * Write back to the block/range this annotation is anchored to, as one
+   * transaction (synced via Yjs). Pre-scoped to `hit`. Returns false if the
+   * edit couldn't be applied (block gone, or `replaceText` on a range-less hit).
+   * Call from an event handler (e.g. onClick), never during render.
+   */
+  update: (edit: HiermarkAnnotationEdit) => boolean;
 }
 
 /** A candidate shown in the annotation search popover. */
@@ -461,6 +487,13 @@ export interface HiermarkEditorHandle {
   setMode(mode: HiermarkEditorMode): void;
   collapseBlock(blockId: HiermarkBlockId): void;
   expandBlock(blockId: HiermarkBlockId): void;
+  /**
+   * Apply a surgical edit to a block, by id, as one transaction (synced via
+   * Yjs) — the supported way for host UI (e.g. a tasks panel toggling a
+   * checklist item, or resolving an annotation) to mutate canonical block state.
+   * Returns false if no block with that id exists. See {@link HiermarkBlockEdit}.
+   */
+  updateBlock(blockId: HiermarkBlockId, edit: HiermarkBlockEdit): boolean;
   /**
    * Advanced escape hatch (spec §5.8): the underlying Tiptap editor. Prefer the
    * typed handle methods; reach for this only when no first-class API exists.

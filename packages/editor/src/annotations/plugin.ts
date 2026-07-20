@@ -77,6 +77,31 @@ function buildBlockTextIndex(node: PMNode, pos: number): BlockTextIndex {
   return { text, charToPos, end: pos + node.nodeSize };
 }
 
+/**
+ * Resolve an annotation hit's block-relative inline range (`from`..`to`, in
+ * chars) to absolute ProseMirror positions — the same mapping the decoration
+ * builder uses, so a write hits exactly the decorated span. Returns null for
+ * block-level hits (no range) or offsets outside the block's text.
+ */
+export function resolveHitDocRange(
+  doc: PMNode,
+  hit: HiermarkAnnotationHit,
+): { from: number; to: number } | null {
+  if (hit.from == null || hit.to == null || hit.to <= hit.from) return null;
+  let range: { from: number; to: number } | null = null;
+  doc.descendants((node, pos, parent) => {
+    if (range) return false;
+    if (!isHiermarkBlockNode(node, parent)) return undefined;
+    if ((node.attrs?.dataBlockId as string | null) !== hit.blockId) return undefined;
+    const index = buildBlockTextIndex(node, pos);
+    const from = index.charToPos[hit.from!];
+    const lastChar = index.charToPos[hit.to! - 1];
+    if (from != null && lastChar != null) range = { from, to: lastChar + 1 };
+    return false;
+  });
+  return range;
+}
+
 function chipEl(hit: HiermarkAnnotationHit): HTMLElement {
   const span = document.createElement("span");
   span.className = `hiermark-annotation-chip hiermark-annotation-chip-${hit.type}`;

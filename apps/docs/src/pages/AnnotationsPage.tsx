@@ -76,9 +76,10 @@ export function AnnotationsPage() {
       <p className="lede">
         Annotations are a layer <em>over</em> the markdown: a set of recognizers scan each
         block&apos;s text and emit typed <strong>hits</strong> that render as inline highlights,
-        clickable pills, block chips, or a type-ahead — without ever changing the source markdown.
-        The framework owns recognition, conflict resolution, and rendering; <em>you</em> own the
-        recognizers and the domain data they read.
+        clickable pills, block chips, or a type-ahead. Recognition never mutates the document — but
+        a hit&apos;s render component can opt to <strong>write back</strong> to its block when the
+        user acts. The framework owns recognition, conflict resolution, and rendering; <em>you</em>{" "}
+        own the recognizers and the domain data they read.
       </p>
 
       <h3>The model</h3>
@@ -97,9 +98,20 @@ export function AnnotationsPage() {
         references &amp; people:
       </p>
 
+      <p>
+        Hits can also <strong>write back</strong>. A render component gets an{" "}
+        <code>update(edit)</code> pre-scoped to its hit — <code>{`{ setAttrs }`}</code> for the
+        block, <code>{`{ replaceText }`}</code> for an inline range — applied as one transaction, so
+        it syncs via Yjs and survives save. Click the <strong>task chip</strong> below and toggle{" "}
+        <em>Done</em>: it flips the source <code>- [ ]</code> ⇄ <code>- [x]</code> for real, not
+        just a sidecar. Host UI outside the editor does the same through{" "}
+        <code>handle.updateBlock(blockId, edit)</code> (and{" "}
+        <code>canvasHandle.getSurfaceEditor(surfaceId)</code> under the canvas).
+      </p>
+
       <div className="doc-live">
         <div className="doc-live-head">
-          <span>Live editor — try @ and the inline pills</span>
+          <span>Live editor — try @, the inline pills, and the task chip&apos;s Done toggle</span>
           <button type="button" className="demo-btn" onClick={() => setKey((k) => k + 1)}>
             Reset
           </button>
