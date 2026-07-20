@@ -669,6 +669,16 @@
   padding: 10px 12px;
   font-size: 13px;
 }
+/* Example task chip's Done toggle (block-chip render — writes back via `update`). */
+.hiermark-task-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.hiermark-task-chip input {
+  cursor: pointer;
+}
 
 /* Annotation type-ahead (search) popover ------------------------------------ */
 .hiermark-suggest-popover {

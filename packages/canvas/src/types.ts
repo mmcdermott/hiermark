@@ -6,6 +6,7 @@ import type {
   HiermarkBranchPolicy,
   HiermarkBranchRequestEvent,
   HiermarkEditorContent,
+  HiermarkEditorHandle,
   HiermarkEditorProps,
   HiermarkEditorSavePayload,
   HiermarkSurfaceId,
@@ -28,6 +29,8 @@ export type {
   // need a direct @hiermark/editor import to name them.
   HiermarkEditorProps,
   HiermarkAnnotationRegistry,
+  // Surfaced by canvasHandle.getSurfaceEditor(), so the canvas API is self-contained.
+  HiermarkEditorHandle,
 };
 
 // ---------------------------------------------------------------------------
@@ -370,6 +373,15 @@ export interface HiermarkCanvasHandle {
   revealChildren(surfaceId: HiermarkSurfaceId): void;
   getActivePath(): HiermarkActivePath;
   getColumns(): HiermarkCanvasColumn[];
+  /**
+   * The live editor handle for a surface — the way host UI *outside* the canvas
+   * (e.g. a tasks panel) reaches a surface's editor to write back (see
+   * {@link HiermarkEditorHandle.updateBlock}). Returns null when the surface has
+   * no mounted editor: only active-path surfaces render a full editor, so a
+   * collapsed surface has no live transaction — mutate those through your data
+   * layer instead.
+   */
+  getSurfaceEditor(surfaceId: HiermarkSurfaceId): HiermarkEditorHandle | null;
 }
 
 export type HiermarkCanvasOperationType =

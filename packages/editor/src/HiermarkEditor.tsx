@@ -10,6 +10,7 @@ import { AnnotationPopover, type OpenAnnotation } from "./annotations/Annotation
 import {
   AnnotationLayer,
   annotationLayerKey,
+  resolveHitDocRange,
   type AnnotationLayerContext,
 } from "./annotations/plugin";
 import {
@@ -46,6 +47,8 @@ import { surfaceSnapshotFromDoc } from "./snapshot/getHiermarkSurfaceSnapshot";
 import { collectBlockIdentities, planBlockIdRestore } from "./snapshot/blockIdentity";
 import { devWarn } from "./devWarn";
 import type {
+  HiermarkAnnotationEdit,
+  HiermarkAnnotationHit,
   HiermarkAnnotationSuggestion,
   HiermarkBlockId,
   HiermarkBranchChildSummary,
@@ -72,6 +75,26 @@ function findBlockPos(doc: Editor["state"]["doc"], blockId: HiermarkBlockId): nu
     return undefined;
   });
   return found;
+}
+
+/**
+ * Merge `attrs` onto the block with `blockId` as one transaction (synced via
+ * Yjs). Shared by the handle's `updateBlock` and annotation `update`. Protects
+ * `dataBlockId` so a write can't change a block's identity (which would orphan
+ * branch edges and anchored annotations). Returns false if the block is gone.
+ */
+function applyBlockAttrs(
+  editor: Editor,
+  blockId: HiermarkBlockId,
+  attrs: Record<string, unknown>,
+): boolean {
+  const pos = findBlockPos(editor.state.doc, blockId);
+  if (pos == null) return false;
+  const node = editor.state.doc.nodeAt(pos);
+  if (!node) return false;
+  const { dataBlockId: _protected, ...safe } = attrs;
+  editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, ...safe }));
+  return true;
 }
 
 /** A readable, distinct caret color when the host doesn't supply one. */
@@ -420,6 +443,20 @@ function HiermarkEditorInner<AnnotationData = unknown>(
   );
 
   // Write edited LaTeX back to / delete a math node by position (drives MathPopover).
+  // The write-back an annotation's `render` component gets, scoped to its hit:
+  // `setAttrs` targets the hit's block; `replaceText` its inline range. Both go
+  // through the editor transaction so they sync via Yjs.
+  const applyAnnotationEdit = useCallback(
+    (hit: HiermarkAnnotationHit, edit: HiermarkAnnotationEdit): boolean => {
+      if (!editor) return false;
+      if ("setAttrs" in edit) return applyBlockAttrs(editor, hit.blockId, edit.setAttrs);
+      const range = resolveHitDocRange(editor.state.doc, hit);
+      if (!range) return false;
+      editor.view.dispatch(editor.state.tr.insertText(edit.replaceText, range.from, range.to));
+      return true;
+    },
+    [editor],
+  );
   const setMathLatex = useCallback(
     (pos: number, latex: string) => {
       if (!editor) return;
@@ -764,6 +801,9 @@ function HiermarkEditorInner<AnnotationData = unknown>(
           return next;
         });
       },
+      updateBlock(blockId, edit) {
+        return applyBlockAttrs(editor, blockId, edit.setAttrs);
+      },
       getUnsafeTiptapEditor: () => editor,
     };
     onReadyRef.current(handle);
@@ -927,6 +967,7 @@ function HiermarkEditorInner<AnnotationData = unknown>(
         type={openType}
         context={(props.annotationContext ?? {}) as AnnotationData}
         onClose={() => setOpenAnnotation(null)}
+        update={applyAnnotationEdit}
       />
       <SuggestPopoverComp
         state={suggest}
