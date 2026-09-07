@@ -147,6 +147,50 @@ describe("HiermarkEditor + annotations", () => {
     expect(document.querySelector(".hiermark-suggest-popover")).toBeNull();
   });
 
+  // The type-ahead must be something the user TYPED into, never a side effect of
+  // where the caret landed: a document full of existing `@key` citations would
+  // otherwise pop a search every time one is clicked or scrolled past.
+  it("does not open when the caret is merely placed after an existing @token", async () => {
+    const { editor } = await mountSearch("Ref: @vaswani2017");
+    editor.commands.focus("end"); // selection-only transaction, caret after the token
+    await new Promise((r) => setTimeout(r, 60));
+    expect(document.querySelector(".hiermark-suggest-popover")).toBeNull();
+    // …nor when the caret is moved inside it (a click on the pill's text).
+    editor.commands.setTextSelection(editor.state.doc.content.size - 3);
+    await new Promise((r) => setTimeout(r, 60));
+    expect(document.querySelector(".hiermark-suggest-popover")).toBeNull();
+  });
+
+  it("does not open for a remote peer's edit that leaves the caret after a token", async () => {
+    const { editor } = await mountSearch("Ref: ");
+    editor.commands.focus("end");
+    // What y-prosemirror dispatches for a synced remote change: a doc change
+    // tagged with its sync plugin's meta.
+    editor.view.dispatch(
+      editor.state.tr.insertText("@vas").setMeta("y-sync$", { isChangeOrigin: true }),
+    );
+    await new Promise((r) => setTimeout(r, 60));
+    expect(editor.getText()).toContain("@vas");
+    expect(document.querySelector(".hiermark-suggest-popover")).toBeNull();
+  });
+
+  it("does not open when setContent lands the caret after a token", async () => {
+    const { editor } = await mountSearch("Ref: ");
+    editor.commands.focus("end");
+    editor.commands.setContent("Ref: @vas");
+    await new Promise((r) => setTimeout(r, 60));
+    expect(document.querySelector(".hiermark-suggest-popover")).toBeNull();
+  });
+
+  it("closes the @-search popover when the editor blurs", async () => {
+    const { container, editor } = await mountSearch("Ref: ");
+    editor.chain().focus("end").insertContent("@vas").run();
+    await waitFor(() => expect(document.querySelector(".hiermark-suggest-popover")).not.toBeNull());
+    const pm = container.querySelector<HTMLElement>(".hiermark-editor .ProseMirror")!;
+    fireEvent.blur(pm);
+    await waitFor(() => expect(document.querySelector(".hiermark-suggest-popover")).toBeNull());
+  });
+
   it("Escape dismisses the @-search popover", async () => {
     const { container, editor } = await mountSearch("Ref: ");
     editor.chain().focus("end").insertContent("@vas").run();
