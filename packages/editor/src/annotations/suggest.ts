@@ -1,6 +1,6 @@
 import { Extension } from "@tiptap/core";
 import type { Editor } from "@tiptap/core";
-import type { EditorState } from "@tiptap/pm/state";
+import type { EditorState, Transaction } from "@tiptap/pm/state";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { findSuggestionMatch } from "@tiptap/suggestion";
 
@@ -138,11 +138,51 @@ function compute(
 }
 
 /**
+ * True when `tr` came from the collaboration sync (a remote peer's edit, or the
+ * initial load of a shared document) rather than from this editor's user.
+ * y-prosemirror tags those transactions with its sync plugin key; the key isn't
+ * importable here (y-prosemirror is a transitive dependency), so match on the
+ * key's name — a remote update is the only source of a `y-sync` meta.
+ */
+function isRemoteChange(tr: Transaction): boolean {
+  // `meta` is private in ProseMirror's types but is a plain record at runtime
+  // (getMeta only takes a key, and the y-sync PluginKey's name gets a `$` suffix
+  // plus a counter when several copies of y-prosemirror are loaded).
+  const meta = (tr as unknown as { meta?: Record<string, unknown> }).meta ?? {};
+  for (const key of Object.keys(meta)) if (key.startsWith("y-sync")) return true;
+  return false;
+}
+
+/**
+ * Whether some step of `tr` changed text *within* `range` (post-change
+ * positions) — a keystroke or an `insertContent` that produced the token. A
+ * wholesale `setContent` also rewrites the token, but its changed range spans
+ * the whole document, so it doesn't count as typing into it.
+ */
+function typedInto(tr: Transaction, range: { from: number; to: number }): boolean {
+  let typed = false;
+  tr.mapping.maps.forEach((map) => {
+    map.forEach((_oldStart, _oldEnd, newStart, newEnd) => {
+      if (newStart >= range.from && newEnd <= range.to) typed = true;
+    });
+  });
+  return typed;
+}
+
+/**
  * Drives an annotation type-ahead: typing a registered `trigger` opens a popover
  * of candidates from that type's `search`; choosing one inserts its text, which
  * the recognizers then pick up (e.g. an `@key` citation pill). Reads triggers
  * dynamically from the registry (via `getContext`), so adding a suggest-capable
  * annotation type "just works" without reconfiguring the editor.
+ *
+ * The popover OPENS only when the user types into the token: a local,
+ * document-changing transaction whose change lies within the trigger + query
+ * range. Merely parking the caret after an existing `@key` — a click on a
+ * citation pill, arrow keys, a remote peer's edit, a `setContent`, or the
+ * initial collaboration sync landing the cursor at the end of a document that
+ * ends in one — never opens it. Once open it follows the caret within the same
+ * token and closes when the caret leaves it, on blur, or on Escape.
  */
 export const AnnotationSuggest = Extension.create<AnnotationSuggestOptions>({
   name: "hiermarkAnnotationSuggest",
@@ -165,15 +205,26 @@ export const AnnotationSuggest = Extension.create<AnnotationSuggestOptions>({
             if (tr.getMeta(annotationSuggestKey)?.dismiss) {
               return { suggest: EMPTY, dismissed: value.suggest.range };
             }
+            // Leaving the editor closes the popover (Tiptap dispatches a `blur`
+            // meta transaction); nothing below can reopen it without typing.
+            if (tr.getMeta("blur")) return { suggest: EMPTY, dismissed: null };
             const next = compute(newState, getContext, cache);
+            if (!next.active || !next.range) return { suggest: EMPTY, dismissed: null };
             // Stay suppressed only while still typing within the SAME token (same
             // trigger position). Moving the cursor away, or a new token, clears
             // the dismissal — so the type-ahead can never get permanently stuck
             // (e.g. after undo/redo returns to the same offset).
-            if (next.active && value.dismissed && next.range?.from === value.dismissed.from) {
+            if (value.dismissed && next.range.from === value.dismissed.from) {
               return { suggest: EMPTY, dismissed: value.dismissed };
             }
-            return { suggest: next, dismissed: null };
+            // Already open on this token: follow the caret / the growing query.
+            const openFrom = value.suggest.range ? tr.mapping.map(value.suggest.range.from) : null;
+            if (value.suggest.active && openFrom === next.range.from) {
+              return { suggest: next, dismissed: null };
+            }
+            // Would newly open: only for the user's own typing into the token.
+            const typed = tr.docChanged && !isRemoteChange(tr) && typedInto(tr, next.range);
+            return typed ? { suggest: next, dismissed: null } : { suggest: EMPTY, dismissed: null };
           },
         },
         props: {
