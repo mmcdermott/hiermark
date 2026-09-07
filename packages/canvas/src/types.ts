@@ -265,6 +265,19 @@ export interface HiermarkSurfaceHeaderProps<SurfaceMeta = unknown, EdgeMeta = un
   onActivate: () => void;
   onDelete?: () => void;
   onAddSibling?: () => void;
+  /** Whether the surface is collapsed to its header (see `onToggleCollapsed`). */
+  collapsed: boolean;
+  /** Collapse / expand this surface — the default header's ▾/▸ toggle. */
+  onToggleCollapsed: () => void;
+  /** A save is in flight for this surface (the default header's spinner). */
+  pending: boolean;
+  /**
+   * Spread onto the element that should act as the drag handle for sibling
+   * reorder (dnd-kit attributes + listeners). Absent when the surface is not
+   * sortable (no sibling group, or reorder disabled) — hide the handle then.
+   * A host header that omits this loses drag-reorder for its surfaces.
+   */
+  dragHandleProps?: Record<string, unknown>;
 }
 
 export interface HiermarkSurfacePreviewProps<SurfaceMeta = unknown, EdgeMeta = unknown> {

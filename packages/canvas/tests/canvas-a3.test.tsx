@@ -273,3 +273,63 @@ describe("canvas A3 — keyboard navigation", () => {
     await waitFor(() => expect(rootEl()?.getAttribute("aria-expanded")).toBe("false"));
   });
 });
+
+describe("SurfaceHeader slot affordances", () => {
+  const twoSiblings = {
+    surfaces: {
+      s_root: surface("s_root", "# Root\n\n## A", "Root"),
+      s_a: surface("s_a", "# A", "A"),
+      s_b: surface("s_b", "# B", "B"),
+    },
+    branchEdges: [
+      { id: "e_a", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_a", order: 0 },
+      { id: "e_b", fromSurfaceId: "s_root", fromBlockId: "blk_A", toSurfaceId: "s_b", order: 1 },
+    ],
+  };
+
+  it("hands a custom header collapse state, pending state and a drag handle", async () => {
+    const seen: Record<string, { collapsed: boolean; pending: boolean; drag: boolean }> = {};
+    const { container } = render(
+      <HiermarkCanvas
+        rootSurfaceId="s_root"
+        surfaces={twoSiblings.surfaces}
+        branchEdges={twoSiblings.branchEdges}
+        handlers={{ ...handlers, reorderBranchSiblings: async () => [] }}
+        slots={{
+          SurfaceHeader: ({ item, collapsed, onToggleCollapsed, pending, dragHandleProps }) => {
+            seen[item.surface.id] = { collapsed, pending, drag: !!dragHandleProps };
+            return (
+              <div className="my-header">
+                <button type="button" className="my-collapse" onClick={onToggleCollapsed}>
+                  {collapsed ? "expand" : "collapse"}
+                </button>
+                {dragHandleProps && (
+                  <button type="button" className="my-drag" {...dragHandleProps}>
+                    ⠿
+                  </button>
+                )}
+              </div>
+            );
+          },
+        }}
+      />,
+    );
+    await waitFor(() => {
+      expect(container.querySelectorAll(".my-header").length).toBe(3);
+    });
+    // Siblings sharing an anchor are sortable; the root (no sibling group) is not.
+    expect(seen.s_a?.drag).toBe(true);
+    expect(seen.s_b?.drag).toBe(true);
+    expect(seen.s_root?.drag).toBe(false);
+    expect(seen.s_a?.collapsed).toBe(false);
+    expect(seen.s_a?.pending).toBe(false);
+    expect(container.querySelectorAll(".my-drag").length).toBe(2);
+
+    // The toggle drives the canvas's collapse state.
+    const aCollapse = container.querySelector('[data-surface-id="s_a"] .my-collapse')!;
+    fireEvent.click(aCollapse);
+    await waitFor(() => {
+      expect(seen.s_a?.collapsed).toBe(true);
+    });
+  });
+});
