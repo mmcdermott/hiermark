@@ -402,6 +402,10 @@ function SurfaceItem({
     <HeaderSlot
       item={item}
       onActivate={onActivate}
+      collapsed={collapsed}
+      onToggleCollapsed={() => canvas.actions.toggleCollapsed(surface.id)}
+      pending={pending}
+      {...(sortable ? { dragHandleProps: { ...attributes, ...listeners } } : {})}
       {...(canDelete ? { onDelete: () => void canvas.actions.removeSurface(surface.id) } : {})}
       {...(canAddSiblingFromHeader
         ? {
