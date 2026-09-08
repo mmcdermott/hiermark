@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { projectBlockTree, type BlockNodeMeta } from "../src/snapshot/projectBlockTree";
-import { resolveBranchMode, isBranchable, SMART_RULES } from "../src/snapshot/blockTreePolicy";
+import {
+  resolveBranchMode,
+  isBranchable,
+  computeBranchPointSet,
+  SMART_RULES,
+} from "../src/snapshot/blockTreePolicy";
 import type { HiermarkBranchabilityRules, HiermarkSurfaceSnapshot } from "../src/types";
 
 const OPTS = { surfaceId: "s1", rootBlockId: "root", rootTitle: "Root" };
@@ -143,6 +148,17 @@ describe("resolveBranchMode — legacy string policies + isBranchable wrapper", 
     expect(resolveBranchMode(block(snap, "h"), snap, "headings-only")).toBe("branch");
     expect(resolveBranchMode(block(snap, "p"), snap, "headings-only")).toBe("none");
     expect(resolveBranchMode(block(snap, "h"), snap, "root-only")).toBe("none");
+    expect(resolveBranchMode(block(snap, "p"), snap, "root-only")).toBe("none");
+  });
+
+  it("root-only puts the one affordance on the root: branch, then add-sibling", () => {
+    // A childless surface must still offer a way to start the next level —
+    // it used to fall through to the "root is structural" rule and show nothing.
+    expect(resolveBranchMode(block(snap, "root"), snap, "root-only")).toBe("branch");
+    expect(
+      resolveBranchMode(block(snap, "root"), snap, "root-only", { existingChildCount: 2 }),
+    ).toBe("add-sibling");
+    expect(computeBranchPointSet(snap, "root-only")).toEqual(new Set(["root"]));
   });
 
   it("honors a custom function policy", () => {

@@ -76,7 +76,9 @@ export interface HiermarkBranchabilityRules {
  *   canvas to branch into).
  * - `"smart"` — the previous default: branch leaves + forks, hoisting single
  *   child chains, headings always (per-block, no whole-subtree bubble-up).
- * - `"any-nonempty-block"` / `"headings-only"` / `"root-only"` — simple rules.
+ * - `"any-nonempty-block"` / `"headings-only"` — simple per-block rules.
+ * - `"root-only"` — no block branches; the surface as a whole does, through
+ *   the single document-level affordance at the top of the editor.
  */
 export type HiermarkBranchPolicy =
   | "bubble-up"
