@@ -472,8 +472,25 @@
   border-radius: 4px;
 }
 
+/* The active-block marker: a 2px accent rule at the outer edge of the left
+   gutter. It used to be a box-shadow flush against the block, which read as
+   part of the text's left edge; out here it is clearly a margin marker, and
+   it stays clear of the fold toggle. Sized in the editor base font so it
+   lines up across headings and paragraphs. */
 .hiermark-block-active {
-  box-shadow: -2px 0 0 0 var(--hiermark-accent);
+  box-shadow: none;
+}
+.hiermark-block-active::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--hiermark-gutter-left));
+  top: 0.1em;
+  bottom: 0.1em;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--hiermark-accent);
+  font-size: var(--hiermark-base-font-size);
+  pointer-events: none;
 }
 
 /* Branch gutter — RIGHT side (children appear to the right) ----------------- */
