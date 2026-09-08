@@ -15,11 +15,19 @@ import type {
  * child (mode `"add-sibling"`) — a clicked sibling-add creates another branch
  * alongside the existing ones.
  */
-export function DefaultBranchButton({ blockId, mode, onBranch }: HiermarkBlockSlotProps) {
+export function DefaultBranchButton({
+  blockId,
+  blockType,
+  mode,
+  onBranch,
+}: HiermarkBlockSlotProps) {
   const sibling = mode === "add-sibling";
+  // The document-level affordance (the synthetic root) branches the whole
+  // surface, not a block — say so.
+  const subject = blockType === "root" ? "this document" : "this block";
   const label = sibling
-    ? "Add a sibling branch from this block"
-    : "Branch this block into a new surface";
+    ? `Add a sibling branch from ${subject}`
+    : `Branch ${subject} into a new surface`;
   return (
     <button
       type="button"

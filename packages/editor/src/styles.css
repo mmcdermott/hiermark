@@ -514,6 +514,11 @@
   right: auto;
   height: auto;
 }
+/* The document-level affordance is the ONLY branch point under root-only, so
+   it rests visible rather than at the per-block ghost opacity. */
+.hiermark-root-gutter .hiermark-branch-button {
+  opacity: 0.6;
+}
 .hiermark-editor:hover .hiermark-root-gutter .hiermark-branch-button,
 .hiermark-root-gutter .hiermark-branch-button:focus-visible {
   opacity: 1;

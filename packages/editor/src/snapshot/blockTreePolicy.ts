@@ -127,6 +127,16 @@ export function resolveBranchMode(
     return computeBranchPointSet(snapshot, "bubble-up").has(block.id) ? "branch" : "none";
   }
 
+  // "root-only": the whole surface branches (a section decomposes as a unit),
+  // so the ONE affordance lives on the synthetic root — "+" until the surface
+  // has children, "⊕" (add a sibling) after. Resolved before the legacy root
+  // check below, which would otherwise leave a childless surface with no
+  // affordance at all.
+  if (policy === "root-only") {
+    if (block.id !== snapshot.rootBlockId) return "none";
+    return ctx.existingChildCount > 0 ? "add-sibling" : "branch";
+  }
+
   // Legacy per-block policies: root is structural and empties never branch —
   // checked BEFORE existingChildCount so they stay "none" regardless of children.
   if (block.id === snapshot.rootBlockId || block.isEmpty) return "none";
@@ -135,8 +145,6 @@ export function resolveBranchMode(
   if (ctx.existingChildCount > 0) return "add-sibling";
 
   if (typeof policy === "function") return policy(block, snapshot) ? "branch" : "none";
-
-  if (policy === "root-only") return "none"; // surfaces branch under root-only, not blocks
   if (policy === "headings-only") return block.type === "heading" ? "branch" : "none";
   if (policy === "any-nonempty-block") return "branch";
 
